@@ -1,0 +1,29 @@
+workflows:
+  android-release:
+    name: Android Release
+    max_build_duration: 60
+    instance_type: linux
+    environment:
+      flutter: stable
+    scripts:
+      - name: Clean and get dependencies
+        script: |
+          cd frontend
+          flutter clean
+          rm -rf android/.gradle
+          rm -rf build
+          flutter pub get
+      - name: Build APK
+        script: |
+          cd frontend
+          flutter build apk --release --no-tree-shake-icons
+    artifacts:
+      - frontend/build/app/outputs/flutter-apk/app-release.apk
+    # Важно: отключаем автоматическую сборку iOS
+    publishing:
+      email:
+        recipients:
+          - nuryagdyyewmuhammetnur@gmail.com
+    triggering:
+      events:
+        - push
