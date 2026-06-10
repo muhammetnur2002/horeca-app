@@ -23,7 +23,7 @@ workflows:
     publishing:
       email:
         recipients:
-          - nuryagdyyewmuhammetnur@gmail.com
+          - your@email.com
     triggering:
       events:
         - push
