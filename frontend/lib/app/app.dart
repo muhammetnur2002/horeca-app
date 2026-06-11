@@ -19,8 +19,8 @@ class _HorecaAppState extends ConsumerState<HorecaApp> {
   @override
   void initState() {
     super.initState();
-    // Через 3 секунды убираем сплеш-скрин
-    Future.delayed(const Duration(seconds: 3), () {
+    // Показываем заставку 5 секунд (можно изменить на любое время)
+    Future.delayed(const Duration(seconds: 5), () {
       if (mounted) {
         setState(() {
           _showSplash = false;
@@ -33,7 +33,17 @@ class _HorecaAppState extends ConsumerState<HorecaApp> {
   Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
 
-    final mainApp = MaterialApp.router(
+    // Пока _showSplash == true, возвращаем только SplashScreen,
+    // обёрнутый в Directionality, чтобы избежать ошибки
+    if (_showSplash) {
+      return const Directionality(
+        textDirection: TextDirection.ltr,
+        child: SplashScreen(),
+      );
+    }
+
+    // После загрузки возвращаем основное приложение
+    return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       themeMode: themeMode,
       locale: const Locale('ru'), // всегда русский
@@ -101,17 +111,6 @@ class _HorecaAppState extends ConsumerState<HorecaApp> {
       ],
       supportedLocales: const [Locale('ru')],
       routerConfig: router,
-    );
-
-    // Оборачиваем в Directionality, чтобы Stack и всё внутри имели доступ к текстовому направлению
-    return Directionality(
-      textDirection: TextDirection.ltr,
-      child: Stack(
-        children: [
-          mainApp,
-          if (_showSplash) const SplashScreen(),
-        ],
-      ),
     );
   }
 }

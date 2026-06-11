@@ -58,28 +58,32 @@ class _SplashScreenState extends State<SplashScreen>
         return Stack(
           fit: StackFit.expand,
           children: [
-            // Дневной фон
-            Opacity(
-              opacity: dayOpacity,
-              child: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Color(0xFF87CEEB), Color(0xFFB0E0E6), Color(0xFFF0F8FF)],
+            // Непрозрачный дневной фон (перекрывает всё)
+            Positioned.fill(
+              child: Opacity(
+                opacity: dayOpacity,
+                child: Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Color(0xFF87CEEB), Color(0xFFB0E0E6), Color(0xFFF0F8FF)],
+                    ),
                   ),
                 ),
               ),
             ),
-            // Ночной фон
-            Opacity(
-              opacity: nightOpacity,
-              child: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Color(0xFF0B0E21), Color(0xFF1B1E3B), Color(0xFF2D2F54)],
+            // Непрозрачный ночной фон
+            Positioned.fill(
+              child: Opacity(
+                opacity: nightOpacity,
+                child: Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Color(0xFF0B0E21), Color(0xFF1B1E3B), Color(0xFF2D2F54)],
+                    ),
                   ),
                 ),
               ),
