@@ -13,7 +13,7 @@ class AppLocalizations {
   static const supportedLocales = [Locale('ru')];
 
   static const Map<String, String> _localizedStrings = {
-    'appTitle': 'Horeca',
+    'appTitle': 'Akyl',
     'makeRequest': 'Сделать заявку',
     'inventory': 'Инвентаризация',
     'history': 'История',
