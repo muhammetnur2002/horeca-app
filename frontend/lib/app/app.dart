@@ -4,15 +4,36 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:horeca_app/app/routes.dart';
 import 'package:horeca_app/app/di.dart';
 import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
+import 'package:horeca_app/features/splash/splash_screen.dart';
 
-class HorecaApp extends ConsumerWidget {
+class HorecaApp extends ConsumerStatefulWidget {
   const HorecaApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HorecaApp> createState() => _HorecaAppState();
+}
+
+class _HorecaAppState extends ConsumerState<HorecaApp> {
+  bool _showSplash = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // Через 3 секунды убираем сплеш-скрин
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) {
+        setState(() {
+          _showSplash = false;
+        });
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
 
-    return MaterialApp.router(
+    final mainApp = MaterialApp.router(
       debugShowCheckedModeBanner: false,
       themeMode: themeMode,
       locale: const Locale('ru'), // всегда русский
@@ -80,6 +101,17 @@ class HorecaApp extends ConsumerWidget {
       ],
       supportedLocales: const [Locale('ru')],
       routerConfig: router,
+    );
+
+    // Оборачиваем в Directionality, чтобы Stack и всё внутри имели доступ к текстовому направлению
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: Stack(
+        children: [
+          mainApp,
+          if (_showSplash) const SplashScreen(),
+        ],
+      ),
     );
   }
 }

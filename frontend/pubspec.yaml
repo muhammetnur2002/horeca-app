@@ -25,9 +25,11 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_native_splash: ^2.3.0
 
 flutter:
   generate: true
   uses-material-design: true
   assets:
     - assets/fonts/NotoSans-Regular.ttf
+    - assets/images/ic_launcher.png
