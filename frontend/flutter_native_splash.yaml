@@ -1,0 +1,24 @@
+flutter_native_splash:
+  # Цвет фона для светлой темы (бежевый, как в приложении)
+  color: "#F5F5DC"
+  
+  # Цвет фона для тёмной темы (тёмно-синий, как в приложении)
+  color_dark: "#1A1C2B"
+  
+  # Логотип для светлой темы (путь к вашей иконке в assets)
+  image: assets/images/ic_launcher.png
+  
+  # Логотип для тёмной темы (можно использовать тот же)
+  image_dark: assets/images/ic_launcher.png
+  
+  # Настройки для Android 12+ (Material splash screen)
+  android_12:
+    image: assets/images/ic_launcher.png
+    color: "#F5F5DC"
+    image_dark: assets/images/ic_launcher.png
+    color_dark: "#1A1C2B"
+  
+  # Размер иконки (можно регулировать, по умолчанию 100)
+  android_gravity: center
+  ios_content_mode: center
+  web_image_mode: center
