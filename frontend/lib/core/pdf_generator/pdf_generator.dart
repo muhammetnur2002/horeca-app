@@ -8,15 +8,15 @@ import 'pdf_saver.dart';
 class PdfGenerator {
   static Future<pw.Font> _loadFont() async {
     try {
-      final fontData =
-          await rootBundle.load('assets/fonts/NotoSans-Regular.ttf');
+      final fontData = await rootBundle.load('assets/fonts/NotoSans-Regular.ttf');
       return pw.Font.ttf(fontData.buffer.asByteData());
     } catch (_) {
+      // Если шрифт не загрузился (например, битый файл или отсутствует) – используем встроенный
       return pw.Font.helvetica();
     }
   }
 
-  /// Убирает ".0" у целых чисел, дробные оставляет как есть.
+  /// Превращает строку с числом в целое, если нет дробной части.
   static String _formatQuantity(String? value) {
     if (value == null || value.isEmpty) return '';
     final d = double.tryParse(value);
@@ -27,7 +27,7 @@ class PdfGenerator {
     return value;
   }
 
-  // Генерация заявки (таблица)
+  // ========== Генерация заявки ==========
   static Future<Uint8List> generateRequestPdf({
     required String title,
     required String establishmentName,
@@ -36,25 +36,22 @@ class PdfGenerator {
   }) async {
     final pdf = pw.Document();
     final font = await _loadFont();
+
     pdf.addPage(pw.Page(
       pageFormat: PdfPageFormat.a4,
       build: (context) => pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
           pw.Text(title,
-              style: pw.TextStyle(
-                  font: font, fontSize: 22, fontWeight: pw.FontWeight.bold)),
+              style: pw.TextStyle(font: font, fontSize: 22, fontWeight: pw.FontWeight.bold)),
           pw.SizedBox(height: 8),
-          pw.Text('$establishmentName',
-              style: pw.TextStyle(font: font, fontSize: 14)),
-          pw.Text('$department',
-              style: pw.TextStyle(font: font, fontSize: 14)),
+          pw.Text('$establishmentName', style: pw.TextStyle(font: font, fontSize: 14)),
+          pw.Text('$department', style: pw.TextStyle(font: font, fontSize: 14)),
           pw.Text('${DateTime.now().toLocal().toString().split('.')[0]}',
               style: pw.TextStyle(font: font, fontSize: 14)),
           pw.SizedBox(height: 16),
           pw.Table.fromTextArray(
-            headerStyle: pw.TextStyle(
-                font: font, fontWeight: pw.FontWeight.bold),
+            headerStyle: pw.TextStyle(font: font, fontWeight: pw.FontWeight.bold),
             cellStyle: pw.TextStyle(font: font),
             headers: ['Товар', 'Количество', 'Ед. изм.'],
             data: items.map((i) => [
@@ -69,7 +66,7 @@ class PdfGenerator {
     return pdf.save();
   }
 
-  // Генерация отчёта инвентаризации (таблица + ответственный)
+  // ========== Генерация отчёта инвентаризации ==========
   static Future<Uint8List> generateInventoryPdf({
     required String establishmentName,
     required String department,
@@ -79,41 +76,38 @@ class PdfGenerator {
     final pdf = pw.Document();
     final font = await _loadFont();
 
+    // Формируем строки таблицы с защитой от null
+    final rows = items.map((i) => [
+          i['name'] ?? '',
+          _formatQuantity(i['remaining'] ?? i['quantity']),
+          i['unit'] ?? '',
+        ]).toList();
+
     pdf.addPage(pw.Page(
       pageFormat: PdfPageFormat.a4,
       build: (context) => pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
           pw.Text('Отчёт об инвентаризации',
-              style: pw.TextStyle(
-                  font: font, fontSize: 22, fontWeight: pw.FontWeight.bold)),
+              style: pw.TextStyle(font: font, fontSize: 22, fontWeight: pw.FontWeight.bold)),
           pw.SizedBox(height: 8),
-          pw.Text('$establishmentName',
-              style: pw.TextStyle(font: font, fontSize: 14)),
-          pw.Text('$department',
-              style: pw.TextStyle(font: font, fontSize: 14)),
+          pw.Text('$establishmentName', style: pw.TextStyle(font: font, fontSize: 14)),
+          pw.Text('$department', style: pw.TextStyle(font: font, fontSize: 14)),
           pw.Text('${DateTime.now().toLocal().toString().split('.')[0]}',
               style: pw.TextStyle(font: font, fontSize: 14)),
           pw.SizedBox(height: 16),
           pw.Table.fromTextArray(
-            headerStyle: pw.TextStyle(
-                font: font, fontWeight: pw.FontWeight.bold),
+            headerStyle: pw.TextStyle(font: font, fontWeight: pw.FontWeight.bold),
             cellStyle: pw.TextStyle(font: font),
             headers: ['Товар', 'Остаток', 'Ед. изм.'],
-            data: items.map((i) => [
-                  i['name'] ?? '',
-                  _formatQuantity(i['remaining'] ?? i['quantity']),
-                  i['unit'] ?? '',
-                ]).toList(),
+            data: rows,
           ),
           if (responsiblePerson != null && responsiblePerson.isNotEmpty) ...[
             pw.SizedBox(height: 20),
-            pw.Text('Ответственный: $responsiblePerson',
-                style: pw.TextStyle(font: font)),
+            pw.Text('Ответственный: $responsiblePerson', style: pw.TextStyle(font: font)),
           ] else ...[
             pw.SizedBox(height: 20),
-            pw.Text('Ответственный: _______________',
-                style: pw.TextStyle(font: font)),
+            pw.Text('Ответственный: _______________', style: pw.TextStyle(font: font)),
           ],
         ],
       ),
@@ -121,7 +115,7 @@ class PdfGenerator {
     return pdf.save();
   }
 
-  /// Сохранение файла (автоматически для всех платформ)
+  /// Скачать/поделиться файлом – автоматически для всех платформ
   static Future<void> downloadFile(Uint8List bytes, String fileName) async {
     await saveFile(bytes, fileName);
   }
