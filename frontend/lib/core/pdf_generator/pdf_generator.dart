@@ -1,11 +1,11 @@
-﻿import 'dart:typed_data';
+﻿// pdf_generator.dart
+import 'dart:typed_data';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:share_plus/share_plus.dart';
-import 'package:path_provider/path_provider.dart';
-import 'dart:io' show File;
 import 'package:flutter/foundation.dart' show kIsWeb;
+
+import 'pdf_saver.dart'; // <-- наш общий файл сохранения
 
 class PdfGenerator {
   static Future<pw.Font> _loadFont() async {
@@ -49,7 +49,7 @@ class PdfGenerator {
     return pdf.save();
   }
 
-  // Генерация отчёта инвентаризации (таблица) – с защитой от отсутствующих ключей
+  // Генерация отчёта инвентаризации – такая же таблица, но колонка "Остаток" и "Ответственный"
   static Future<Uint8List> generateInventoryPdf({
     required String establishmentName,
     required String department,
@@ -58,12 +58,6 @@ class PdfGenerator {
   }) async {
     final pdf = pw.Document();
     final font = await _loadFont();
-
-    final rows = items.map((i) => [
-      i['name'] ?? '',
-      i['remaining'] ?? '',
-      i['unit'] ?? '',
-    ]).toList();
 
     pdf.addPage(pw.Page(
       pageFormat: PdfPageFormat.a4,
@@ -82,11 +76,19 @@ class PdfGenerator {
             headerStyle: pw.TextStyle(font: font, fontWeight: pw.FontWeight.bold),
             cellStyle: pw.TextStyle(font: font),
             headers: ['Товар', 'Остаток', 'Ед. изм.'],
-            data: rows,
+            data: items.map((i) => [
+              i['name'] ?? '',
+              i['remaining'] ?? i['quantity'] ?? '',   // защита от отсутствия нужного ключа
+              i['unit'] ?? '',
+            ]).toList(),
           ),
+          // Блок "Ответственный"
           if (responsiblePerson != null && responsiblePerson.isNotEmpty) ...[
             pw.SizedBox(height: 20),
             pw.Text('Ответственный: $responsiblePerson', style: pw.TextStyle(font: font)),
+          ] else ...[
+            pw.SizedBox(height: 20),
+            pw.Text('Ответственный: _______________', style: pw.TextStyle(font: font)),
           ],
         ],
       ),
@@ -94,12 +96,8 @@ class PdfGenerator {
     return pdf.save();
   }
 
-  // Сохранение/отправка файла (только для Android/iOS/десктоп)
+  // Сохранение файла – автоматически выбирает способ в зависимости от платформы
   static Future<void> downloadFile(Uint8List bytes, String fileName) async {
-    // Если всё-таки понадобится веб — нужно вынести в отдельный файл с условным импортом
-    final dir = await getTemporaryDirectory();
-    final file = File('${dir.path}/$fileName');
-    await file.writeAsBytes(bytes);
-    await Share.shareXFiles([XFile(file.path)], subject: fileName);
+    await saveFile(bytes, fileName);  // из pdf_saver.dart
   }
 }
