@@ -5,7 +5,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:flutter/foundation.dart' show kIsWeb;
 
-import 'pdf_saver.dart'; // <-- наш общий файл сохранения
+import 'pdf_saver.dart';
 
 class PdfGenerator {
   static Future<pw.Font> _loadFont() async {
@@ -15,6 +15,17 @@ class PdfGenerator {
     } catch (_) {
       return pw.Font.helvetica();
     }
+  }
+
+  /// Убирает ".0" у целых чисел, оставляя остальные как есть.
+  static String _formatQuantity(String? value) {
+    if (value == null || value.isEmpty) return '';
+    final d = double.tryParse(value);
+    if (d == null) return value;          // не число — вернём как есть
+    if (d == d.truncateToDouble()) {      // целое (например 1.0, 10.0)
+      return d.toInt().toString();
+    }
+    return value;                         // дробное (например 2.5) — оставим
   }
 
   // Генерация заявки (таблица)
@@ -41,7 +52,11 @@ class PdfGenerator {
             headerStyle: pw.TextStyle(font: font, fontWeight: pw.FontWeight.bold),
             cellStyle: pw.TextStyle(font: font),
             headers: ['Товар', 'Количество', 'Ед. изм.'],
-            data: items.map((i) => [i['name']!, i['quantity']!, i['unit']!]).toList(),
+            data: items.map((i) => [
+              i['name']!,
+              _formatQuantity(i['quantity']),  // <-- форматируем количество
+              i['unit']!,
+            ]).toList(),
           ),
         ],
       ),
@@ -49,7 +64,7 @@ class PdfGenerator {
     return pdf.save();
   }
 
-  // Генерация отчёта инвентаризации – такая же таблица, но колонка "Остаток" и "Ответственный"
+  // Генерация отчёта инвентаризации
   static Future<Uint8List> generateInventoryPdf({
     required String establishmentName,
     required String department,
@@ -78,11 +93,10 @@ class PdfGenerator {
             headers: ['Товар', 'Остаток', 'Ед. изм.'],
             data: items.map((i) => [
               i['name'] ?? '',
-              i['remaining'] ?? i['quantity'] ?? '',   // защита от отсутствия нужного ключа
+              _formatQuantity(i['remaining'] ?? i['quantity']),  // форматируем остаток
               i['unit'] ?? '',
             ]).toList(),
           ),
-          // Блок "Ответственный"
           if (responsiblePerson != null && responsiblePerson.isNotEmpty) ...[
             pw.SizedBox(height: 20),
             pw.Text('Ответственный: $responsiblePerson', style: pw.TextStyle(font: font)),
@@ -96,8 +110,7 @@ class PdfGenerator {
     return pdf.save();
   }
 
-  // Сохранение файла – автоматически выбирает способ в зависимости от платформы
   static Future<void> downloadFile(Uint8List bytes, String fileName) async {
-    await saveFile(bytes, fileName);  // из pdf_saver.dart
+    await saveFile(bytes, fileName);
   }
 }
