@@ -41,9 +41,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
         title: Text(l10n.history),
         bottom: TabBar(
           controller: _tabController,
-          tabs: const [
-            Tab(text: 'Заявки'),
-            Tab(text: 'Инвентаризации'),
+          tabs: [
+            Tab(text: l10n.requestsTab),
+            Tab(text: l10n.inventoryTab),
           ],
         ),
         actions: [
@@ -52,7 +52,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
             onPressed: () {
               final isRequestsTab = _tabController.index == 0;
               final type = isRequestsTab ? HistoryType.request : HistoryType.inventory;
-              final title = isRequestsTab ? 'Заявки' : 'Инвентаризации';
+              final title = isRequestsTab ? l10n.requestsTab : l10n.inventoryTab;
 
               // Мгновенная очистка
               repo.clearByType(type);
@@ -107,18 +107,21 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
               icon: Icon(Icons.share, color: isDark ? Colors.white : Colors.black87),
               onPressed: () => Share.share(e.text),
             ),
-            onTap: () => showDialog(
-              context: ctx,
-              builder: (_) => AlertDialog(
-                content: SingleChildScrollView(child: SelectableText(e.text)),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    child: const Text('Закрыть'),
-                  ),
-                ],
-              ),
-            ),
+            onTap: () {
+              // Открываем диалог с полным текстом
+              showDialog(
+                context: ctx,
+                builder: (dialogContext) => AlertDialog(
+                  content: SingleChildScrollView(child: SelectableText(e.text)),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(dialogContext), // <-- правильный контекст
+                      child: const Text('Закрыть'),
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
         );
       },

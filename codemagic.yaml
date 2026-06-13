@@ -23,22 +23,27 @@ workflows:
   ios-release:
     name: iOS Release
     max_build_duration: 90
-    instance_type: mac_mini_m1   # Codemagic предоставляет Mac-инстансы
+    instance_type: mac_mini_m1   # потребуется платный план Codemagic для macOS-инстансов
     environment:
       flutter: stable
       xcode: latest
       cocoapods: default
+    cache:
+      cache_paths:
+        - $HOME/Library/Caches/CocoaPods
     scripts:
-      - name: Clean and get dependencies
+      - name: Setup CocoaPods and dependencies
         script: |
           cd frontend
           flutter clean
-          rm -rf ios/Pods
-          rm -rf ios/Podfile.lock
+          rm -rf ios/Pods ios/Podfile.lock
           flutter pub get
-      - name: Build iOS
+      - name: Build iOS with signing
         script: |
           cd frontend
-          flutter build ios --release --no-codesign   # для теста можно без подписи
+          flutter build ipa --release \
+            --export-method=ad-hoc \
+            --build-number=$(date +%s) \
+            --no-tree-shake-icons
     artifacts:
-      - frontend/build/ios/iphoneos/Runner.app
+      - frontend/build/ios/ipa/*.ipa

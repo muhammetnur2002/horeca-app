@@ -80,7 +80,6 @@ class SettingsRepository extends StateNotifier<SettingsData> {
     _loadFromPrefs();
   }
 
-  // ==================== Сохранение и загрузка ====================
   void _saveToPrefs() {
     final data = {
       'departments': state.departments
@@ -90,7 +89,13 @@ class SettingsRepository extends StateNotifier<SettingsData> {
           .map((c) => {'id': c.id, 'name': c.name, 'departmentId': c.departmentId})
           .toList(),
       'products': state.products
-          .map((p) => {'id': p.id, 'name': p.name, 'unit': p.unit, 'categoryId': p.categoryId})
+          .map((p) => {
+                'id': p.id,
+                'name': p.name,
+                'unit': p.unit,
+                'inventoryUnit': p.inventoryUnit,
+                'categoryId': p.categoryId,
+              })
           .toList(),
       'establishmentName': state.establishmentName,
     };
@@ -116,6 +121,7 @@ class SettingsRepository extends StateNotifier<SettingsData> {
             id: p['id'],
             name: p['name'],
             unit: p['unit'],
+            inventoryUnit: p['inventoryUnit'] ?? p['unit'],
             categoryId: p['categoryId'],
           )).toList();
       final name = data['establishmentName'] as String? ?? 'Sunrise';
@@ -125,35 +131,26 @@ class SettingsRepository extends StateNotifier<SettingsData> {
         products: prods,
         establishmentName: name,
       );
-    } catch (_) {
-      // Если данные повреждены – остаёмся с демо-данными
-    }
+    } catch (_) {}
   }
 
-  // ==================== Название заведения ====================
   void setEstablishmentName(String name) {
     state = state.copyWith(establishmentName: name);
     _saveToPrefs();
   }
 
-  // ==================== Отделы ====================
   void addDepartment(String name, IconData icon) {
-    final d = DepartmentModel(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      name: name,
-      icon: icon,
-    );
+    final d = DepartmentModel(id: DateTime.now().millisecondsSinceEpoch.toString(), name: name, icon: icon);
     state = state.copyWith(departments: [...state.departments, d]);
     _saveToPrefs();
   }
 
   void updateDepartment(String id, String newName, IconData? newIcon) {
     state = state.copyWith(
-      departments: state.departments
-          .map((d) => d.id == id
-              ? DepartmentModel(id: d.id, name: newName, icon: newIcon ?? d.icon)
-              : d)
-          .toList(),
+      departments: state.departments.map((d) {
+        if (d.id == id) return DepartmentModel(id: d.id, name: newName, icon: newIcon ?? d.icon);
+        return d;
+      }).toList(),
     );
     _saveToPrefs();
   }
@@ -163,38 +160,25 @@ class SettingsRepository extends StateNotifier<SettingsData> {
       departments: state.departments.where((d) => d.id != id).toList(),
       categories: state.categories.where((c) => c.departmentId != id).toList(),
       products: state.products.where((p) {
-        final cat = state.categories.firstWhere(
-          (c) => c.id == p.categoryId,
-          orElse: () => CategoryModel(id: '', name: '', departmentId: ''),
-        );
+        final cat = state.categories.firstWhere((c) => c.id == p.categoryId, orElse: () => CategoryModel(id: '', name: '', departmentId: ''));
         return cat.departmentId != id;
       }).toList(),
     );
     _saveToPrefs();
   }
 
-  // ==================== Категории ====================
   void addCategory(String name, String departmentId) {
-    final c = CategoryModel(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      name: name,
-      departmentId: departmentId,
-    );
+    final c = CategoryModel(id: DateTime.now().millisecondsSinceEpoch.toString(), name: name, departmentId: departmentId);
     state = state.copyWith(categories: [...state.categories, c]);
     _saveToPrefs();
   }
 
   void updateCategory(String id, String newName, {String? newDepartmentId}) {
     state = state.copyWith(
-      categories: state.categories
-          .map((c) => c.id == id
-              ? CategoryModel(
-                  id: c.id,
-                  name: newName,
-                  departmentId: newDepartmentId ?? c.departmentId,
-                )
-              : c)
-          .toList(),
+      categories: state.categories.map((c) {
+        if (c.id == id) return CategoryModel(id: c.id, name: newName, departmentId: newDepartmentId ?? c.departmentId);
+        return c;
+      }).toList(),
     );
     _saveToPrefs();
   }
@@ -207,30 +191,32 @@ class SettingsRepository extends StateNotifier<SettingsData> {
     _saveToPrefs();
   }
 
-  // ==================== Товары ====================
-  void addProduct(String name, String unit, String categoryId) {
+  void addProduct(String name, String unit, String categoryId, {String? inventoryUnit}) {
     final p = ProductModel(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       name: name,
       unit: unit,
+      inventoryUnit: inventoryUnit ?? unit,
       categoryId: categoryId,
     );
     state = state.copyWith(products: [...state.products, p]);
     _saveToPrefs();
   }
 
-  void updateProduct(String id, String newName, String newUnit, {String? newCategoryId}) {
+  void updateProduct(String id, String newName, String newUnit, {String? newCategoryId, String? newInventoryUnit}) {
     state = state.copyWith(
-      products: state.products
-          .map((p) => p.id == id
-              ? ProductModel(
-                  id: p.id,
-                  name: newName,
-                  unit: newUnit,
-                  categoryId: newCategoryId ?? p.categoryId,
-                )
-              : p)
-          .toList(),
+      products: state.products.map((p) {
+        if (p.id == id) {
+          return ProductModel(
+            id: p.id,
+            name: newName,
+            unit: newUnit,
+            inventoryUnit: newInventoryUnit ?? p.inventoryUnit,
+            categoryId: newCategoryId ?? p.categoryId,
+          );
+        }
+        return p;
+      }).toList(),
     );
     _saveToPrefs();
   }
@@ -240,25 +226,20 @@ class SettingsRepository extends StateNotifier<SettingsData> {
     _saveToPrefs();
   }
 
-  void bulkAddProducts(List<String> names, String defaultUnit, String categoryId) {
-    final newProds = names
-        .map((name) => ProductModel(
-              id: DateTime.now().millisecondsSinceEpoch.toString() + name,
-              name: name,
-              unit: defaultUnit,
-              categoryId: categoryId,
-            ))
-        .toList();
+  void bulkAddProducts(List<String> names, String defaultUnit, String categoryId, {String? defaultInventoryUnit}) {
+    final newProds = names.map((name) => ProductModel(
+      id: DateTime.now().millisecondsSinceEpoch.toString() + name,
+      name: name,
+      unit: defaultUnit,
+      inventoryUnit: defaultInventoryUnit ?? defaultUnit,
+      categoryId: categoryId,
+    )).toList();
     state = state.copyWith(products: [...state.products, ...newProds]);
     _saveToPrefs();
   }
-
-  void replaceAll(List<DepartmentModel> departments, List<CategoryModel> categories, List<ProductModel> products) {}
 }
 
-// Провайдер, который получает SharedPreferences из di.dart
-final settingsRepositoryProvider =
-    StateNotifierProvider<SettingsRepository, SettingsData>((ref) {
-  final prefs = ref.read(sharedPreferencesProvider);
+final settingsRepositoryProvider = StateNotifierProvider<SettingsRepository, SettingsData>((ref) {
+  final prefs = ref.watch(sharedPreferencesProvider);
   return SettingsRepository(prefs);
 });

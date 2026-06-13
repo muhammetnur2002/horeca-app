@@ -2,6 +2,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/features/request/data/repositories/department_repository.dart';
 import 'package:horeca_app/features/inventory/domain/usecases/inventory_state.dart';
+import 'package:horeca_app/features/settings/data/settings_repository.dart';
+import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
 
 class SelectDepartmentStep extends ConsumerWidget {
   const SelectDepartmentStep({super.key});
@@ -9,7 +11,9 @@ class SelectDepartmentStep extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final departments = ref.watch(departmentsProvider);
+    final l10n = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final allCategories = ref.watch(settingsRepositoryProvider).categories;
 
     return GridView.builder(
       padding: const EdgeInsets.all(24),
@@ -22,11 +26,13 @@ class SelectDepartmentStep extends ConsumerWidget {
       itemCount: departments.length + 1, // +1 для "Все отделы"
       itemBuilder: (_, index) {
         if (index == 0) {
-          // Карточка "Все отделы"
           return Card(
             color: isDark ? Colors.grey.shade800 : Colors.white,
             child: InkWell(
-              onTap: () => ref.read(inventoryStateProvider.notifier).selectDepartment('all'),
+              onTap: () {
+                final allCategoryIds = allCategories.map((c) => c.id).toList();
+                ref.read(inventoryStateProvider.notifier).selectDepartment('all', allCategoryIds);
+              },
               borderRadius: BorderRadius.circular(12),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -34,7 +40,7 @@ class SelectDepartmentStep extends ConsumerWidget {
                   Icon(Icons.all_inclusive, size: 48, color: Colors.green),
                   const SizedBox(height: 8),
                   Text(
-                    'Все отделы',
+                    l10n.allDepartments,
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
                           color: isDark ? Colors.white : Colors.black87,
                         ),
@@ -48,7 +54,13 @@ class SelectDepartmentStep extends ConsumerWidget {
         return Card(
           color: isDark ? Colors.grey.shade800 : Colors.white,
           child: InkWell(
-            onTap: () => ref.read(inventoryStateProvider.notifier).selectDepartment(d.id),
+            onTap: () {
+              final categoryIds = allCategories
+                  .where((c) => c.departmentId == d.id)
+                  .map((c) => c.id)
+                  .toList();
+              ref.read(inventoryStateProvider.notifier).selectDepartment(d.id, categoryIds);
+            },
             borderRadius: BorderRadius.circular(12),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -56,7 +68,7 @@ class SelectDepartmentStep extends ConsumerWidget {
                 Icon(d.icon, size: 48, color: Colors.orange),
                 const SizedBox(height: 8),
                 Text(
-                  d.name,
+                  d.name, // <-- реальное имя
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
                         color: isDark ? Colors.white : Colors.black87,
                       ),

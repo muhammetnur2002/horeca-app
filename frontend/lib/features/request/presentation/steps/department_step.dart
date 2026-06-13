@@ -2,6 +2,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/features/request/data/repositories/department_repository.dart';
 import 'package:horeca_app/features/request/domain/usecases/request_state.dart';
+import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
 
 class DepartmentStep extends ConsumerWidget {
   const DepartmentStep({super.key});
@@ -9,12 +10,13 @@ class DepartmentStep extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final departments = ref.watch(departmentsProvider);
+    final l10n = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (departments.isEmpty) {
       return Center(
         child: Text(
-          'Нет отделов. Добавьте в настройках.',
+          l10n.noDepartments,
           style: TextStyle(color: isDark ? Colors.white : Colors.black87),
         ),
       );
@@ -42,7 +44,7 @@ class DepartmentStep extends ConsumerWidget {
                 Icon(d.icon, size: 48, color: Colors.orange),
                 const SizedBox(height: 8),
                 Text(
-                  d.name,
+                  d.name, // <-- используем реальное имя
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
                         color: isDark ? Colors.white : Colors.black87,
                       ),

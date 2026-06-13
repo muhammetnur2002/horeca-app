@@ -74,6 +74,25 @@ class AppLocalizations {
     'date': 'Дата',
     'establishment': 'Заведение',
     'responsible': 'Ответственный',
+    'loading': 'Загрузка...',
+    'noData': 'Нет данных',
+    'allDepartments': 'Все отделы',
+    'enterQuantity': 'Введите количество',
+    'ok': 'OK',
+    'requestsTab': 'Заявки',
+    'inventoryTab': 'Инвентаризации',
+    'noRecords': 'Нет записей',
+    'establishmentTab': 'Заведение',
+    'departmentsTab': 'Отделы',
+    'categoriesTab': 'Категории',
+    'productsTab': 'Товары',
+    'themeTab': 'Тема',
+    'kitchen': 'Кухня',
+    'bar': 'Бар',
+    'hall': 'Зал',
+    'warehouse': 'Склад',
+    'cleaning': 'Клининг',
+    'generateReport': 'Создать отчёт',
   };
 
   String translate(String key) => _localizedStrings[key] ?? key;
@@ -139,16 +158,48 @@ class AppLocalizations {
   String get date => translate('date');
   String get establishment => translate('establishment');
   String get responsible => translate('responsible');
+  String get loading => translate('loading');
+  String get noData => translate('noData');
+  String get allDepartments => translate('allDepartments');
+  String get enterQuantity => translate('enterQuantity');
+  String get ok => translate('ok');
+  String get requestsTab => translate('requestsTab');
+  String get inventoryTab => translate('inventoryTab');
+  String get noRecords => translate('noRecords');
+  String get establishmentTab => translate('establishmentTab');
+  String get departmentsTab => translate('departmentsTab');
+  String get categoriesTab => translate('categoriesTab');
+  String get productsTab => translate('productsTab');
+  String get themeTab => translate('themeTab');
+  String get kitchen => translate('kitchen');
+  String get bar => translate('bar');
+  String get hall => translate('hall');
+  String get warehouse => translate('warehouse');
+  String get cleaning => translate('cleaning');
+  String get generateReport => translate('generateReport');
+
+  String getDepartmentName(String id) {
+    switch (id) {
+      case '1': return kitchen;
+      case '2': return bar;
+      case '3': return hall;
+      case '4': return warehouse;
+      case '5': return cleaning;
+      default: return department;
+    }
+  }
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationsDelegate();
 
   @override
-  bool isSupported(Locale locale) => locale.languageCode == 'ru';
+  bool isSupported(Locale locale) =>
+      AppLocalizations.supportedLocales.contains(locale);
 
   @override
-  Future<AppLocalizations> load(Locale locale) async => AppLocalizations(locale);
+  Future<AppLocalizations> load(Locale locale) async =>
+      AppLocalizations(locale);
 
   @override
   bool shouldReload(covariant LocalizationsDelegate<AppLocalizations> old) => false;

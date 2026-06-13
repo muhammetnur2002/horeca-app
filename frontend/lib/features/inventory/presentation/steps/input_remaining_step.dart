@@ -14,21 +14,29 @@ class InputRemainingStep extends ConsumerWidget {
     final state = ref.watch(inventoryStateProvider);
     if (state.departmentId == null) return const SizedBox.shrink();
 
-    final products = ref.watch(inventoryProductsProvider(state.departmentId!));
+    final allProducts = ref.watch(settingsRepositoryProvider).products;
+    final allCategories = ref.watch(settingsRepositoryProvider).categories;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    if (state.items.isEmpty || !_listsEqual(state.items, products)) {
+    final filteredProducts = allProducts.where((p) {
+      final cat = allCategories.firstWhere((c) => c.id == p.categoryId, orElse: () => CategoryModel(id: '', name: '', departmentId: ''));
+      if (state.departmentId == 'all') {
+        return state.selectedCategoryIds.contains(cat.id);
+      } else {
+        return cat.departmentId == state.departmentId && state.selectedCategoryIds.contains(cat.id);
+      }
+    }).toList();
+
+    if (state.items.isEmpty || !_listsEqual(state.items, filteredProducts)) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ref.read(inventoryStateProvider.notifier).initItems(
-              products
-                  .map((p) => InventoryItem(
-                        productId: p.id,
-                        productName: p.name,
-                        remaining: 0,
-                        unit: p.unit,
-                      ))
-                  .toList(),
-            );
+          filteredProducts.map((p) => InventoryItem(
+            productId: p.id,
+            productName: p.name,
+            remaining: 0,
+            unit: p.inventoryUnit,   // <-- используем единицу для инвентаризации
+          )).toList(),
+        );
       });
     }
 
@@ -40,18 +48,8 @@ class InputRemainingStep extends ConsumerWidget {
             itemCount: state.items.length,
             itemBuilder: (_, index) {
               final item = state.items[index];
-              
-              // Определяем категорию товара
-              final allProducts = ref.read(settingsRepositoryProvider).products;
-              final allCategories = ref.read(settingsRepositoryProvider).categories;
-              final product = allProducts.firstWhere(
-                (p) => p.id == item.productId,
-                orElse: () => ProductModel(id: '', name: item.productName, unit: item.unit, categoryId: ''),
-              );
-              final category = allCategories.firstWhere(
-                (c) => c.id == product.categoryId,
-                orElse: () => CategoryModel(id: '', name: 'Без категории', departmentId: ''),
-              );
+              final product = allProducts.firstWhere((p) => p.id == item.productId, orElse: () => ProductModel(id: '', name: item.productName, unit: item.unit, inventoryUnit: item.unit, categoryId: ''));
+              final category = allCategories.firstWhere((c) => c.id == product.categoryId, orElse: () => CategoryModel(id: '', name: 'Без категории', departmentId: ''));
 
               return Card(
                 color: isDark ? Colors.grey.shade800 : Colors.white,
@@ -64,16 +62,8 @@ class InputRemainingStep extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              item.productName,
-                              style: TextStyle(
-                                  fontSize: 16, color: isDark ? Colors.white : Colors.black87),
-                            ),
-                            Text(
-                              category.name,
-                              style: TextStyle(
-                                  fontSize: 12, color: isDark ? Colors.grey.shade400 : Colors.grey.shade600),
-                            ),
+                            Text(item.productName, style: TextStyle(fontSize: 16, color: isDark ? Colors.white : Colors.black87)),
+                            Text(category.name, style: TextStyle(fontSize: 12, color: isDark ? Colors.grey.shade400 : Colors.grey.shade600)),
                           ],
                         ),
                       ),
@@ -81,17 +71,15 @@ class InputRemainingStep extends ConsumerWidget {
                         width: 100,
                         child: TextField(
                           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             isDense: true,
-                            suffixText: 'ост.',
-                            border: OutlineInputBorder(),
+                            suffixText: item.unit,  // <-- отображаем inventoryUnit
+                            border: const OutlineInputBorder(),
                           ),
                           style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                           onChanged: (val) {
                             final parsed = double.tryParse(val) ?? 0;
-                            ref
-                                .read(inventoryStateProvider.notifier)
-                                .updateRemaining(item.productId, parsed);
+                            ref.read(inventoryStateProvider.notifier).updateRemaining(item.productId, parsed);
                           },
                         ),
                       ),
@@ -106,9 +94,7 @@ class InputRemainingStep extends ConsumerWidget {
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: ElevatedButton(
-              onPressed: () {
-                ref.read(inventoryStateProvider.notifier).generateReport();
-              },
+              onPressed: () => ref.read(inventoryStateProvider.notifier).generateReport(),
               child: const Text('Создать отчёт'),
             ),
           ),
@@ -117,7 +103,7 @@ class InputRemainingStep extends ConsumerWidget {
     );
   }
 
-  bool _listsEqual(List<InventoryItem> items, List<InventoryProduct> products) {
+  bool _listsEqual(List<InventoryItem> items, List<ProductModel> products) {
     if (items.length != products.length) return false;
     for (int i = 0; i < items.length; i++) {
       if (items[i].productId != products[i].id) return false;

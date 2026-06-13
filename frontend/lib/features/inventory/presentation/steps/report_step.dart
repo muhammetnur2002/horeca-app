@@ -5,6 +5,9 @@ import 'package:horeca_app/features/inventory/domain/usecases/inventory_state.da
 import 'package:horeca_app/features/history/data/history_repository.dart';
 import 'package:horeca_app/features/history/domain/history_entry.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
+import 'package:horeca_app/shared/models/product_model.dart';
+import 'package:horeca_app/shared/models/category_model.dart';
+import 'package:horeca_app/shared/models/department_model.dart';
 import 'package:horeca_app/core/pdf_generator/pdf_generator.dart';
 import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
 import 'package:share_plus/share_plus.dart';
@@ -12,17 +15,64 @@ import 'package:share_plus/share_plus.dart';
 class ReportStep extends ConsumerWidget {
   const ReportStep({super.key});
 
-  String _generateReport(InventoryState state, AppLocalizations l10n, String establishmentName) {
+  String _generateReport(
+    InventoryState state,
+    AppLocalizations l10n,
+    String establishmentName,
+    List<ProductModel> allProducts,
+    List<CategoryModel> allCategories,
+    List<DepartmentModel> allDepartments,
+  ) {
     final buffer = StringBuffer();
     buffer.writeln(l10n.reportTitle);
     buffer.writeln('${l10n.date}: ${DateTime.now().toLocal().toString().split('.')[0]}');
     buffer.writeln('${l10n.establishment}: “$establishmentName”');
-    buffer.writeln('${l10n.department}: ${state.departmentId}');
-    buffer.writeln('');
-    for (final item in state.items) {
-      buffer.writeln('- ${item.productName}: ${item.remaining} ${item.unit}');
+
+    String deptName;
+    if (state.departmentId == 'all') {
+      deptName = l10n.allDepartments;
+    } else {
+      switch (state.departmentId) {
+        case '1': deptName = 'Кухня'; break;
+        case '2': deptName = 'Бар'; break;
+        case '3': deptName = 'Зал'; break;
+        case '4': deptName = 'Склад'; break;
+        case '5': deptName = 'Клининг'; break;
+        default: deptName = state.departmentId ?? 'Неизвестный отдел';
+      }
     }
-    buffer.writeln('');
+    buffer.writeln('${l10n.department}: $deptName');
+    buffer.writeln();
+
+    final Map<String, List<InventoryItem>> grouped = {};
+    final List<String> catOrder = [];
+
+    for (final item in state.items) {
+      final product = allProducts.firstWhere(
+        (p) => p.id == item.productId,
+        orElse: () => ProductModel(id: '', name: item.productName, unit: '', inventoryUnit: '', categoryId: ''),
+      );
+      final category = allCategories.firstWhere(
+        (c) => c.id == product.categoryId,
+        orElse: () => CategoryModel(id: '', name: 'Без категории', departmentId: ''),
+      );
+      final catName = category.name.isNotEmpty ? category.name : 'Без категории';
+
+      if (!grouped.containsKey(catName)) {
+        grouped[catName] = [];
+        catOrder.add(catName);
+      }
+      grouped[catName]!.add(item);
+    }
+
+    for (final catName in catOrder) {
+      buffer.writeln('${l10n.category}: $catName');
+      for (final item in grouped[catName]!) {
+        buffer.writeln('- ${item.productName}: ${item.remaining} ${item.unit}');
+      }
+      buffer.writeln();
+    }
+
     buffer.writeln('${l10n.responsible}: _______________');
     return buffer.toString();
   }
@@ -33,8 +83,26 @@ class ReportStep extends ConsumerWidget {
     final state = ref.watch(inventoryStateProvider);
     final settings = ref.watch(settingsRepositoryProvider);
     final establishmentName = settings.establishmentName;
-    final text = _generateReport(state, l10n, establishmentName);
+    final allProducts = settings.products;
+    final allCategories = settings.categories;
+    final allDepartments = settings.departments;
+
+    final text = _generateReport(state, l10n, establishmentName, allProducts, allCategories, allDepartments);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    String deptName;
+    if (state.departmentId == 'all') {
+      deptName = l10n.allDepartments;
+    } else {
+      switch (state.departmentId) {
+        case '1': deptName = 'Кухня'; break;
+        case '2': deptName = 'Бар'; break;
+        case '3': deptName = 'Зал'; break;
+        case '4': deptName = 'Склад'; break;
+        case '5': deptName = 'Клининг'; break;
+        default: deptName = state.departmentId ?? 'Неизвестный отдел';
+      }
+    }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final repo = ref.read(historyRepositoryProvider);
@@ -42,7 +110,7 @@ class ReportStep extends ConsumerWidget {
         repo.add(HistoryEntry(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
           type: HistoryType.inventory,
-          title: 'Инвентаризация ${state.departmentId}',
+          title: '${l10n.inventory} $deptName',
           text: text,
           createdAt: DateTime.now(),
         ));
@@ -64,13 +132,7 @@ class ReportStep extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: SingleChildScrollView(
-                child: SelectableText(
-                  text,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: isDark ? Colors.white : Colors.black87,
-                  ),
-                ),
+                child: SelectableText(text, style: TextStyle(fontSize: 16, color: isDark ? Colors.white : Colors.black87)),
               ),
             ),
           ),
@@ -83,9 +145,7 @@ class ReportStep extends ConsumerWidget {
                   label: Text(l10n.copy),
                   onPressed: () {
                     Clipboard.setData(ClipboardData(text: text)).then((_) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(l10n.copySuccess)),
-                      );
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.copySuccess)));
                     });
                   },
                 ),
@@ -108,9 +168,14 @@ class ReportStep extends ConsumerWidget {
               icon: const Icon(Icons.picture_as_pdf),
               label: Text(l10n.downloadPdf),
               onPressed: () async {
+                if (state.items.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.noData)));
+                  return;
+                }
+                // Передаём данные в виде списка карт для таблицы
                 final pdfBytes = await PdfGenerator.generateInventoryPdf(
                   establishmentName: establishmentName,
-                  department: state.departmentId ?? '',
+                  department: deptName,
                   items: state.items.map((i) => {
                     'name': i.productName,
                     'remaining': '${i.remaining}',

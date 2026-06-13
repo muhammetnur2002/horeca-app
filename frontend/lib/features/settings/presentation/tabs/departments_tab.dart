@@ -41,7 +41,7 @@ class DepartmentsTab extends ConsumerWidget {
                     color: isDark ? Colors.grey.shade800 : Colors.white,
                     child: ListTile(
                       leading: Icon(dept.icon, color: Colors.orange),
-                      title: Text(dept.name, style: TextStyle(color: isDark ? Colors.white : Colors.black87)),
+                      title: Text(dept.name, style: TextStyle(color: isDark ? Colors.white : Colors.black87)), // <-- реальное имя
                       trailing: IconButton(
                         icon: const Icon(Icons.delete, color: Colors.red),
                         onPressed: () => _confirmDelete(context, repo, dept, l10n),
@@ -65,8 +65,8 @@ class DepartmentsTab extends ConsumerWidget {
           TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l.cancel)),
           TextButton(
             onPressed: () {
-              Navigator.pop(ctx);               // сначала закрываем диалог
-              repo.deleteDepartment(dept.id);   // потом обновляем данные
+              Navigator.pop(ctx);
+              repo.deleteDepartment(dept.id);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text('${l.successDepartmentDeleted} «${dept.name}»')),
               );
@@ -90,8 +90,8 @@ class DepartmentsTab extends ConsumerWidget {
           ElevatedButton(
             onPressed: () {
               if (nameCtrl.text.isNotEmpty) {
-                Navigator.pop(ctx);               // сначала закрываем диалог
-                repo.addDepartment(nameCtrl.text, Icons.category);  // потом обновляем данные
+                Navigator.pop(ctx);
+                repo.addDepartment(nameCtrl.text, Icons.category);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('${l.successDepartmentAdded} «${nameCtrl.text}»')),
                 );
@@ -116,8 +116,8 @@ class DepartmentsTab extends ConsumerWidget {
           ElevatedButton(
             onPressed: () {
               if (nameCtrl.text.isNotEmpty) {
-                Navigator.pop(ctx);               // сначала закрываем диалог
-                repo.updateDepartment(dept.id, nameCtrl.text, null);  // потом обновляем данные
+                Navigator.pop(ctx);
+                repo.updateDepartment(dept.id, nameCtrl.text, null);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('${l.successDepartmentUpdated} «${nameCtrl.text}»')),
                 );

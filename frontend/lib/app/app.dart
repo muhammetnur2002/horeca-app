@@ -19,13 +19,8 @@ class _HorecaAppState extends ConsumerState<HorecaApp> {
   @override
   void initState() {
     super.initState();
-    // Показываем заставку 5 секунд (можно изменить на любое время)
     Future.delayed(const Duration(seconds: 5), () {
-      if (mounted) {
-        setState(() {
-          _showSplash = false;
-        });
-      }
+      if (mounted) setState(() => _showSplash = false);
     });
   }
 
@@ -33,8 +28,6 @@ class _HorecaAppState extends ConsumerState<HorecaApp> {
   Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
 
-    // Пока _showSplash == true, возвращаем только SplashScreen,
-    // обёрнутый в Directionality, чтобы избежать ошибки
     if (_showSplash) {
       return const Directionality(
         textDirection: TextDirection.ltr,
@@ -42,11 +35,17 @@ class _HorecaAppState extends ConsumerState<HorecaApp> {
       );
     }
 
-    // После загрузки возвращаем основное приложение
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       themeMode: themeMode,
-      locale: const Locale('ru'), // всегда русский
+      locale: const Locale('ru'),
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [Locale('ru')],
       theme: ThemeData(
         brightness: Brightness.light,
         scaffoldBackgroundColor: const Color(0xFFF5F5DC),
@@ -103,13 +102,6 @@ class _HorecaAppState extends ConsumerState<HorecaApp> {
           elevation: 0,
         ),
       ),
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [Locale('ru')],
       routerConfig: router,
     );
   }

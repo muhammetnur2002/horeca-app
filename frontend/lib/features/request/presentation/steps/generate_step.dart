@@ -17,13 +17,9 @@ class GenerateStep extends ConsumerWidget {
 
   String _getGreeting() {
     final hour = DateTime.now().hour;
-    if (hour >= 6 && hour < 12) {
-      return 'Доброе утро!';
-    } else if (hour >= 12 && hour < 18) {
-      return 'Добрый день!';
-    } else {
-      return 'Добрый вечер!';
-    }
+    if (hour >= 6 && hour < 12) return 'Доброе утро!';
+    if (hour >= 12 && hour < 18) return 'Добрый день!';
+    return 'Добрый вечер!';
   }
 
   String _generateText(
@@ -39,10 +35,10 @@ class GenerateStep extends ConsumerWidget {
     buffer.writeln('Заявка для заведения “$establishmentName”.');
     buffer.writeln();
 
-    // Группировка: Map<отдел, Map<категория, List<товар>>>
+    // Сначала группируем по отделам, а внутри – по категориям
     final Map<String, Map<String, List<RequestItem>>> grouped = {};
     final List<String> departmentOrder = [];
-    final Map<String, List<String>> categoryOrderInDept = {};
+    final Map<String, List<String>> categoryOrder = {};
 
     for (final item in state.items) {
       final product = allProducts.firstWhere(
@@ -51,7 +47,7 @@ class GenerateStep extends ConsumerWidget {
       );
       final category = allCategories.firstWhere(
         (c) => c.id == product.categoryId,
-        orElse: () => CategoryModel(id: '', name: '', departmentId: ''),
+        orElse: () => CategoryModel(id: '', name: 'Без категории', departmentId: ''),
       );
       final department = allDepartments.firstWhere(
         (d) => d.id == category.departmentId,
@@ -64,26 +60,25 @@ class GenerateStep extends ConsumerWidget {
       if (!grouped.containsKey(deptName)) {
         grouped[deptName] = {};
         departmentOrder.add(deptName);
-        categoryOrderInDept[deptName] = [];
+        categoryOrder[deptName] = [];
       }
       if (!grouped[deptName]!.containsKey(catName)) {
         grouped[deptName]![catName] = [];
-        categoryOrderInDept[deptName]!.add(catName);
+        categoryOrder[deptName]!.add(catName);
       }
       grouped[deptName]![catName]!.add(item);
     }
 
-    // Вывод
+    // Вывод по отделам и категориям
     for (final deptName in departmentOrder) {
       buffer.writeln('Отдел: $deptName');
-      final cats = categoryOrderInDept[deptName]!;
+      final cats = categoryOrder[deptName]!;
       for (final catName in cats) {
         buffer.writeln('Категория: $catName');
-        buffer.writeln();
         for (final item in grouped[deptName]![catName]!) {
           buffer.writeln('- ${item.productName} — ${item.quantity} ${item.unit}');
         }
-        buffer.writeln();
+        buffer.writeln(); // пустая строка между категориями
       }
     }
 
@@ -110,7 +105,7 @@ class GenerateStep extends ConsumerWidget {
         repo.add(HistoryEntry(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
           type: HistoryType.request,
-          title: 'Заявка ${state.departmentId}',
+          title: '${l10n.requestTitle} ${state.departmentId}',
           text: text,
           createdAt: DateTime.now(),
         ));
@@ -134,10 +129,7 @@ class GenerateStep extends ConsumerWidget {
               child: SingleChildScrollView(
                 child: SelectableText(
                   text,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: isDark ? Colors.white : Colors.black87,
-                  ),
+                  style: TextStyle(fontSize: 16, color: isDark ? Colors.white : Colors.black87),
                 ),
               ),
             ),
@@ -196,10 +188,16 @@ class GenerateStep extends ConsumerWidget {
               icon: const Icon(Icons.picture_as_pdf),
               label: Text(l10n.downloadPdf),
               onPressed: () async {
+                if (state.items.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(l10n.noData)),
+                  );
+                  return;
+                }
                 final pdfBytes = await PdfGenerator.generateRequestPdf(
                   title: l10n.requestTitle,
                   establishmentName: establishmentName,
-                  department: 'Сводная',
+                  department: state.departmentId ?? '',
                   items: state.items.map((i) => {
                     'name': i.productName,
                     'quantity': '${i.quantity}',
