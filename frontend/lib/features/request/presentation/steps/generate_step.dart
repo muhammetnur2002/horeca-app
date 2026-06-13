@@ -22,6 +22,13 @@ class GenerateStep extends ConsumerWidget {
     return 'Добрый вечер!';
   }
 
+  /// Превращает double в строку без ".0", если число целое.
+  String _formatDouble(double value) {
+    return value == value.truncateToDouble()
+        ? value.toInt().toString()
+        : value.toString();
+  }
+
   String _generateText(
     RequestState state,
     String establishmentName,
@@ -35,7 +42,7 @@ class GenerateStep extends ConsumerWidget {
     buffer.writeln('Заявка для заведения “$establishmentName”.');
     buffer.writeln();
 
-    // Сначала группируем по отделам, а внутри – по категориям
+    // Группировка по отделам, внутри по категориям
     final Map<String, Map<String, List<RequestItem>>> grouped = {};
     final List<String> departmentOrder = [];
     final Map<String, List<String>> categoryOrder = {};
@@ -69,16 +76,16 @@ class GenerateStep extends ConsumerWidget {
       grouped[deptName]![catName]!.add(item);
     }
 
-    // Вывод по отделам и категориям
     for (final deptName in departmentOrder) {
       buffer.writeln('Отдел: $deptName');
       final cats = categoryOrder[deptName]!;
       for (final catName in cats) {
         buffer.writeln('Категория: $catName');
         for (final item in grouped[deptName]![catName]!) {
-          buffer.writeln('- ${item.productName} — ${item.quantity} ${item.unit}');
+          // ИСПРАВЛЕНИЕ: вместо item.quantity используем _formatDouble
+          buffer.writeln('- ${item.productName} — ${_formatDouble(item.quantity)} ${item.unit}');
         }
-        buffer.writeln(); // пустая строка между категориями
+        buffer.writeln();
       }
     }
 
