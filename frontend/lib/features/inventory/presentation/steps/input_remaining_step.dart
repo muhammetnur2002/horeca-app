@@ -19,26 +19,32 @@ class InputRemainingStep extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final filteredProducts = allProducts.where((p) {
-      final cat = allCategories.firstWhere((c) => c.id == p.categoryId, orElse: () => CategoryModel(id: '', name: '', departmentId: ''));
-      if (state.departmentId == 'all') {
-        return state.selectedCategoryIds.contains(cat.id);
-      } else {
-        return cat.departmentId == state.departmentId && state.selectedCategoryIds.contains(cat.id);
+      final cat = allCategories.firstWhere(
+        (c) => c.id == p.categoryId,
+        orElse: () => CategoryModel(id: '', name: '', departmentId: ''),
+      );
+      if (!state.selectedCategoryIds.contains(cat.id)) return false;
+      if (state.departmentId != 'all') {
+        if (cat.departmentId.isNotEmpty &&
+            cat.departmentId != state.departmentId) {
+          return false;
+        }
       }
+      return true;
     }).toList();
 
-    if (state.items.isEmpty || !_listsEqual(state.items, filteredProducts)) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(inventoryStateProvider.notifier).initItems(
-          filteredProducts.map((p) => InventoryItem(
-            productId: p.id,
-            productName: p.name,
-            remaining: 0,
-            unit: p.inventoryUnit,   // <-- используем единицу для инвентаризации
-          )).toList(),
-        );
-      });
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(inventoryStateProvider.notifier).initItemsIfNeeded(
+            filteredProducts
+                .map((p) => InventoryItem(
+                      productId: p.id,
+                      productName: p.name,
+                      remaining: 0,
+                      unit: p.inventoryUnit.isNotEmpty ? p.inventoryUnit : p.unit,
+                    ))
+                .toList(),
+          );
+    });
 
     return Column(
       children: [
@@ -48,8 +54,21 @@ class InputRemainingStep extends ConsumerWidget {
             itemCount: state.items.length,
             itemBuilder: (_, index) {
               final item = state.items[index];
-              final product = allProducts.firstWhere((p) => p.id == item.productId, orElse: () => ProductModel(id: '', name: item.productName, unit: item.unit, inventoryUnit: item.unit, categoryId: ''));
-              final category = allCategories.firstWhere((c) => c.id == product.categoryId, orElse: () => CategoryModel(id: '', name: 'Без категории', departmentId: ''));
+              final product = allProducts.firstWhere(
+                (p) => p.id == item.productId,
+                orElse: () => ProductModel(
+                  id: '',
+                  name: item.productName,
+                  unit: item.unit,
+                  inventoryUnit: item.unit,
+                  categoryId: '',
+                ),
+              );
+              final category = allCategories.firstWhere(
+                (c) => c.id == product.categoryId,
+                orElse: () =>
+                    CategoryModel(id: '', name: 'Без категории', departmentId: ''),
+              );
 
               return Card(
                 color: isDark ? Colors.grey.shade800 : Colors.white,
@@ -62,24 +81,43 @@ class InputRemainingStep extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(item.productName, style: TextStyle(fontSize: 16, color: isDark ? Colors.white : Colors.black87)),
-                            Text(category.name, style: TextStyle(fontSize: 12, color: isDark ? Colors.grey.shade400 : Colors.grey.shade600)),
+                            Text(
+                              item.productName,
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: isDark ? Colors.white : Colors.black87,
+                              ),
+                            ),
+                            Text(
+                              category.name,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: isDark
+                                    ? Colors.grey.shade400
+                                    : Colors.grey.shade600,
+                              ),
+                            ),
                           ],
                         ),
                       ),
                       SizedBox(
                         width: 100,
                         child: TextField(
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true),
                           decoration: InputDecoration(
                             isDense: true,
-                            suffixText: item.unit,  // <-- отображаем inventoryUnit
+                            suffixText: item.unit,
                             border: const OutlineInputBorder(),
                           ),
-                          style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                          style: TextStyle(
+                            color: isDark ? Colors.white : Colors.black87,
+                          ),
                           onChanged: (val) {
                             final parsed = double.tryParse(val) ?? 0;
-                            ref.read(inventoryStateProvider.notifier).updateRemaining(item.productId, parsed);
+                            ref
+                                .read(inventoryStateProvider.notifier)
+                                .updateRemaining(item.productId, parsed);
                           },
                         ),
                       ),
@@ -94,20 +132,13 @@ class InputRemainingStep extends ConsumerWidget {
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: ElevatedButton(
-              onPressed: () => ref.read(inventoryStateProvider.notifier).generateReport(),
+              onPressed: () =>
+                  ref.read(inventoryStateProvider.notifier).generateReport(),
               child: const Text('Создать отчёт'),
             ),
           ),
         ),
       ],
     );
-  }
-
-  bool _listsEqual(List<InventoryItem> items, List<ProductModel> products) {
-    if (items.length != products.length) return false;
-    for (int i = 0; i < items.length; i++) {
-      if (items[i].productId != products[i].id) return false;
-    }
-    return true;
   }
 }

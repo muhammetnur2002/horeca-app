@@ -24,7 +24,7 @@ class InventoryItem {
 }
 
 class InventoryState {
-  final int step; // 0-отдел, 1-категории, 2-ввод остатков, 3-отчёт
+  final int step;
   final String? departmentId;
   final List<InventoryItem> items;
   final bool isGenerated;
@@ -78,6 +78,16 @@ class InventoryStateNotifier extends StateNotifier<InventoryState> {
 
   void initItems(List<InventoryItem> items) {
     state = state.copyWith(items: items);
+  }
+
+  void initItemsIfNeeded(List<InventoryItem> newItems) {
+    final oldIds = state.items.map((e) => e.productId).toList();
+    final newIds = newItems.map((e) => e.productId).toList();
+    if (oldIds.length == newIds.length &&
+        oldIds.every((id) => newIds.contains(id))) {
+      return;
+    }
+    state = state.copyWith(items: newItems);
   }
 
   void updateRemaining(String productId, double newValue) {

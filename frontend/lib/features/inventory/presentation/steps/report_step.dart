@@ -15,6 +15,18 @@ import 'package:share_plus/share_plus.dart';
 class ReportStep extends ConsumerWidget {
   const ReportStep({super.key});
 
+  String _getDeptName(String? departmentId, AppLocalizations l10n) {
+    if (departmentId == 'all') return l10n.allDepartments;
+    switch (departmentId) {
+      case '1': return 'Кухня';
+      case '2': return 'Бар';
+      case '3': return 'Зал';
+      case '4': return 'Склад';
+      case '5': return 'Клининг';
+      default: return departmentId ?? 'Неизвестный отдел';
+    }
+  }
+
   String _generateReport(
     InventoryState state,
     AppLocalizations l10n,
@@ -26,22 +38,8 @@ class ReportStep extends ConsumerWidget {
     final buffer = StringBuffer();
     buffer.writeln(l10n.reportTitle);
     buffer.writeln('${l10n.date}: ${DateTime.now().toLocal().toString().split('.')[0]}');
-    buffer.writeln('${l10n.establishment}: “$establishmentName”');
-
-    String deptName;
-    if (state.departmentId == 'all') {
-      deptName = l10n.allDepartments;
-    } else {
-      switch (state.departmentId) {
-        case '1': deptName = 'Кухня'; break;
-        case '2': deptName = 'Бар'; break;
-        case '3': deptName = 'Зал'; break;
-        case '4': deptName = 'Склад'; break;
-        case '5': deptName = 'Клининг'; break;
-        default: deptName = state.departmentId ?? 'Неизвестный отдел';
-      }
-    }
-    buffer.writeln('${l10n.department}: $deptName');
+    buffer.writeln('${l10n.establishment}: "$establishmentName"');
+    buffer.writeln('${l10n.department}: ${_getDeptName(state.departmentId, l10n)}');
     buffer.writeln();
 
     final Map<String, List<InventoryItem>> grouped = {};
@@ -86,22 +84,14 @@ class ReportStep extends ConsumerWidget {
     final allProducts = settings.products;
     final allCategories = settings.categories;
     final allDepartments = settings.departments;
-
-    final text = _generateReport(state, l10n, establishmentName, allProducts, allCategories, allDepartments);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final deptName = _getDeptName(state.departmentId, l10n);
+    final text = _generateReport(state, l10n, establishmentName, allProducts, allCategories, allDepartments);
 
-    String deptName;
-    if (state.departmentId == 'all') {
-      deptName = l10n.allDepartments;
-    } else {
-      switch (state.departmentId) {
-        case '1': deptName = 'Кухня'; break;
-        case '2': deptName = 'Бар'; break;
-        case '3': deptName = 'Зал'; break;
-        case '4': deptName = 'Склад'; break;
-        case '5': deptName = 'Клининг'; break;
-        default: deptName = state.departmentId ?? 'Неизвестный отдел';
-      }
+    // ОТЛАДКА — убери после того как заработает
+    debugPrint('=== ReportStep: items count = ${state.items.length}');
+    for (final i in state.items) {
+      debugPrint('  ${i.productName}: ${i.remaining} ${i.unit}');
     }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -132,7 +122,10 @@ class ReportStep extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: SingleChildScrollView(
-                child: SelectableText(text, style: TextStyle(fontSize: 16, color: isDark ? Colors.white : Colors.black87)),
+                child: SelectableText(
+                  text,
+                  style: TextStyle(fontSize: 16, color: isDark ? Colors.white : Colors.black87),
+                ),
               ),
             ),
           ),
@@ -145,7 +138,9 @@ class ReportStep extends ConsumerWidget {
                   label: Text(l10n.copy),
                   onPressed: () {
                     Clipboard.setData(ClipboardData(text: text)).then((_) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.copySuccess)));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(l10n.copySuccess)),
+                      );
                     });
                   },
                 ),
@@ -168,22 +163,43 @@ class ReportStep extends ConsumerWidget {
               icon: const Icon(Icons.picture_as_pdf),
               label: Text(l10n.downloadPdf),
               onPressed: () async {
+                // ОТЛАДКА
+                debugPrint('=== PDF button pressed: items = ${state.items.length}');
+
                 if (state.items.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.noData)));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(l10n.noData)),
+                  );
                   return;
                 }
-                // Передаём данные в виде списка карт для таблицы
-                final pdfBytes = await PdfGenerator.generateInventoryPdf(
-                  establishmentName: establishmentName,
-                  department: deptName,
-                  items: state.items.map((i) => {
+                try {
+                  final pdfItems = state.items.map((i) => {
                     'name': i.productName,
-                    'remaining': '${i.remaining}',
-                    'unit': i.unit,
-                  }).toList(),
-                  responsiblePerson: '_______________',
-                );
-                PdfGenerator.downloadFile(pdfBytes, 'inventory_${DateTime.now().millisecondsSinceEpoch}.pdf');
+                    'remaining': i.remaining == i.remaining.truncateToDouble()
+                        ? i.remaining.toInt().toString()
+                        : i.remaining.toString(),
+                    'unit': i.unit.isNotEmpty ? i.unit : 'шт',
+                  }).toList();
+
+                  // ОТЛАДКА
+                  debugPrint('=== pdfItems: $pdfItems');
+
+                  final pdfBytes = await PdfGenerator.generateInventoryPdf(
+                    establishmentName: establishmentName,
+                    department: deptName,
+                    items: pdfItems,
+                    responsiblePerson: '_______________',
+                  );
+                  await PdfGenerator.downloadFile(
+                    pdfBytes,
+                    'inventory_${DateTime.now().millisecondsSinceEpoch}.pdf',
+                  );
+                } catch (e, stack) {
+                  debugPrint('=== PDF error: $e\n$stack');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Ошибка при создании PDF: $e')),
+                  );
+                }
               },
             ),
           ),
