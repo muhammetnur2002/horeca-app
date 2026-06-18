@@ -1,0 +1,19 @@
+flutter_native_splash:
+  # Фон для светлой темы (бежевый)
+  color: "#F5F5DC"
+  # Фон для тёмной темы (тёмно-синий)
+  color_dark: "#1A1C2B"
+  
+  # Убираем логотип, оставляем только фон
+  # image и image_dark больше не нужны
+  
+  # Настройки для Android 12+
+  android_12:
+    color: "#F5F5DC"
+    color_dark: "#1A1C2B"
+    # Без логотипа
+  
+  # Размещение по центру (пустое)
+  android_gravity: center
+  ios_content_mode: center
+  web_image_mode: center
