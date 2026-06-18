@@ -1,4 +1,4 @@
-﻿import 'dart:ui';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
@@ -135,8 +135,8 @@ class _ProductListStepState extends ConsumerState<ProductListStep> {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(14),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                
                 child: Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(14),
@@ -225,11 +225,9 @@ class _ProductListStepState extends ConsumerState<ProductListStep> {
                       final hasQty = currentItem.quantity > 0;
 
                       return ClipRRect(
-                        borderRadius: BorderRadius.circular(14),
-                        child: BackdropFilter(
-                          filter:
-                              ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                          child: Container(
+                                child: BackdropFilter(
+                                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                                  child: Container(
                             margin: const EdgeInsets.only(bottom: 10),
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 14, vertical: 12),
@@ -395,8 +393,8 @@ class _ProductListStepState extends ConsumerState<ProductListStep> {
                   .goToGenerate(),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  
                   child: Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 16),

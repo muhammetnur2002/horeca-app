@@ -1,4 +1,4 @@
-﻿import 'dart:ui';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
@@ -17,6 +17,8 @@ class HistoryScreen extends ConsumerStatefulWidget {
 class _HistoryScreenState extends ConsumerState<HistoryScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
+  
+  get _selectedTab => null;
 
   @override
   void initState() {
@@ -67,8 +69,8 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                
                 child: Container(
                   height: 40,
                   decoration: BoxDecoration(
@@ -210,8 +212,8 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
         minChildSize: 0.4,
         builder: (_, scrollCtrl) => ClipRRect(
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            
             child: Container(
               decoration: BoxDecoration(
                 color: isDark
@@ -288,57 +290,24 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
   }
 
   void _confirmClear(
-      BuildContext context, dynamic repo, AppLocalizations l10n) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: isDark ? AppColors.darkCard : Colors.white,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20)),
-        title: const Text('Очистить историю?',
-            style: TextStyle(fontWeight: FontWeight.w600)),
-        content: Text(
-          'Все записи этой вкладки будут удалены.',
-          style: TextStyle(color: AppColors.muted, fontSize: 14),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Отмена',
-                style: TextStyle(color: AppColors.muted)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final type = _tabController.index == 0
-                  ? HistoryType.request
-                  : HistoryType.inventory;
-              repo.clearByType(type);
-              ref.invalidate(historyEntriesProvider);
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('История очищена'),
-                  backgroundColor: AppColors.darkCard,
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-            ),
-            child: const Text('Очистить'),
-          ),
-        ],
-      ),
-    );
-  }
+    BuildContext context, dynamic repo, AppLocalizations l10n) {
+  final type = _selectedTab == 0
+      ? HistoryType.request
+      : HistoryType.inventory;
+  repo.clearByType(type);
+  ref.invalidate(historyEntriesProvider);
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: const Text('История очищена'),
+      backgroundColor: AppColors.darkCard,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12)),
+    ),
+  );
 }
+  }
+
 
 // ── Карточка истории ──────────────────────────────────────────────────────
 class _HistoryCard extends StatelessWidget {
@@ -370,8 +339,8 @@ class _HistoryCard extends StatelessWidget {
       onTap: onTap,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          
           child: Container(
             margin: const EdgeInsets.only(bottom: 10),
             padding: const EdgeInsets.all(16),

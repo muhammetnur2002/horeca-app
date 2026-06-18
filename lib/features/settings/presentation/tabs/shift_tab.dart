@@ -230,8 +230,8 @@ class _StaffItem extends StatelessWidget {
       onTap: onEdit,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(14),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          
           child: Container(
             margin: const EdgeInsets.only(bottom: 10),
             padding:

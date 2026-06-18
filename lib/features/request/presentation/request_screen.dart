@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/features/request/presentation/steps/department_step.dart';
 import 'package:horeca_app/features/request/presentation/steps/category_step.dart';

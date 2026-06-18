@@ -244,8 +244,8 @@ class _LogoIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(28),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+      child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        
         child: Container(
           width: 110,
           height: 110,

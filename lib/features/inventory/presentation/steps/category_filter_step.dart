@@ -84,8 +84,8 @@ class CategoryFilterStep extends ConsumerWidget {
                   },
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(14),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                    child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                      
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
                         margin: const EdgeInsets.only(bottom: 10),
@@ -159,8 +159,8 @@ class CategoryFilterStep extends ConsumerWidget {
                   .confirmCategories(),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  
                   child: Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 16),

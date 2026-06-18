@@ -1,4 +1,4 @@
-﻿class ProductModel {
+class ProductModel {
   final String id;
   String name;
   String unit;           // основная единица (для заявок)

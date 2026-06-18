@@ -61,8 +61,8 @@ class _ProductsTabState extends ConsumerState<ProductsTab> {
       builder: (_) => ClipRRect(
         borderRadius:
             const BorderRadius.vertical(top: Radius.circular(20)),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          
           child: Container(
             decoration: BoxDecoration(
               color: Theme.of(context).brightness == Brightness.dark
@@ -252,8 +252,8 @@ class _ProductsTabState extends ConsumerState<ProductsTab> {
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(14),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                
                 child: Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(14),
@@ -434,8 +434,7 @@ class _ProductsTabState extends ConsumerState<ProductsTab> {
           if (_selectMode && _selectedIds.isNotEmpty)
             ClipRRect(
               child: BackdropFilter(
-                filter:
-                    ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                 child: Container(
                   color: isDark
                       ? AppColors.darkSurface.withOpacity(0.9)
@@ -1142,8 +1141,8 @@ class _ProductItem extends StatelessWidget {
       onTap: onTap,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(14),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          
           child: Container(
             margin: const EdgeInsets.only(bottom: 10),
             padding: const EdgeInsets.symmetric(

@@ -1,4 +1,4 @@
-﻿import 'dart:ui';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
@@ -135,8 +135,7 @@ class InputRemainingStep extends ConsumerWidget {
                       return ClipRRect(
                         borderRadius: BorderRadius.circular(14),
                         child: BackdropFilter(
-                          filter:
-                              ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                           child: Container(
                             margin: const EdgeInsets.only(bottom: 10),
                             padding: const EdgeInsets.symmetric(
@@ -180,8 +179,7 @@ class InputRemainingStep extends ConsumerWidget {
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(10),
                                   child: BackdropFilter(
-                                    filter: ImageFilter.blur(
-                                        sigmaX: 5, sigmaY: 5),
+                                    filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
                                     child: Container(
                                       width: 100,
                                       padding: const EdgeInsets.symmetric(
@@ -247,8 +245,8 @@ class InputRemainingStep extends ConsumerWidget {
                   .generateReport(),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  
                   child: Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 16),

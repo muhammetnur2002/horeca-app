@@ -1,4 +1,4 @@
-﻿import 'dart:ui';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
@@ -39,46 +39,43 @@ class SettingsScreen extends ConsumerWidget {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                  child: Container(
-                    height: 36,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  height: 36,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.white
+                        .withOpacity(isDark ? 0.06 : 0.5),
+                    border: Border.all(
                       color: Colors.white
-                          .withOpacity(isDark ? 0.06 : 0.5),
-                      border: Border.all(
-                        color: Colors.white
-                            .withOpacity(isDark ? 0.1 : 0.6),
-                      ),
+                          .withOpacity(isDark ? 0.1 : 0.6),
                     ),
-                    child: TabBar(
-                      isScrollable: true,
-                      tabAlignment: TabAlignment.start,
-                      indicator: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                        color: AppColors.orange,
-                      ),
-                      indicatorSize: TabBarIndicatorSize.tab,
-                      labelColor: Colors.white,
-                      unselectedLabelColor: AppColors.muted,
-                      labelStyle: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      dividerColor: Colors.transparent,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 2),
-                      tabs: [
-                        Tab(text: l10n.establishmentTab),
-                        Tab(text: l10n.departmentsTab),
-                        Tab(text: l10n.categoriesTab),
-                        Tab(text: l10n.productsTab),
-                        const Tab(text: 'Смена'),
-                        Tab(text: l10n.themeTab),
-                      ],
+                  ),
+                  child: TabBar(
+                    isScrollable: true,
+                    tabAlignment: TabAlignment.start,
+                    indicator: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      color: AppColors.orange,
                     ),
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    labelColor: Colors.white,
+                    unselectedLabelColor: AppColors.muted,
+                    labelStyle: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    dividerColor: Colors.transparent,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 2),
+                    tabs: [
+                      Tab(text: l10n.establishmentTab),
+                      Tab(text: l10n.departmentsTab),
+                      Tab(text: l10n.categoriesTab),
+                      Tab(text: l10n.productsTab),
+                      const Tab(text: 'Смена'),
+                      Tab(text: l10n.themeTab),
+                    ],
                   ),
                 ),
               ),

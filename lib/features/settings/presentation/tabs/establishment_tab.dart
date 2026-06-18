@@ -37,8 +37,8 @@ class EstablishmentTab extends ConsumerWidget {
           // Карточка заведения
           ClipRRect(
             borderRadius: BorderRadius.circular(24),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+            child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(28),
@@ -70,8 +70,8 @@ class EstablishmentTab extends ConsumerWidget {
                     onTap: () => _showEditDialog(context, name, repo, l10n, isDark),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(14),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                      child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                        
                         child: Container(
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(vertical: 14),
@@ -101,8 +101,8 @@ class EstablishmentTab extends ConsumerWidget {
           // Выбор валюты
           ClipRRect(
             borderRadius: BorderRadius.circular(20),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+            child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
@@ -193,8 +193,8 @@ class EstablishmentTab extends ConsumerWidget {
           // Инфо
           ClipRRect(
             borderRadius: BorderRadius.circular(16),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),

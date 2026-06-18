@@ -1,4 +1,4 @@
-﻿import 'dart:typed_data';
+import 'dart:typed_data';
 import 'package:flutter/material.dart' show BuildContext;
 import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
@@ -22,7 +22,8 @@ class ShiftClosePdf {
     required double inkass,
     required double tomorrowCash,
     required DateTime date,
-required String currency,
+    required List<ManualWriteOff> manualWriteOffs,
+    required String currency,
   }) async {
     final fontData = await rootBundle.load('assets/fonts/NotoSans-Regular.ttf');
     final fontBold = await rootBundle.load('assets/fonts/NotoSans-Bold.ttf');
@@ -102,7 +103,7 @@ required String currency,
           child: pw.Row(children: [
             pw.Expanded(child: _pdfBox(label: 'ИТОГОВАЯ ВЫРУЧКА', value: '${fmt(totalRevenue)} $currency', sub: dateStr, valueColor: orange, bg: bgLight)),
             pw.SizedBox(width: 12),
-            pw.Expanded(child: _pdfBox(label: 'КАССА НА ЗАВТРА', value: '${fmt(tomorrowCash)} $currency', sub: 'наличных в кассе', valueColor: dark, bg: bgLight)),
+            pw.Expanded(child: _pdfBox(label: 'КАССА НА СЛЕДУЮЩУЮ СМЕНУ', value: '${fmt(tomorrowCash)} $currency', sub: 'наличных в кассе', valueColor: dark, bg: bgLight)),
           ]),
         ),
         pw.Padding(
@@ -130,8 +131,8 @@ required String currency,
           child: _pdfTable(
             headers: ['Позиция', 'Сумма'],
             rows: [
-              ['Наличные утром', '${fmt(morningCash)} $currency'],
-              ['Наличные вечером', '${fmt(eveningCash)} $currency'],
+              ['Наличные начало смены', '${fmt(morningCash)} $currency'],
+              ['Наличные конец смены', '${fmt(eveningCash)} $currency'],
               if (inkass > 0) ['Инкассация', '${fmt(inkass)} $currency'],
               ['Касса на завтра', '${fmt(tomorrowCash)} $currency'],
             ],
@@ -151,17 +152,30 @@ required String currency,
         if (writeOffs.isNotEmpty) ...[
           pw.Padding(
             padding: const pw.EdgeInsets.fromLTRB(32, 16, 32, 4),
-            child: _pdfSectionTitle('Списания / порча', red),
+            child: _pdfSectionTitle('Списания', red),
           ),
           pw.Padding(
             padding: const pw.EdgeInsets.fromLTRB(32, 0, 32, 0),
             child: _pdfTable(
-              headers: ['Наименование', 'Тип', 'Кол-во'],
+              headers: ['Наименование', '', 'Кол-во'],
               rows: writeOffs.map((d) => [
                 d.name,
-                d.writeOffType == WriteOffType.spoilage ? 'Порча' : 'Списание',
+                '${d.writeOffType}',
                 '${d.writeOff} шт',
               ]).toList(),
+              accentColor: red, dark: dark, muted: muted),
+          ),
+        ],
+        if (manualWriteOffs.isNotEmpty) ...[
+          pw.Padding(
+            padding: const pw.EdgeInsets.fromLTRB(32, 16, 32, 4),
+            child: _pdfSectionTitle('Ручные списания', red ),
+          ),
+          pw.Padding(
+            padding: const pw.EdgeInsets.fromLTRB(32, 0, 32, 0),
+            child: _pdfTable(
+              headers: ['Наименование', 'Количество', 'Ед. изм.'],
+              rows: manualWriteOffs.map((m) => [m.name, '${m.quantity}', m.unit]).toList(),
               accentColor: red, dark: dark, muted: muted),
           ),
         ],

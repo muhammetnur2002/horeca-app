@@ -23,8 +23,8 @@ class ThemeTab extends ConsumerWidget {
           // Карточка с иконкой
           ClipRRect(
             borderRadius: BorderRadius.circular(24),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+            child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(32),

@@ -1,4 +1,4 @@
-﻿import 'dart:ui';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
@@ -300,8 +300,8 @@ class _CatItem extends StatelessWidget {
       onTap: onEdit,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(14),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          
           child: Container(
             margin: const EdgeInsets.only(bottom: 10),
             padding:

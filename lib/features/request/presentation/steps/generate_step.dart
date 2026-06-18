@@ -1,4 +1,4 @@
-﻿import 'dart:ui';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -165,8 +165,8 @@ class GenerateStep extends ConsumerWidget {
             Expanded(
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  
                   child: Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
@@ -382,8 +382,8 @@ class _ActionBtn extends StatelessWidget {
       onTap: onTap,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          
           child: Container(
             width: fullWidth ? double.infinity : null,
             padding: const EdgeInsets.symmetric(
