@@ -111,9 +111,15 @@ class InventoryStateNotifier extends StateNotifier<InventoryState> {
   void reset() {
     state = const InventoryState();
   }
+
+  void updateItem(String id, String name, String inventoryUnit, double value) {}
 }
 
 final inventoryStateProvider =
     StateNotifierProvider<InventoryStateNotifier, InventoryState>((ref) {
   return InventoryStateNotifier();
 });
+
+
+
+

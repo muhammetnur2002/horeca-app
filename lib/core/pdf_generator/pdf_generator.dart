@@ -71,6 +71,7 @@ class PdfGenerator {
               color: PdfColors.white, letterSpacing: 1.2)),
           pw.Text(subtitle, style: pw.TextStyle(font: font, fontSize: 10, color: PdfColors.white)),
         ])),
+      pw.SizedBox(height: 10),
     ]);
   }
 
@@ -106,18 +107,8 @@ class PdfGenerator {
       headerStyle: pw.TextStyle(font: boldFont, fontSize: 9, color: PdfColors.white),
       headerDecoration: pw.BoxDecoration(color: accent),
       cellStyle: pw.TextStyle(font: font, fontSize: 10, color: _dark),
-      cellAlignments: {
-        0: pw.Alignment.centerLeft,
-        1: pw.Alignment.centerRight,
-        2: pw.Alignment.centerRight,
-      },
       oddRowDecoration: pw.BoxDecoration(color: PdfColor.fromHex('F8F9FF')),
       rowDecoration: const pw.BoxDecoration(color: PdfColors.white),
-      columnWidths: {
-        0: const pw.FlexColumnWidth(3),
-        1: const pw.FlexColumnWidth(1.5),
-        2: const pw.FlexColumnWidth(1.5),
-      },
       border: pw.TableBorder.all(color: PdfColor.fromHex('E0E0E0'), width: 0.5),
       cellPadding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 7),
     );
@@ -161,7 +152,7 @@ class PdfGenerator {
 
     final rows = items.map((i) => [
       i['name'] ?? '',
-      _formatQuantity(i['quantity']),
+      i['quantity'] ?? '',
       i['unit'] ?? '',
     ]).toList();
 
@@ -171,7 +162,7 @@ class PdfGenerator {
       margin: const pw.EdgeInsets.all(0),
       header: (ctx) => _buildHeader(
         font: font, boldFont: boldFont,
-        title: 'Заявка на товары',
+        title: title,
         establishmentName: establishmentName,
         subtitle: department),
       footer: (ctx) => _buildFooter(font),
@@ -212,22 +203,34 @@ class PdfGenerator {
     return pdf.save();
   }
 
-  // ── PDF Инвентаризация ────────────────────────────────────────────────────
+  // ── PDF Инвентаризация ──────────────────────────────────────────────────
   static Future<Uint8List> generateInventoryPdf({
     required String establishmentName,
     required String department,
     required List<Map<String, String>> items,
     String? responsiblePerson,
+    List<String>? customHeaders,
+    List<String>? customFieldOrder,
   }) async {
     final font = await _loadFont();
     final boldFont = await _loadBoldFont();
     final pdf = pw.Document(theme: pw.ThemeData.withFont(base: font, bold: boldFont));
 
-    final rows = items.map((i) => [
-      i['name'] ?? '',
-      _formatQuantity(i['remaining'] ?? i['quantity']),
-      (i['unit'] != null && i['unit']!.isNotEmpty) ? i['unit']! : 'шт',
-    ]).toList();
+    final headers = customHeaders ?? ['Наименование', 'Остаток', 'Ед. изм.'];
+    final fieldOrder = customFieldOrder ?? ['productName', 'quantity', 'unit'];
+
+    final rows = items.map((i) {
+      return fieldOrder.map((field) {
+        switch (field) {
+          case 'productName': return i['name'] ?? '';
+          case 'quantity': return _formatQuantity(i['remaining'] ?? i['quantity']);
+          case 'unit': return (i['unit'] != null && i['unit']!.isNotEmpty) ? i['unit']! : 'шт';
+          case 'category': return i['category'] ?? '';
+          case 'department': return i['department'] ?? '';
+          default: return '';
+        }
+      }).toList();
+    }).toList();
 
     pdf.addPage(pw.MultiPage(
       pageFormat: PdfPageFormat.a4,
@@ -254,7 +257,7 @@ class PdfGenerator {
           padding: const pw.EdgeInsets.fromLTRB(32, 0, 32, 0),
           child: _buildTable(
             font: font, boldFont: boldFont,
-            headers: ['Наименование', 'Остаток', 'Ед. изм.'],
+            headers: headers,
             rows: rows, accentColor: _green)),
         pw.Padding(
           padding: const pw.EdgeInsets.fromLTRB(32, 24, 32, 32),

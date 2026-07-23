@@ -88,6 +88,7 @@ class ShiftClosePdf {
             pw.Text(dateStr, style: pw.TextStyle(fontSize: 10, color: white)),
           ]),
         ),
+        pw.SizedBox(height: 10),
       ]),
       footer: (ctx) => pw.Container(
         color: dark,
@@ -138,31 +139,35 @@ class ShiftClosePdf {
             ],
             accentColor: orange, dark: dark, muted: muted),
         ),
-        pw.Padding(
-          padding: const pw.EdgeInsets.fromLTRB(32, 16, 32, 4),
-          child: _pdfSectionTitle('Остатки десертов', orange),
-        ),
-        pw.Padding(
-          padding: const pw.EdgeInsets.fromLTRB(32, 0, 32, 0),
-          child: _pdfTable(
-            headers: ['Наименование', 'Витрина', 'Склад'],
-            rows: desserts.map((d) => [d.name, '${d.showcase} шт', '${d.stock} шт']).toList(),
-            accentColor: orange, dark: dark, muted: muted),
-        ),
+        if (desserts.any((d) => d.showcase > 0 || d.stock > 0)) ...[
+  pw.Padding(
+    padding: const pw.EdgeInsets.fromLTRB(32, 16, 32, 4),
+    child: _pdfSectionTitle('Остатки десертов', orange),
+  ),
+  pw.Padding(
+    padding: const pw.EdgeInsets.fromLTRB(32, 0, 32, 0),
+    child: _pdfTable(
+      headers: ['Наименование', 'Витрина', 'Склад'],
+      rows: desserts.where((d) => d.showcase > 0 || d.stock > 0)
+          .map((d) => [d.name, '${d.showcase} шт', '${d.stock} шт']).toList(),
+      accentColor: orange, dark: dark, muted: muted),
+  ),
+],
+        
         if (writeOffs.isNotEmpty) ...[
           pw.Padding(
             padding: const pw.EdgeInsets.fromLTRB(32, 16, 32, 4),
             child: _pdfSectionTitle('Списания', red),
-          ),
-          pw.Padding(
-            padding: const pw.EdgeInsets.fromLTRB(32, 0, 32, 0),
-            child: _pdfTable(
-              headers: ['Наименование', '', 'Кол-во'],
-              rows: writeOffs.map((d) => [
-                d.name,
-                '${d.writeOffType}',
-                '${d.writeOff} шт',
-              ]).toList(),
+            ),
+            pw.Padding(
+              padding: const pw.EdgeInsets.fromLTRB(32, 0, 32, 0),
+              child: _pdfTable(
+                headers: ['Наименование', 'Количество', 'Ед. изм.'],
+                rows: writeOffs.map((d) => [
+                  d.name,
+                  '${d.writeOff}',
+                  'шт',
+                ]).toList(),
               accentColor: red, dark: dark, muted: muted),
           ),
         ],
@@ -260,3 +265,7 @@ class ShiftClosePdf {
     );
   }
 }
+
+
+
+

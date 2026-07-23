@@ -57,7 +57,7 @@ class ShiftTab extends ConsumerWidget {
               ),
             )
           : ListView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 110, 16, 100),
+              padding: const EdgeInsets.fromLTRB(16, 130, 16, 100),
               itemCount: staff.length,
               itemBuilder: (_, index) {
                 final name = staff[index];
@@ -191,7 +191,7 @@ class ShiftTab extends ConsumerWidget {
               repo.deleteStaff(name);
               ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                 content: Text('«$name» удалён'),
-                backgroundColor: AppColors.darkCard,
+                backgroundColor: const Color(0xFF2E3352),
                 behavior: SnackBarBehavior.floating,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
@@ -289,3 +289,7 @@ class _StaffItem extends StatelessWidget {
     );
   }
 }
+
+
+
+

@@ -13,6 +13,9 @@ import 'package:horeca_app/shared/models/department_model.dart';
 import 'package:horeca_app/core/pdf_generator/pdf_generator.dart';
 import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:horeca_app/features/custom_template/data/template_repository.dart';
+import 'package:horeca_app/features/custom_template/data/template_models.dart';
+import 'package:horeca_app/features/inventory/data/stock_levels_repository.dart';
 
 class ReportStep extends ConsumerWidget {
   const ReportStep({super.key});
@@ -89,20 +92,7 @@ class ReportStep extends ConsumerWidget {
     final text = _generateReport(state, l10n, establishmentName,
         allProducts, allCategories, allDepartments);
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final repo = ref.read(historyRepositoryProvider);
-      if (!repo.getAll().any(
-          (e) => e.type == HistoryType.inventory && e.text == text)) {
-        repo.add(HistoryEntry(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
-          type: HistoryType.inventory,
-          title: '${l10n.inventory} $deptName',
-          text: text,
-          createdAt: DateTime.now(),
-        ));
-      }
-    });
-
+    
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -189,7 +179,7 @@ class ReportStep extends ConsumerWidget {
                       Clipboard.setData(ClipboardData(text: text)).then((_) {
                         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                           content: Text(l10n.copySuccess),
-                          backgroundColor: AppColors.darkCard,
+                          backgroundColor: const Color(0xFF2E3352),
                           behavior: SnackBarBehavior.floating,
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12)),
@@ -221,17 +211,33 @@ class ReportStep extends ConsumerWidget {
               isDark: isDark,
               fullWidth: true,
               onTap: () async {
-                if (state.items.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text(l10n.noData),
-                    backgroundColor: AppColors.darkCard,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ));
-                  return;
-                }
-                try {
+  if (state.items.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(l10n.noData),
+      backgroundColor: const Color(0xFF2E3352),
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12)),
+    ));
+    return;
+  }
+  final repo = ref.read(historyRepositoryProvider);
+repo.add(HistoryEntry(
+  id: DateTime.now().millisecondsSinceEpoch.toString(),
+  type: HistoryType.inventory,
+  title: '${l10n.inventory} $deptName',
+  text: text,
+  createdAt: DateTime.now(),
+));
+
+// Обновляем текущие остатки для отслеживания низких запасов
+final levels = <String, double>{};
+for (final item in state.items) {
+  levels[item.productId] = item.remaining;
+}
+ref.read(stockLevelsRepositoryProvider.notifier).updateLevels(levels);
+
+try {
                   final pdfItems = state.items
                       .map((i) => {
                             'name': i.productName,
@@ -242,12 +248,23 @@ class ReportStep extends ConsumerWidget {
                             'unit': i.unit.isNotEmpty ? i.unit : 'шт',
                           })
                       .toList();
-                  final pdfBytes = await PdfGenerator.generateInventoryPdf(
-                    establishmentName: establishmentName,
-                    department: deptName,
-                    items: pdfItems,
-                    responsiblePerson: '_______________',
-                  );
+                  final template = ref.read(templateRepositoryProvider);
+List<String>? customHeaders;
+List<String>? customFieldOrder;
+if (template != null) {
+  final usedColumns = template.columns.where((c) => c.mappedField != TemplateField.notUsed).toList();
+  customHeaders = usedColumns.map((c) => c.originalHeader).toList();
+  customFieldOrder = usedColumns.map((c) => c.mappedField.name).toList();
+}
+
+final pdfBytes = await PdfGenerator.generateInventoryPdf(
+  establishmentName: establishmentName,
+  department: deptName,
+  items: pdfItems,
+  responsiblePerson: '_______________',
+  customHeaders: customHeaders,
+  customFieldOrder: customFieldOrder,
+);
                   await PdfGenerator.downloadFile(pdfBytes,
                       'inventory_${DateTime.now().millisecondsSinceEpoch}.pdf');
                 } catch (e) {
@@ -383,3 +400,7 @@ class _ActionBtn extends StatelessWidget {
     );
   }
 }
+
+
+
+

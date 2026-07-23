@@ -1,4 +1,4 @@
-import 'dart:ui';
+﻿import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
@@ -18,7 +18,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
   
-  get _selectedTab => null;
+
 
   @override
   void initState() {
@@ -186,7 +186,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 120, 16, 16),
+      padding: const EdgeInsets.fromLTRB(16, 140, 16, 16),
       itemCount: entries.length,
       itemBuilder: (_, i) {
         final e = entries[entries.length - 1 - i]; // новые сверху
@@ -267,7 +267,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                   Expanded(
                     child: SingleChildScrollView(
                       controller: scrollCtrl,
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(24),
                       child: SelectableText(
                         e.text,
                         style: TextStyle(
@@ -291,15 +291,15 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
 
   void _confirmClear(
     BuildContext context, dynamic repo, AppLocalizations l10n) {
-  final type = _selectedTab == 0
+  final type = _tabController.index == 0
       ? HistoryType.request
       : HistoryType.inventory;
   repo.clearByType(type);
   ref.invalidate(historyEntriesProvider);
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
-      content: const Text('История очищена'),
-      backgroundColor: AppColors.darkCard,
+      content: const Text('История очищена', style: TextStyle(color: Colors.white)),
+      backgroundColor: const Color(0xFF2E3352),
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12)),
@@ -426,3 +426,7 @@ class _HistoryCard extends StatelessWidget {
     );
   }
 }
+
+
+
+

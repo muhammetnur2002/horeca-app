@@ -5,6 +5,8 @@ import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/features/shift_close/presentation/shift_close_pdf.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
+import 'package:horeca_app/features/analytics/data/analytics_repository.dart';
+import 'package:horeca_app/features/shift_close/data/shift_draft_provider.dart';
 
 class DessertItem {
   final String name;
@@ -30,20 +32,23 @@ class ShiftCloseScreen extends ConsumerStatefulWidget {
 }
 
 class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
+  final ScrollController _scrollController = ScrollController();
   int _step = 0;
   final int _totalSteps = 4;
   final Set<String> _selectedStaff = {};
   List<DessertItem> _desserts = [];
   bool _dessertsLoaded = false;
   final List<ManualWriteOff> _manualWriteOffs = [];
+  final _dessertSearchCtrl = TextEditingController();
+  String _dessertSearch = '';
 
-  final _qrCtrl     = TextEditingController(text: '0');
-  final _cardCtrl   = TextEditingController(text: '0');
-  final _cashCtrl   = TextEditingController(text: '0');
+  final _qrCtrl     = TextEditingController();
+  final _cardCtrl   = TextEditingController();
+  final _cashCtrl   = TextEditingController();
   final _manualCtrl = TextEditingController();
-  final _morningCashCtrl = TextEditingController(text: '0');
-  final _eveningCashCtrl = TextEditingController(text: '0');
-  final _inkassCtrl = TextEditingController(text: '0');
+  final _morningCashCtrl = TextEditingController();
+  final _eveningCashCtrl = TextEditingController();
+  final _inkassCtrl = TextEditingController();
   bool _hasInkass = false;
 
   double get _autoTotal =>
@@ -57,15 +62,83 @@ class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
     return e - i;
   }
 
-  @override
+
+@override
+void initState() {
+  super.initState();
+  _loadDraft();
+}
+
+void _saveDraft() {
+  final notifier = ref.read(shiftDraftProvider.notifier);
+  notifier.state = ShiftDraft(
+    step: _step,
+    selectedStaff: Set.from(_selectedStaff),
+    desserts: _desserts,
+    dessertsLoaded: _dessertsLoaded,
+    manualWriteOffs: List.from(_manualWriteOffs),
+    qr: _qrCtrl.text,
+    card: _cardCtrl.text,
+    cash: _cashCtrl.text,
+    manual: _manualCtrl.text,
+    morningCash: _morningCashCtrl.text,
+    eveningCash: _eveningCashCtrl.text,
+    inkass: _inkassCtrl.text,
+    hasInkass: _hasInkass,
+  );
+}
+void _loadDraft() {
+  final draft = ref.read(shiftDraftProvider);
+  _step = draft.step;
+  _selectedStaff.addAll(draft.selectedStaff);
+  if (draft.dessertsLoaded) {
+    _desserts = draft.desserts;
+    _dessertsLoaded = true;
+  }
+  _manualWriteOffs.addAll(draft.manualWriteOffs);
+  _qrCtrl.text = draft.qr;
+  _cardCtrl.text = draft.card;
+  _cashCtrl.text = draft.cash;
+  _manualCtrl.text = draft.manual;
+  _morningCashCtrl.text = draft.morningCash;
+  _eveningCashCtrl.text = draft.eveningCash;
+  _inkassCtrl.text = draft.inkass;
+  _hasInkass = draft.hasInkass;
+}
+
+@override
+void deactivate() {
+  final draft = ShiftDraft(
+    step: _step,
+    selectedStaff: Set.from(_selectedStaff),
+    desserts: _desserts,
+    dessertsLoaded: _dessertsLoaded,
+    manualWriteOffs: List.from(_manualWriteOffs),
+    qr: _qrCtrl.text,
+    card: _cardCtrl.text,
+    cash: _cashCtrl.text,
+    manual: _manualCtrl.text,
+    morningCash: _morningCashCtrl.text,
+    eveningCash: _eveningCashCtrl.text,
+    inkass: _inkassCtrl.text,
+    hasInkass: _hasInkass,
+  );
+  final notifier = ref.read(shiftDraftProvider.notifier);
+  Future.microtask(() => notifier.state = draft);
+  super.deactivate();
+}
+
+@override
   void dispose() {
+    _scrollController.dispose();
     _qrCtrl.dispose(); _cardCtrl.dispose(); _cashCtrl.dispose();
     _manualCtrl.dispose(); _morningCashCtrl.dispose();
     _eveningCashCtrl.dispose(); _inkassCtrl.dispose();
+    _dessertSearchCtrl.dispose();
     super.dispose();
   }
 
-  void _next() {
+    void _next() {
     if (_step == 0) {
       if (_selectedStaff.isEmpty) {
         _showWarning('Отметьте хотя бы одного сотрудника');
@@ -79,14 +152,26 @@ class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
       }
     }
     if (_step == 1) {
-      final qr   = double.tryParse(_qrCtrl.text) ?? 0;
-      final card = double.tryParse(_cardCtrl.text) ?? 0;
-      final cash = double.tryParse(_cashCtrl.text) ?? 0;
-      if (qr == 0 && card == 0 && cash == 0) {
-        _showWarning('Укажите хотя бы один способ оплаты');
-        return;
-      }
-    }
+  if (_qrCtrl.text.trim().isEmpty) {
+    _showWarning('Укажите сумму по QR-коду (или 0, если не было)');
+    return;
+  }
+  if (_cardCtrl.text.trim().isEmpty) {
+    _showWarning('Укажите сумму по карте (или 0, если не было)');
+    return;
+  }
+  if (_cashCtrl.text.trim().isEmpty) {
+    _showWarning('Укажите сумму наличными (или 0, если не было)');
+    return;
+  }
+  final qr   = double.tryParse(_qrCtrl.text) ?? 0;
+  final card = double.tryParse(_cardCtrl.text) ?? 0;
+  final cash = double.tryParse(_cashCtrl.text) ?? 0;
+  if (qr == 0 && card == 0 && cash == 0) {
+    _showWarning('Хотя бы один способ оплаты должен быть больше нуля');
+    return;
+  }
+}
     if (_step == 2) {
       final morning = double.tryParse(_morningCashCtrl.text) ?? 0;
       final evening = double.tryParse(_eveningCashCtrl.text) ?? 0;
@@ -117,35 +202,57 @@ class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
   void _back() { if (_step > 0) setState(() => _step--); }
 
   void _onSubmit() async {
-    final confirm = await showDialog<bool>(
-      context: context, builder: (_) => _ConfirmDialog());
-    if (confirm == true && mounted) {
-      await ShiftClosePdf.generateAndShare(
-        currency: ref.read(settingsRepositoryProvider).currency,
-        context: context,
-        staffName: _selectedStaff.isEmpty ? '—' : _selectedStaff.join(', '),
-        desserts: _desserts,
-        manualWriteOffs: _manualWriteOffs,
-        qr: double.tryParse(_qrCtrl.text) ?? 0,
-        card: double.tryParse(_cardCtrl.text) ?? 0,
-        cash: double.tryParse(_cashCtrl.text) ?? 0,
-        totalRevenue: _finalTotal,
-        morningCash: double.tryParse(_morningCashCtrl.text) ?? 0,
-        eveningCash: double.tryParse(_eveningCashCtrl.text) ?? 0,
-        inkass: _hasInkass ? (double.tryParse(_inkassCtrl.text) ?? 0) : 0,
-        tomorrowCash: _tomorrowCash,
-        date: DateTime.now(),
-      );
-      if (mounted) Navigator.of(context).pop();
+  final confirm = await showDialog<bool>(
+    context: context, builder: (_) => _ConfirmDialog());
+  if (confirm == true && mounted) {
+    // Сохраняем запись для аналитики
+    final writeOffsMap = <String, int>{};
+    for (final d in _desserts.where((d) => d.writeOff > 0)) {
+      writeOffsMap[d.name] = d.writeOff;
     }
+    for (final m in _manualWriteOffs) {
+      writeOffsMap[m.name] = (writeOffsMap[m.name] ?? 0) + m.quantity;
+    }
+    ref.read(analyticsRepositoryProvider).addShift(ShiftRecord(
+  date: DateTime.now(),
+  revenue: _finalTotal,
+  qr: double.tryParse(_qrCtrl.text) ?? 0,
+  card: double.tryParse(_cardCtrl.text) ?? 0,
+  cash: double.tryParse(_cashCtrl.text) ?? 0,
+  morningCash: double.tryParse(_morningCashCtrl.text) ?? 0,
+  eveningCash: double.tryParse(_eveningCashCtrl.text) ?? 0,
+  writeOffs: writeOffsMap,
+));
+
+    await ShiftClosePdf.generateAndShare(
+      currency: ref.read(settingsRepositoryProvider).currency,
+      context: context,
+      staffName: _selectedStaff.isEmpty ? '—' : _selectedStaff.join(', '),
+      desserts: _desserts,
+      manualWriteOffs: _manualWriteOffs,
+      qr: double.tryParse(_qrCtrl.text) ?? 0,
+      card: double.tryParse(_cardCtrl.text) ?? 0,
+      cash: double.tryParse(_cashCtrl.text) ?? 0,
+      totalRevenue: _finalTotal,
+      morningCash: double.tryParse(_morningCashCtrl.text) ?? 0,
+      eveningCash: double.tryParse(_eveningCashCtrl.text) ?? 0,
+      inkass: _hasInkass ? (double.tryParse(_inkassCtrl.text) ?? 0) : 0,
+      tomorrowCash: _tomorrowCash,
+      date: DateTime.now(),
+    );
+    ref.read(shiftDraftProvider.notifier).reset();
+    if (mounted) Navigator.of(context).pop();
   }
+}
 
   void _addManualWriteOff(bool isDark) {
-    final nameCtrl = TextEditingController();
-    final unitCtrl = TextEditingController(text: 'шт');
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
+  final nameCtrl = TextEditingController();
+  String selectedUnit = 'шт';
+  final units = ['шт', 'кг', 'гр', 'л', 'мл'];
+  showDialog(
+    context: context,
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setS) => AlertDialog(
         backgroundColor: isDark ? AppColors.darkCard : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Ручное списание',
@@ -156,10 +263,15 @@ class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
                 hintText: 'Продукт, заготовка...',
                 prefixIcon: Icon(Icons.edit_outlined, color: AppColors.orange))),
           const SizedBox(height: 12),
-          TextField(controller: unitCtrl,
-              decoration: const InputDecoration(
-                hintText: 'шт, кг, л...',
-                prefixIcon: Icon(Icons.straighten_rounded, color: AppColors.orange))),
+          DropdownButtonFormField<String>(
+            value: selectedUnit,
+            dropdownColor: isDark ? AppColors.darkCard : Colors.white,
+            items: units.map((u) => DropdownMenuItem(value: u, child: Text(u))).toList(),
+            onChanged: (v) => setS(() => selectedUnit = v!),
+            decoration: const InputDecoration(
+              labelText: 'Единица измерения',
+              prefixIcon: Icon(Icons.straighten_rounded, color: AppColors.orange)),
+          ),
         ]),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx),
@@ -169,7 +281,7 @@ class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
               if (nameCtrl.text.isNotEmpty) {
                 setState(() => _manualWriteOffs.add(ManualWriteOff(
                   name: nameCtrl.text.trim(),
-                  unit: unitCtrl.text.trim().isEmpty ? 'шт' : unitCtrl.text.trim())));
+                  unit: selectedUnit)));
                 Navigator.pop(ctx);
               }
             },
@@ -177,7 +289,7 @@ class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
             child: const Text('Добавить')),
-        ],
+        ],)
       ),
     );
   }
@@ -212,8 +324,9 @@ class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
           _buildStepper(isDark),
           const SizedBox(height: 8),
           Expanded(child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: _buildCurrentStep(isDark, currency))),
+            controller: _scrollController,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _buildCurrentStep(isDark, currency))),
           _buildBottomBar(isDark),
         ])),
       ]),
@@ -274,6 +387,14 @@ class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
 
   Widget _buildStep1(bool isDark) {
     final staffList = ref.watch(settingsRepositoryProvider).staff;
+    final filteredDesserts = _dessertSearch.trim().isEmpty
+    ? _desserts
+    : _desserts.where((d) {
+        final query = _dessertSearch.toLowerCase().trim();
+        final words = query.split(RegExp(r'\s+')).where((w) => w.isNotEmpty);
+        final name = d.name.toLowerCase();
+        return words.any((w) => name.contains(w));
+      }).toList();
     final settings = ref.read(settingsRepositoryProvider);
     if (!_dessertsLoaded) {
       final catIds = settings.categories
@@ -290,8 +411,9 @@ class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
     }
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       const SizedBox(height: 8),
-      _StepHeader(step: 1, total: _totalSteps, title: 'Смена и десерты'),
-      const SizedBox(height: 16),
+    _StepHeader(step: 1, total: _totalSteps, title: 'Смена и десерты'),
+const SizedBox(height: 16),
+
 
       _GlassCard(isDark: isDark, child: Column(
           crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -326,17 +448,47 @@ class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
 
       const SizedBox(height: 10),
 
+      // Поиск десертов
+        Container(
+  padding: const EdgeInsets.symmetric(horizontal: 14),
+  decoration: BoxDecoration(
+    borderRadius: BorderRadius.circular(14),
+    color: Colors.white.withOpacity(isDark ? 0.06 : 0.55),
+    border: Border.all(color: Colors.white.withOpacity(isDark ? 0.1 : 0.8))),
+  child: TextField(
+    controller: _dessertSearchCtrl,
+    style: TextStyle(fontSize: 14, color: isDark ? Colors.white : const Color(0xFF1A1A2E)),
+    decoration: InputDecoration(
+      hintText: 'Поиск десерта...',
+      hintStyle: const TextStyle(color: AppColors.muted, fontSize: 13),
+      prefixIcon: const Icon(Icons.search_rounded, color: AppColors.muted, size: 20),
+      suffixIcon: _dessertSearch.isNotEmpty
+          ? IconButton(
+              icon: const Icon(Icons.close_rounded, color: AppColors.muted, size: 18),
+              onPressed: () => setState(() {
+                _dessertSearchCtrl.clear();
+                _dessertSearch = '';
+              }))
+          : null,
+      border: InputBorder.none, enabledBorder: InputBorder.none,
+      focusedBorder: InputBorder.none, filled: false,
+      contentPadding: const EdgeInsets.symmetric(vertical: 12)),
+    onChanged: (v) => setState(() => _dessertSearch = v),
+  ),
+),
+const SizedBox(height: 10),
+
       _GlassCard(isDark: isDark, child: Column(
           crossAxisAlignment: CrossAxisAlignment.start, children: [
         _CardLabel(text: 'Десерты — витрина'),
         const SizedBox(height: 10),
-        _desserts.isEmpty
-            ? Text('Добавьте товары в категорию "Десерты"',
-                style: TextStyle(fontSize: 13, color: AppColors.muted))
-            : Column(children: _desserts.map((d) => _DessertRow(
-                name: d.name, value: d.showcase,
-                onChanged: (v) => setState(() => d.showcase = v),
-                isDark: isDark)).toList()),
+        filteredDesserts.isEmpty
+    ? Text(_dessertSearch.isNotEmpty ? 'Ничего не найдено' : 'Добавьте товары в категорию "Десерты"',
+        style: TextStyle(fontSize: 13, color: AppColors.muted))
+    : Column(children: filteredDesserts.map((d) => _DessertRow(
+        name: d.name, value: d.showcase,
+        onChanged: (v) => setState(() => d.showcase = v),
+        isDark: isDark)).toList()),
       ])),
 
       const SizedBox(height: 10),
@@ -345,13 +497,13 @@ class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
           crossAxisAlignment: CrossAxisAlignment.start, children: [
         _CardLabel(text: 'Десерты — склад'),
         const SizedBox(height: 10),
-        _desserts.isEmpty
-            ? Text('Добавьте товары в категорию "Десерты"',
-                style: TextStyle(fontSize: 13, color: AppColors.muted))
-            : Column(children: _desserts.map((d) => _DessertRow(
-                name: d.name, value: d.stock,
-                onChanged: (v) => setState(() => d.stock = v),
-                isDark: isDark)).toList()),
+        filteredDesserts.isEmpty
+    ? Text(_dessertSearch.isNotEmpty ? 'Ничего не найдено' : 'Добавьте товары в категорию "Десерты"',
+        style: TextStyle(fontSize: 13, color: AppColors.muted))
+    : Column(children: filteredDesserts.map((d) => _DessertRow(
+        name: d.name, value: d.stock,
+        onChanged: (v) => setState(() => d.stock = v),
+        isDark: isDark)).toList()),
       ])),
 
       const SizedBox(height: 10),
@@ -360,13 +512,13 @@ class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
           crossAxisAlignment: CrossAxisAlignment.start, children: [
         _CardLabel(text: 'Списания — десерты'),
         const SizedBox(height: 10),
-        _desserts.isEmpty
-            ? Text('Добавьте товары в категорию "Десерты"',
-                style: TextStyle(fontSize: 13, color: AppColors.muted))
-            : Column(children: _desserts.map((d) => _DessertRow(
-                name: d.name, value: d.writeOff,
-                onChanged: (v) => setState(() => d.writeOff = v),
-                isDark: isDark, isWriteOff: true)).toList()),
+        filteredDesserts.isEmpty
+    ? Text(_dessertSearch.isNotEmpty ? 'Ничего не найдено' : 'Добавьте товары в категорию "Десерты"',
+        style: TextStyle(fontSize: 13, color: AppColors.muted))
+    : Column(children: filteredDesserts.map((d) => _DessertRow(
+        name: d.name, value: d.writeOff,
+        onChanged: (v) => setState(() => d.writeOff = v),
+        isDark: isDark, isWriteOff: true)).toList()),
       ])),
 
       const SizedBox(height: 10),
@@ -434,12 +586,12 @@ class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
       _StepHeader(step: 2, total: _totalSteps, title: 'Способы оплаты'),
       const SizedBox(height: 16),
       _PaymentRow(icon: Icons.qr_code_rounded, label: 'QR-код',
-          hint: 'Kaspi, Click и др.', controller: _qrCtrl,
+          hint: 'СБП.', controller: _qrCtrl,
           color: AppColors.green, isDark: isDark, currency: currency,
           onChanged: (_) => setState(() {})),
       const SizedBox(height: 10),
       _PaymentRow(icon: Icons.credit_card_rounded, label: 'Банковская карта',
-          hint: 'Visa, Mastercard', controller: _cardCtrl,
+          hint: 'Сбербанк, Т-банк', controller: _cardCtrl,
           color: const Color(0xFF378ADD), isDark: isDark, currency: currency,
           onChanged: (_) => setState(() {})),
       const SizedBox(height: 10),
@@ -684,6 +836,41 @@ class _DessertRow extends StatelessWidget {
   final ValueChanged<int> onChanged; final bool isDark; final bool isWriteOff;
   const _DessertRow({required this.name, required this.value,
       required this.onChanged, required this.isDark, this.isWriteOff = false});
+
+  void _showManualInput(BuildContext context) {
+    final ctrl = TextEditingController(text: value == 0 ? '' : '$value');
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? AppColors.darkCard : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          keyboardType: TextInputType.number,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+          decoration: const InputDecoration(hintText: '0'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx),
+              child: const Text('Отмена', style: TextStyle(color: AppColors.muted))),
+          ElevatedButton(
+            onPressed: () {
+              final v = int.tryParse(ctrl.text) ?? value;
+              onChanged(v < 0 ? 0 : v);
+              Navigator.pop(ctx);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.orange,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+            child: const Text('OK')),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: 10),
@@ -692,9 +879,12 @@ class _DessertRow extends StatelessWidget {
           color: isDark ? Colors.white.withOpacity(0.85) : const Color(0xFF1A1A2E)))),
       _QtyBtn(icon: Icons.remove, isDark: isDark,
           onTap: () { if (value > 0) onChanged(value - 1); }),
-      SizedBox(width: 32, child: Text('$value', textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600,
-              color: isDark ? Colors.white : const Color(0xFF1A1A2E)))),
+      GestureDetector(
+        onTap: () => _showManualInput(context),
+        child: SizedBox(width: 32, child: Text('$value', textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white : const Color(0xFF1A1A2E)))),
+      ),
       _QtyBtn(icon: Icons.add, isDark: isDark, onTap: () => onChanged(value + 1)),
     ]));
 }
@@ -745,10 +935,12 @@ class _PaymentRow extends StatelessWidget {
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600,
                   color: isDark ? Colors.white : const Color(0xFF1A1A2E)),
               decoration: InputDecoration(suffixText: currency,
-                  suffixStyle: const TextStyle(fontSize: 13, color: AppColors.muted),
-                  border: InputBorder.none, enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none, filled: false,
-                  contentPadding: EdgeInsets.zero))),
+                hintText: '0',
+                hintStyle: const TextStyle(fontSize: 15, color: AppColors.muted),
+                suffixStyle: const TextStyle(fontSize: 13, color: AppColors.muted),
+                border: InputBorder.none, enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none, filled: false,
+                contentPadding: EdgeInsets.zero))),
         ]))));
 }
 
@@ -768,12 +960,15 @@ class _AmountField extends StatelessWidget {
         onChanged: onChanged, textAlign: TextAlign.right,
         style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600,
             color: isDark ? Colors.white : const Color(0xFF1A1A2E)),
-        decoration: InputDecoration(hintText: hint,
+        decoration: InputDecoration(
+            hintText: hint ?? '0',
             hintStyle: const TextStyle(color: AppColors.muted, fontSize: 13),
             suffixText: currency,
             suffixStyle: const TextStyle(fontSize: 13, color: AppColors.muted),
-            border: InputBorder.none, enabledBorder: InputBorder.none,
-            focusedBorder: InputBorder.none, filled: false,
+            border: InputBorder.none,
+            enabledBorder: InputBorder.none,
+            focusedBorder: InputBorder.none,
+            filled: false,
             contentPadding: EdgeInsets.zero))),
   ]);
 }
@@ -802,6 +997,8 @@ class _CashField extends StatelessWidget {
               enabledBorder: InputBorder.none, focusedBorder: InputBorder.none,
               filled: false, contentPadding: EdgeInsets.zero,
               suffixText: currency,
+              hintText: '0',
+              hintStyle: const TextStyle(fontSize: 15, color: AppColors.muted),
               suffixStyle: const TextStyle(color: AppColors.muted, fontSize: 13))),
     ]));
 }
@@ -874,3 +1071,7 @@ class _ConfirmDialog extends StatelessWidget {
       ]);
   }
 }
+
+
+
+

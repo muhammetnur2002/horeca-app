@@ -53,7 +53,7 @@ class DepartmentsTab extends ConsumerWidget {
               ),
             )
           : ListView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 110, 16, 100),
+              padding: const EdgeInsets.fromLTRB(16, 130, 16, 100),
               itemCount: departments.length,
               itemBuilder: (_, index) {
                 final dept = departments[index];
@@ -95,7 +95,7 @@ class DepartmentsTab extends ConsumerWidget {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text('Отдел «${dept.name}» удалён'),
-                  backgroundColor: AppColors.darkCard,
+                  backgroundColor: const Color(0xFF2E3352),
                   behavior: SnackBarBehavior.floating,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
@@ -149,7 +149,7 @@ class DepartmentsTab extends ConsumerWidget {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('Отдел «${nameCtrl.text}» добавлен'),
-                    backgroundColor: AppColors.darkCard,
+                    backgroundColor: const Color(0xFF2E3352),
                     behavior: SnackBarBehavior.floating,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
@@ -204,7 +204,7 @@ class DepartmentsTab extends ConsumerWidget {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('Отдел «${nameCtrl.text}» обновлён'),
-                    backgroundColor: AppColors.darkCard,
+                    backgroundColor: const Color(0xFF2E3352),
                     behavior: SnackBarBehavior.floating,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
@@ -296,3 +296,7 @@ class _DeptItem extends StatelessWidget {
     );
   }
 }
+
+
+
+

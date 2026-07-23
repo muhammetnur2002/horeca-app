@@ -14,6 +14,7 @@ class SettingsData {
   final String establishmentName;
   final List<String> staff;
   final String currency;
+  final String? logoPath;
 
   const SettingsData({
     required this.departments,
@@ -22,6 +23,7 @@ class SettingsData {
     this.establishmentName = 'Спартак',
     this.staff = const ['Настя', 'Никита', 'Медина', 'Бэлла', 'Альбина'],
     this.currency = '₸',
+    this.logoPath,
   });
 
   SettingsData copyWith({
@@ -31,6 +33,8 @@ class SettingsData {
     String? establishmentName,
     List<String>? staff,
     String? currency,
+    String? logoPath,
+    bool clearLogo = false,
   }) {
     return SettingsData(
       departments: departments ?? this.departments,
@@ -39,6 +43,7 @@ class SettingsData {
       establishmentName: establishmentName ?? this.establishmentName,
       staff: staff ?? this.staff,
       currency: currency ?? this.currency,
+      logoPath: clearLogo ? null : (logoPath ?? this.logoPath),
     );
   }
 
@@ -101,15 +106,17 @@ class SettingsRepository extends StateNotifier<SettingsData> {
       'products': state.products
           .map((p) => {
                 'id': p.id,
-                'name': p.name,
-                'unit': p.unit,
-                'inventoryUnit': p.inventoryUnit,
-                'categoryId': p.categoryId,
-              })
-          .toList(),
+'name': p.name,
+'unit': p.unit,
+'inventoryUnit': p.inventoryUnit,
+'categoryId': p.categoryId,
+'minStock': p.minStock,
+})
+.toList(),
       'establishmentName': state.establishmentName,
       'staff': state.staff,
       'currency': state.currency,
+      'logoPath': state.logoPath,
     };
     _prefs.setString(_settingsKey, jsonEncode(data));
   }
@@ -131,13 +138,15 @@ class SettingsRepository extends StateNotifier<SettingsData> {
           )).toList();
       final prods = (data['products'] as List).map((p) => ProductModel(
             id: p['id'],
-            name: p['name'],
-            unit: p['unit'],
-            inventoryUnit: p['inventoryUnit'] ?? p['unit'],
-            categoryId: p['categoryId'],
-          )).toList();
+name: p['name'],
+unit: p['unit'],
+inventoryUnit: p['inventoryUnit'] ?? p['unit'],
+categoryId: p['categoryId'],
+minStock: (p['minStock'] as num?)?.toDouble(),
+)).toList();
       final name = data['establishmentName'] as String? ?? 'Спартак';
       final currency = data['currency'] as String? ?? '₸';
+      final logoPath = data['logoPath'] as String?;
       List<String> staff;
       try {
         staff = data['staff'] != null
@@ -153,8 +162,30 @@ class SettingsRepository extends StateNotifier<SettingsData> {
         establishmentName: name,
         staff: staff,
         currency: currency,
+        logoPath: logoPath,
       );
     } catch (_) {}
+  }
+
+  // ── Сброс всех данных ─────────────────────────────────────────────────────
+  void resetAll() {
+    state = state.copyWith(
+      categories: [],
+      products: [],
+      staff: [],
+    );
+    _saveToPrefs();
+  } 
+
+  // ── Лого заведения ───────────────────────────────────────────────────────
+  void setLogoPath(String path) {
+    state = state.copyWith(logoPath: path);
+    _saveToPrefs();
+}
+
+  void removeLogo() {
+    state = state.copyWith(clearLogo: true);
+    _saveToPrefs();
   }
 
   // ── Валюта ────────────────────────────────────────────────────────────────
@@ -249,16 +280,22 @@ class SettingsRepository extends StateNotifier<SettingsData> {
   }
 
   // ── Товары ────────────────────────────────────────────────────────────────
-  void addProduct(String name, String unit, String categoryId,
-      {String? inventoryUnit}) {
-    final p = ProductModel(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      name: name, unit: unit,
-      inventoryUnit: inventoryUnit ?? unit,
-      categoryId: categoryId);
-    state = state.copyWith(products: [...state.products, p]);
-    _saveToPrefs();
-  }
+  bool isDuplicateProduct(String name, String categoryId) {
+  return state.products.any((p) =>
+      p.categoryId == categoryId &&
+      p.name.trim().toLowerCase() == name.trim().toLowerCase());
+}
+
+void addProduct(String name, String unit, String categoryId,
+    {String? inventoryUnit}) {
+  final p = ProductModel(
+    id: DateTime.now().millisecondsSinceEpoch.toString(),
+    name: name, unit: unit,
+    inventoryUnit: inventoryUnit ?? unit,
+    categoryId: categoryId);
+  state = state.copyWith(products: [...state.products, p]);
+  _saveToPrefs();
+}
 
   void updateProduct(String id, String newName, String newUnit,
       {String? newCategoryId, String? newInventoryUnit}) {
@@ -276,10 +313,27 @@ class SettingsRepository extends StateNotifier<SettingsData> {
   }
 
   void deleteProduct(String id) {
-    state = state.copyWith(
-        products: state.products.where((p) => p.id != id).toList());
-    _saveToPrefs();
-  }
+  state = state.copyWith(
+      products: state.products.where((p) => p.id != id).toList());
+  _saveToPrefs();
+}
+
+void setProductMinStock(String id, double? minStock) {
+  state = state.copyWith(
+    products: state.products.map((p) {
+      if (p.id == id) {
+        return ProductModel(
+          id: p.id, name: p.name, unit: p.unit,
+          inventoryUnit: p.inventoryUnit,
+          categoryId: p.categoryId,
+          minStock: minStock,
+        );
+      }
+      return p;
+    }).toList(),
+  );
+  _saveToPrefs();
+}
 
   void bulkAddProducts(List<String> names, String defaultUnit, String categoryId,
       {String? defaultInventoryUnit}) {
@@ -298,3 +352,7 @@ final settingsRepositoryProvider =
   final prefs = ref.watch(sharedPreferencesProvider);
   return SettingsRepository(prefs);
 });
+
+
+
+

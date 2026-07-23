@@ -52,7 +52,7 @@ class CategoriesTab extends ConsumerWidget {
               ),
             )
           : ListView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 110, 16, 100),
+              padding: const EdgeInsets.fromLTRB(16, 130, 16, 100),
               itemCount: categories.length,
               itemBuilder: (_, index) {
                 final cat = categories[index];
@@ -95,7 +95,7 @@ class CategoriesTab extends ConsumerWidget {
               repo.deleteCategory(cat.id);
               ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                 content: Text('Категория «${cat.name}» удалена'),
-                backgroundColor: AppColors.darkCard,
+                backgroundColor: const Color(0xFF2E3352),
                 behavior: SnackBarBehavior.floating,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
@@ -171,7 +171,7 @@ class CategoriesTab extends ConsumerWidget {
                     repo.addCategory(nameCtrl.text, selectedDeptId!);
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                       content: Text('Категория «${nameCtrl.text}» добавлена'),
-                      backgroundColor: AppColors.darkCard,
+                      backgroundColor: const Color(0xFF2E3352),
                       behavior: SnackBarBehavior.floating,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
@@ -256,7 +256,7 @@ class CategoriesTab extends ConsumerWidget {
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                       content:
                           Text('Категория «${nameCtrl.text}» обновлена'),
-                      backgroundColor: AppColors.darkCard,
+                      backgroundColor: const Color(0xFF2E3352),
                       behavior: SnackBarBehavior.floating,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
@@ -363,3 +363,7 @@ class _CatItem extends StatelessWidget {
     );
   }
 }
+
+
+
+

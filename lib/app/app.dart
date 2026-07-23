@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -6,6 +6,8 @@ import 'package:horeca_app/app/routes.dart';
 import 'package:horeca_app/app/di.dart';
 import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
 import 'package:horeca_app/features/splash/splash_screen.dart';
+import 'package:horeca_app/features/auth/data/auth_repository.dart';
+import 'package:horeca_app/features/auth/presentation/pin_screen.dart';
 
 // ─── Цветовые константы (меняй только здесь) ───────────────────────────────
 class AppColors {
@@ -46,7 +48,7 @@ class _HorecaAppState extends ConsumerState<HorecaApp> {
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.light,
     ));
-    Future.delayed(const Duration(seconds: 5), () {
+    Future.delayed(const Duration(seconds: 10), () {
       if (mounted) setState(() => _showSplash = false);
     });
   }
@@ -56,13 +58,34 @@ class _HorecaAppState extends ConsumerState<HorecaApp> {
     final themeMode = ref.watch(themeModeProvider);
 
     if (_showSplash) {
-      return const Directionality(
-        textDirection: TextDirection.ltr,
-        child: SplashScreen(),
-      );
-    }
+  return const Directionality(
+    textDirection: TextDirection.ltr,
+    child: SplashScreen(),
+  );
+}
 
-    return MaterialApp.router(
+final authState = ref.watch(authRepositoryProvider);
+final pinsEnabled = ref.read(authRepositoryProvider.notifier).pinsEnabled;
+
+if (pinsEnabled && !authState.isLoggedIn) {
+  return MaterialApp(
+    debugShowCheckedModeBanner: false,
+    themeMode: themeMode,
+    locale: const Locale('ru'),
+    localizationsDelegates: const [
+      AppLocalizations.delegate,
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
+    ],
+    supportedLocales: const [Locale('ru')],
+    theme: ThemeData(brightness: Brightness.light, useMaterial3: true),
+    darkTheme: ThemeData(brightness: Brightness.dark, useMaterial3: true),
+    home: const PinScreen(),
+  );
+}
+
+return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       themeMode: themeMode,
       locale: const Locale('ru'),
@@ -273,3 +296,7 @@ class _HorecaAppState extends ConsumerState<HorecaApp> {
     );
   }
 }
+
+
+
+

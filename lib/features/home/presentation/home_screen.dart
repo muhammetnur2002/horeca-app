@@ -1,18 +1,35 @@
-import 'dart:math';
+﻿import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
+import 'package:horeca_app/features/auth/data/auth_repository.dart';
+import 'package:horeca_app/features/settings/data/settings_repository.dart';
+import 'package:horeca_app/features/inventory/data/stock_levels_repository.dart';
+
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context)!;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+  @override
+Widget build(BuildContext context, WidgetRef ref) {
+  final l10n = AppLocalizations.of(context)!;
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  final authState = ref.watch(authRepositoryProvider);
+  final isAdmin = authState.role != UserRole.staff;
+
+  final settings = ref.watch(settingsRepositoryProvider);
+  final stockLevels = ref.watch(stockLevelsRepositoryProvider);
+  final lowStockItems = settings.products.where((p) {
+    if (p.minStock == null) return false;
+    final current = stockLevels[p.id];
+    if (current == null) return false;
+    return current < p.minStock!;
+  }).toList();
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -31,8 +48,13 @@ class HomeScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 16),
-                  _GreetingHeader(isDark: isDark),
-                  const SizedBox(height: 20),
+_GreetingHeader(isDark: isDark),
+const SizedBox(height: 16),
+if (lowStockItems.isNotEmpty) ...[
+  _LowStockBanner(items: lowStockItems, isDark: isDark),
+  const SizedBox(height: 12),
+],
+const SizedBox(height: 4),
                   _GlassButton(
                     icon: Icons.assignment_outlined,
                     label: l10n.makeRequest,
@@ -43,6 +65,16 @@ class HomeScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 12),
                   _GlassButton(
+                    icon: Icons.nights_stay_outlined,
+                    label: 'Закрытие смены',
+                    sublabel: 'Отчёт и PDF',
+                    isPrimary: false,
+                    isDark: isDark,
+                    accentColor: AppColors.green,
+                    onTap: () => context.push('/shift-close'),
+                  ),
+                  const SizedBox(height: 12),    
+                  _GlassButton(
                     icon: Icons.inventory_2_outlined,
                     label: l10n.inventory,
                     sublabel: 'Подсчёт остатков',
@@ -51,14 +83,27 @@ class HomeScreen extends ConsumerWidget {
                     onTap: () => context.push('/inventory'),
                   ),
                   const SizedBox(height: 12),
+                  if (isAdmin) ...[
+  const SizedBox(height: 12),
+  _GlassButton(
+    icon: Icons.insights_rounded,
+    label: 'Аналитика и инсайты',
+    sublabel: 'Графики, тренды, списания',
+    isPrimary: false,
+    isDark: isDark,
+    accentColor: const Color(0xFF9966FF),
+    onTap: () => context.push('/analytics'),
+  ),
+],
+                  const SizedBox(height: 12),
                   _GlassButton(
-                    icon: Icons.nights_stay_outlined,
-                    label: 'Закрытие смены',
-                    sublabel: 'Отчёт и PDF',
+                    icon: Icons.store_rounded,
+                    label: 'iiko',
+                    sublabel: 'Остатки на складе',
                     isPrimary: false,
                     isDark: isDark,
-                    accentColor: AppColors.green,
-                    onTap: () => context.push('/shift-close'),
+                  accentColor: const Color(0xFF378ADD),
+                    onTap: () => context.push('/iiko'),
                   ),
                 ],
               ),
@@ -211,6 +256,33 @@ class _Background extends StatelessWidget {
   }
 }
 
+class _LowStockBanner extends StatelessWidget {
+  final List<dynamic> items;
+  final bool isDark;
+  const _LowStockBanner({required this.items, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: Colors.redAccent.withOpacity(isDark ? 0.1 : 0.08),
+        border: Border.all(color: Colors.redAccent.withOpacity(0.3)),
+      ),
+      child: Row(children: [
+        Container(width: 36, height: 36,
+            decoration: BoxDecoration(color: Colors.redAccent.withOpacity(0.15), borderRadius: BorderRadius.circular(10)),
+            child: const Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 18)),
+        const SizedBox(width: 10),
+        Expanded(child: Text(
+            '${items.length} ${items.length == 1 ? "товар заканчивается" : "товара заканчиваются"}: ${items.map((p) => p.name).take(2).join(", ")}${items.length > 2 ? "..." : ""}',
+            style: TextStyle(fontSize: 12, color: isDark ? Colors.white.withOpacity(0.85) : const Color(0xFF1A1A2E)))),
+      ]),
+    );
+  }
+}
+
 // ── Приветствие ──────────────────────────────────────────────────────────────
 class _GreetingHeader extends StatelessWidget {
   final bool isDark;
@@ -308,3 +380,7 @@ class _GlassButton extends StatelessWidget {
       );
   }
 }
+
+
+
+

@@ -108,20 +108,6 @@ class GenerateStep extends ConsumerWidget {
     final text = _generateText(
         state, establishmentName, allProducts, allCategories, allDepartments);
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final repo = ref.read(historyRepositoryProvider);
-      if (!repo
-          .getAll()
-          .any((e) => e.type == HistoryType.request && e.text == text)) {
-        repo.add(HistoryEntry(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
-          type: HistoryType.request,
-          title: '${l10n.requestTitle} ${state.departmentId}',
-          text: text,
-          createdAt: DateTime.now(),
-        ));
-      }
-    });
 
     return Container(
       decoration: BoxDecoration(
@@ -213,7 +199,7 @@ class GenerateStep extends ConsumerWidget {
                         ScaffoldMessenger.of(context)
                             .showSnackBar(SnackBar(
                           content: Text(l10n.copySuccess),
-                          backgroundColor: AppColors.darkCard,
+                          backgroundColor: const Color(0xFF2E3352),
                           behavior: SnackBarBehavior.floating,
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12)),
@@ -270,19 +256,27 @@ class GenerateStep extends ConsumerWidget {
               isDark: isDark,
               fullWidth: true,
               onTap: () async {
-                if (state.items.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text(l10n.noData),
-                    backgroundColor: AppColors.darkCard,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ));
-                  return;
-                }
-                final pdfBytes = await PdfGenerator.generateRequestPdf(
-                  title: l10n.requestTitle,
-                  establishmentName: establishmentName,
+  if (state.items.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(l10n.noData),
+      backgroundColor: const Color(0xFF2E3352),
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12)),
+    ));
+    return;
+  }
+  final repo = ref.read(historyRepositoryProvider);
+  repo.add(HistoryEntry(
+    id: DateTime.now().millisecondsSinceEpoch.toString(),
+    type: HistoryType.request,
+    title: '${l10n.requestTitle} ${state.departmentId}',
+    text: text,
+    createdAt: DateTime.now(),
+  ));
+  final pdfBytes = await PdfGenerator.generateRequestPdf(
+    title: l10n.requestTitle,
+    establishmentName: establishmentName,
                   department: state.departmentId ?? '',
                   items: state.items
                       .map((i) => {
@@ -414,3 +408,7 @@ class _ActionBtn extends StatelessWidget {
     );
   }
 }
+
+
+
+

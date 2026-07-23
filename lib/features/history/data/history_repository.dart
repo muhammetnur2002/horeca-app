@@ -67,3 +67,7 @@ final historyRepositoryProvider = Provider<HistoryRepository>((ref) {
 final historyEntriesProvider = Provider<List<HistoryEntry>>((ref) {
   return ref.watch(historyRepositoryProvider).getAll();
 });
+
+
+
+

@@ -204,3 +204,7 @@ class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> 
   @override
   bool shouldReload(covariant LocalizationsDelegate<AppLocalizations> old) => false;
 }
+
+
+
+

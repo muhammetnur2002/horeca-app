@@ -9,6 +9,11 @@ import 'package:horeca_app/features/inventory/presentation/inventory_screen.dart
 import 'package:horeca_app/features/history/presentation/history_screen.dart';
 import 'package:horeca_app/features/settings/presentation/settings_screen.dart';
 import 'package:horeca_app/features/shift_close/presentation/shift_close_screen.dart';
+import 'package:horeca_app/features/iiko/presentation/iiko_screen.dart';
+import 'package:horeca_app/features/analytics/presentation/analytics_screen.dart';
+import 'package:horeca_app/features/notifications/presentation/notifications_screen.dart';
+import 'package:horeca_app/features/custom_template/presentation/template_screen.dart';
+import 'package:horeca_app/features/auth/data/auth_repository.dart';
 
 final router = GoRouter(
   initialLocation: '/',
@@ -28,6 +33,22 @@ final router = GoRouter(
       path: '/shift-close',
       builder: (_, __) => const ShiftCloseScreen(),
     ),
+    GoRoute(
+      path: '/iiko',
+      builder: (_, __) => const IikoScreen(),
+    ),
+    GoRoute(
+      path: '/analytics',
+      builder: (_, __) => const AnalyticsScreen(),
+    ),
+    GoRoute(
+      path: '/notifications',
+      builder: (_, __) => const NotificationsScreen(),
+    ),
+    GoRoute(
+      path: '/template',
+      builder: (_, __) => const TemplateScreen(),
+    ),
   ],
 );
 
@@ -36,9 +57,11 @@ class MainShell extends ConsumerWidget {
   const MainShell({required this.child, super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+Widget build(BuildContext context, WidgetRef ref) {
+  final l10n = AppLocalizations.of(context);
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  final authState = ref.watch(authRepositoryProvider);
+  final isAdmin = authState.role != UserRole.staff;
 
     return Scaffold(
       body: child,
@@ -77,22 +100,23 @@ class MainShell extends ConsumerWidget {
           ),
           unselectedLabelStyle: const TextStyle(fontSize: 11),
           items: [
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.home_outlined),
-              activeIcon: const Icon(Icons.home_rounded),
-              label: l10n.appTitle,
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.history_outlined),
-              activeIcon: const Icon(Icons.history_rounded),
-              label: l10n.history,
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.settings_outlined),
-              activeIcon: const Icon(Icons.settings_rounded),
-              label: l10n.settings,
-            ),
-          ],
+  BottomNavigationBarItem(
+    icon: const Icon(Icons.home_outlined),
+    activeIcon: const Icon(Icons.home_rounded),
+    label: l10n.appTitle,
+  ),
+  BottomNavigationBarItem(
+    icon: const Icon(Icons.history_outlined),
+    activeIcon: const Icon(Icons.history_rounded),
+    label: l10n.history,
+  ),
+  if (isAdmin)
+    BottomNavigationBarItem(
+      icon: const Icon(Icons.settings_outlined),
+      activeIcon: const Icon(Icons.settings_rounded),
+      label: l10n.settings,
+    ),
+],
         ),
       ),
     );
@@ -113,3 +137,7 @@ class MainShell extends ConsumerWidget {
     }
   }
 }
+
+
+
+

@@ -17,3 +17,7 @@ final productsProvider = Provider.family<List<Product>, String>((ref, categoryId
       .map((p) => Product(id: p.id, name: p.name, unit: p.unit, categoryId: p.categoryId))
       .toList();
 });
+
+
+
+

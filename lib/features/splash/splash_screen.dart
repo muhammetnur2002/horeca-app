@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/app/di.dart';
 
@@ -14,12 +15,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _ctrl;
   final Random _rnd = Random(42);
+  bool _navigated = false;
 
-  // звёзды
   late List<_Star> _stars;
-  // частицы
   final List<_Particle> _particles = [];
-  // метеориты
   final List<_Shoot> _shoots = [];
 
   @override
@@ -28,7 +27,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     _ctrl = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 10),
-    )..repeat();
+    );
 
     _stars = List.generate(160, (i) => _Star(
       x: _rnd.nextDouble(),
@@ -37,6 +36,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       phase: _rnd.nextDouble() * pi * 2,
       speed: 0.4 + _rnd.nextDouble() * 1.2,
     ));
+
+    _ctrl.forward();
+
   }
 
   @override
@@ -61,7 +63,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       body: AnimatedBuilder(
         animation: _ctrl,
         builder: (context, _) {
-          final t = _ctrl.value * 10; // 0..10 секунд
+          final t = _ctrl.value * 10;
           _updateParticles();
           _maybeShoot();
           return CustomPaint(
@@ -106,7 +108,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   }
 }
 
-// ── Модели ────────────────────────────────────────────────────────────────
 class _Star {
   final double x, y, r, phase, speed;
   const _Star({required this.x, required this.y, required this.r,
@@ -128,7 +129,6 @@ class _Shoot {
       required this.vy, required this.life});
 }
 
-// ── Painter ───────────────────────────────────────────────────────────────
 class _GalaxyPainter extends CustomPainter {
   final double t;
   final bool isDark;
@@ -144,11 +144,9 @@ class _GalaxyPainter extends CustomPainter {
     required this.shoots,
   });
 
-  // прогресс фазы
   double ph(double s, double e) => ((t - s) / (e - s)).clamp(0.0, 1.0);
   double eo(double v, [double p = 3]) => 1 - pow(1 - v.clamp(0, 1), p).toDouble();
 
-  // цвета
   Color get _orbitCol => isDark
       ? const Color(0xFF8C5020).withOpacity(1)
       : const Color(0xFFB05A10).withOpacity(1);
@@ -174,7 +172,6 @@ class _GalaxyPainter extends CustomPainter {
   }
 
   void _drawBg(Canvas canvas, Size size, double CX, double CY, double W, double H) {
-    // радиальный фон
     final bg = RadialGradient(
       center: Alignment(0, -0.2),
       radius: 1.2,
@@ -184,14 +181,12 @@ class _GalaxyPainter extends CustomPainter {
     ).createShader(Rect.fromLTWH(0, 0, W, H));
     canvas.drawRect(Rect.fromLTWH(0, 0, W, H), Paint()..shader = bg);
 
-    // туманности
     final nebColors = isDark
         ? [const Color(0xFF0F1629), const Color(0xFF140C32)]
         : [const Color(0xFFC8DAFF), const Color(0xFFDCE8FF)];
     _drawNebula(canvas, CX * 0.5, CY * 0.5, W * 0.3, nebColors[0].withOpacity(isDark ? 0.3 : 0.6));
     _drawNebula(canvas, CX * 1.5, CY * 1.4, W * 0.25, nebColors[1].withOpacity(isDark ? 0.25 : 0.5));
 
-    // звёзды
     for (final s in stars) {
       final opacity = (isDark ? 0.07 : 0.05) + 0.09 * sin(t * s.speed + s.phase);
       canvas.drawCircle(
@@ -201,7 +196,6 @@ class _GalaxyPainter extends CustomPainter {
       );
     }
 
-    // виньетка
     final vig = RadialGradient(
       radius: 0.85,
       colors: [
@@ -298,14 +292,12 @@ class _GalaxyPainter extends CustomPainter {
     canvas.translate(CX, CY);
     canvas.scale(p, p);
 
-    // свечение
     final gr = RadialGradient(colors: [
       AppColors.orange.withOpacity(lerpDouble(0.12, 0.04, settle)),
       Colors.transparent,
     ]).createShader(Rect.fromCircle(center: Offset.zero, radius: W * 0.14));
     canvas.drawCircle(Offset.zero, W * 0.14, Paint()..shader = gr);
 
-    // рисуем A через TextPainter
     final tp = TextPainter(
       text: TextSpan(
         text: 'A',
@@ -358,7 +350,6 @@ class _GalaxyPainter extends CustomPainter {
     final p = eo(ph(4.8, 6.2));
     if (p <= 0) return;
 
-    // Akyl
     final tp1 = TextPainter(
       text: TextSpan(text: 'Akyl', style: TextStyle(
         fontSize: 44, fontWeight: FontWeight.w800,
@@ -369,7 +360,6 @@ class _GalaxyPainter extends CustomPainter {
     tp1.layout();
     tp1.paint(canvas, Offset(CX - tp1.width / 2, H * 0.72));
 
-    // слоган
     final tp2 = TextPainter(
       text: TextSpan(text: 'управляй с умом', style: TextStyle(
         fontSize: 13, fontWeight: FontWeight.w500,
@@ -380,7 +370,6 @@ class _GalaxyPainter extends CustomPainter {
     tp2.layout();
     tp2.paint(canvas, Offset(CX - tp2.width / 2, H * 0.72 + 52));
 
-    // точки загрузки
     for (int i = 0; i < 3; i++) {
       final dt = (t * 0.33 - i * 0.33) % 1.0;
       final dotAlpha = (0.25 + 0.75 * (1 - (dt * 2 - 1).abs())).clamp(0.2, 1.0) * p;
@@ -435,3 +424,6 @@ class _PlanetDef {
 }
 
 double lerpDouble(double a, double b, double t) => a + (b - a) * t;
+
+
+

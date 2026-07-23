@@ -137,7 +137,7 @@ class _ProductsTabState extends ConsumerState<ProductsTab> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(
           'Изменено у ${_selectedIds.length} товаров'),
-      backgroundColor: AppColors.darkCard,
+      backgroundColor: const Color(0xFF2E3352),
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12)),
@@ -165,7 +165,7 @@ class _ProductsTabState extends ConsumerState<ProductsTab> {
       }
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text('$title изменено у ${ids.length} товаров'),
-        backgroundColor: AppColors.darkCard,
+        backgroundColor: const Color(0xFF2E3352),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12)),
@@ -222,29 +222,15 @@ class _ProductsTabState extends ConsumerState<ProductsTab> {
         ],
       ),
       floatingActionButton: _selectMode
-          ? null
-          : Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                FloatingActionButton(
-                  heroTag: 'add',
-                  onPressed: () => _showAdd(
-                      context, repo, departments, categories, l10n, isDark),
-                  backgroundColor: AppColors.orange,
-                  foregroundColor: Colors.white,
-                  child: const Icon(Icons.add_rounded),
-                ),
-                const SizedBox(height: 8),
-                FloatingActionButton(
-                  heroTag: 'bulk',
-                  onPressed: () => _showBulk(
-                      context, repo, departments, categories, l10n, isDark),
-                  backgroundColor: AppColors.darkCard2,
-                  foregroundColor: Colors.white,
-                  child: const Icon(Icons.playlist_add_rounded),
-                ),
-              ],
-            ),
+    ? null
+    : FloatingActionButton(
+        heroTag: 'bulk',
+        onPressed: () => _showBulk(
+            context, repo, departments, categories, l10n, isDark),
+        backgroundColor: AppColors.orange,
+        foregroundColor: Colors.white,
+        child: const Icon(Icons.playlist_add_rounded),
+      ),
       body: Column(
         children: [
           // Поиск
@@ -273,20 +259,24 @@ class _ProductsTabState extends ConsumerState<ProductsTab> {
                       fontSize: 14,
                     ),
                     decoration: InputDecoration(
-                      hintText: l10n.searchProducts,
-                      hintStyle:
-                          TextStyle(color: AppColors.muted),
-                      prefixIcon: Icon(Icons.search_rounded,
-                          color: AppColors.muted),
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
-                      filled: false,
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
-                    ),
-                    onChanged: (v) =>
-                        setState(() => _searchQuery = v),
+  hintText: l10n.searchProducts,
+  hintStyle: TextStyle(color: AppColors.muted),
+  prefixIcon: Icon(Icons.search_rounded, color: AppColors.muted),
+  suffixIcon: _searchQuery.isNotEmpty
+      ? IconButton(
+          icon: const Icon(Icons.close_rounded, color: AppColors.muted, size: 18),
+          onPressed: () => setState(() {
+            _searchController.clear();
+            _searchQuery = '';
+          }))
+      : null,
+  border: InputBorder.none,
+  enabledBorder: InputBorder.none,
+  focusedBorder: InputBorder.none,
+  filled: false,
+  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+),
+onChanged: (v) => setState(() => _searchQuery = v),
                   ),
                 ),
               ),
@@ -398,14 +388,15 @@ class _ProductsTabState extends ConsumerState<ProductsTab> {
                       final isSelected =
                           _selectedIds.contains(p.id);
                       return _ProductItem(
-                        p: p,
-                        catName: cat.name,
-                        deptName: dept.name,
-                        isDark: isDark,
-                        isSelected: isSelected,
-                        selectMode: _selectMode,
-                        onSelect: (v) {
-                          setState(() {
+  p: p,
+  catName: cat.name,
+  deptName: dept.name,
+  isDark: isDark,
+  isSelected: isSelected,
+  selectMode: _selectMode,
+  onSetMinStock: () => _showMinStockDialog(context, repo, p, isDark),
+  onSelect: (v) {
+    setState(() {
                             if (v == true)
                               _selectedIds.add(p.id);
                             else
@@ -628,6 +619,49 @@ class _ProductsTabState extends ConsumerState<ProductsTab> {
     );
   }
 
+  void _showMinStockDialog(BuildContext context, SettingsRepository repo, ProductModel p, bool isDark) {
+  final ctrl = TextEditingController(text: p.minStock?.toString() ?? '');
+  showDialog(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      backgroundColor: isDark ? AppColors.darkCard : Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: Text('Минимальный остаток: ${p.name}', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+      content: TextField(
+        controller: ctrl,
+        autofocus: true,
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        decoration: InputDecoration(
+          hintText: 'Например: 5',
+          suffixText: p.inventoryUnit,
+          prefixIcon: const Icon(Icons.notifications_outlined, color: AppColors.orange),
+        ),
+      ),
+      actions: [
+        if (p.minStock != null)
+          TextButton(
+            onPressed: () {
+              repo.setProductMinStock(p.id, null);
+              Navigator.pop(ctx);
+            },
+            child: const Text('Убрать', style: TextStyle(color: Colors.redAccent)),
+          ),
+        TextButton(onPressed: () => Navigator.pop(ctx),
+            child: const Text('Отмена', style: TextStyle(color: AppColors.muted))),
+        ElevatedButton(
+          onPressed: () {
+            final value = double.tryParse(ctrl.text.replaceAll(',', '.'));
+            repo.setProductMinStock(p.id, value);
+            Navigator.pop(ctx);
+          },
+          style: ElevatedButton.styleFrom(backgroundColor: AppColors.orange, foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+          child: const Text('Сохранить')),
+      ],
+    ),
+  );
+}
+
   void _confirmDelete(BuildContext context, SettingsRepository repo,
       ProductModel p, AppLocalizations l, bool isDark) {
     showDialog(
@@ -653,7 +687,7 @@ class _ProductsTabState extends ConsumerState<ProductsTab> {
               repo.deleteProduct(p.id);
               ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                 content: Text('«${p.name}» удалён'),
-                backgroundColor: AppColors.darkCard,
+                backgroundColor: const Color(0xFF2E3352),
                 behavior: SnackBarBehavior.floating,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
@@ -800,76 +834,6 @@ class _ProductsTabState extends ConsumerState<ProductsTab> {
     );
   }
 
-  void _showAdd(
-    BuildContext c,
-    SettingsRepository r,
-    List<DepartmentModel> depts,
-    List<CategoryModel> allCats,
-    AppLocalizations l,
-    bool isDark,
-  ) {
-    final ctrl = TextEditingController();
-    String? selectedDeptId =
-        depts.isNotEmpty ? depts.first.id : null;
-    String? selectedCatId;
-    String sUnit = 'кг';
-    String sInvUnit = 'кг';
-
-    showDialog(
-      context: c,
-      builder: (ctx) => StatefulBuilder(
-        builder: (_, set) {
-          final filteredCats = selectedDeptId == null
-              ? allCats
-              : allCats
-                  .where(
-                      (cat) => cat.departmentId == selectedDeptId)
-                  .toList();
-          if (selectedCatId == null && filteredCats.isNotEmpty) {
-            selectedCatId = filteredCats.first.id;
-          }
-          return _buildProductDialog(
-            ctx: ctx,
-            title: l.addProduct,
-            set: set,
-            ctrl: ctrl,
-            depts: depts,
-            allCats: allCats,
-            selectedDeptId: selectedDeptId,
-            selectedCatId: selectedCatId,
-            sUnit: sUnit,
-            sInvUnit: sInvUnit,
-            isDark: isDark,
-            onDeptChanged: (v) => set(() {
-              selectedDeptId = v;
-              selectedCatId = null;
-            }),
-            onCatChanged: (v) => set(() => selectedCatId = v),
-            onUnitChanged: (v) => set(() => sUnit = v),
-            onInvUnitChanged: (v) => set(() => sInvUnit = v),
-            onSave: () {
-              if (ctrl.text.isNotEmpty && selectedCatId != null) {
-                Navigator.pop(ctx);
-                r.addProduct(ctrl.text, sUnit, selectedCatId!,
-                    inventoryUnit: sInvUnit);
-                ScaffoldMessenger.of(c).showSnackBar(SnackBar(
-                  content:
-                      Text('«${ctrl.text}» добавлен'),
-                  backgroundColor: AppColors.darkCard,
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                ));
-              }
-            },
-            l: l,
-            isEdit: false,
-          );
-        },
-      ),
-    );
-  }
-
   void _showBulk(
     BuildContext c,
     SettingsRepository r,
@@ -1003,29 +967,43 @@ class _ProductsTabState extends ConsumerState<ProductsTab> {
               ),
               ElevatedButton(
                 onPressed: () {
-                  final names = ctrl.text
-                      .split('\n')
-                      .map((s) => s.trim())
-                      .where((s) => s.isNotEmpty)
-                      .toList();
-                  if (names.isNotEmpty &&
-                      selectedCatId != null) {
-                    Navigator.pop(ctx);
-                    r.bulkAddProducts(
-    names, sUnit, selectedCatId!,
-    defaultInventoryUnit: sInvUnit);
-                    ScaffoldMessenger.of(c)
-                        .showSnackBar(SnackBar(
-                      content: Text(
-                          'Добавлено ${names.length} товаров'),
-                      backgroundColor: AppColors.darkCard,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(12)),
-                    ));
-                  }
-                },
+  final names = ctrl.text
+      .split('\n')
+      .map((s) => s.trim())
+      .where((s) => s.isNotEmpty)
+      .toList();
+  if (names.isNotEmpty &&
+      selectedCatId != null) {
+    final duplicates = names
+        .where((n) => r.isDuplicateProduct(n, selectedCatId!))
+        .toList();
+    if (duplicates.isNotEmpty) {
+      ScaffoldMessenger.of(c).showSnackBar(SnackBar(
+        content: Text(
+            'Уже существуют: ${duplicates.join(', ')}'),
+        backgroundColor: Colors.redAccent,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12)),
+      ));
+      return;
+    }
+    Navigator.pop(ctx);
+    r.bulkAddProducts(
+names, sUnit, selectedCatId!,
+defaultInventoryUnit: sInvUnit);
+    ScaffoldMessenger.of(c)
+        .showSnackBar(SnackBar(
+      content: Text(
+          'Добавлено ${names.length} товаров'),
+      backgroundColor: const Color(0xFF2E3352),
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(
+          borderRadius:
+              BorderRadius.circular(12)),
+    ));
+  }
+},
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.orange,
                   foregroundColor: Colors.white,
@@ -1096,7 +1074,7 @@ class _ProductsTabState extends ConsumerState<ProductsTab> {
                   newInventoryUnit: sInvUnit);
               ScaffoldMessenger.of(c).showSnackBar(SnackBar(
                 content: Text('«${ctrl.text}» обновлён'),
-                backgroundColor: AppColors.darkCard,
+                backgroundColor: const Color(0xFF2E3352),
                 behavior: SnackBarBehavior.floating,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
@@ -1122,6 +1100,7 @@ class _ProductItem extends StatelessWidget {
   final ValueChanged<bool?> onSelect;
   final VoidCallback onDelete;
   final VoidCallback onTap;
+  final VoidCallback onSetMinStock;
 
   const _ProductItem({
     required this.p,
@@ -1131,6 +1110,7 @@ class _ProductItem extends StatelessWidget {
     required this.isSelected,
     required this.selectMode,
     required this.onSelect,
+    required this.onSetMinStock,
     required this.onDelete,
     required this.onTap,
   });
@@ -1214,14 +1194,22 @@ class _ProductItem extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (!selectMode)
-                  IconButton(
-                    icon: const Icon(
-                        Icons.delete_outline_rounded,
-                        color: Colors.redAccent,
-                        size: 20),
-                    onPressed: onDelete,
-                  ),
+                if (!selectMode) ...[
+  IconButton(
+    icon: const Icon(
+        Icons.notifications_outlined,
+        color: AppColors.orange,
+        size: 20),
+    onPressed: onSetMinStock,
+  ),
+  IconButton(
+    icon: const Icon(
+        Icons.delete_outline_rounded,
+        color: Colors.redAccent,
+        size: 20),
+    onPressed: onDelete,
+  ),
+],
               ],
             ),
           ),
@@ -1275,3 +1263,7 @@ class _BatchBtn extends StatelessWidget {
     );
   }
 }
+
+
+
+

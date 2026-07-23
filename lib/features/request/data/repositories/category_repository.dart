@@ -16,3 +16,7 @@ final categoriesProvider = Provider.family<List<Category>, String>((ref, departm
       .map((c) => Category(id: c.id, name: c.name, departmentId: c.departmentId))
       .toList();
 });
+
+
+
+

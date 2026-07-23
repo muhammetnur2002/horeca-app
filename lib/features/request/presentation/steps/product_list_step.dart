@@ -154,18 +154,24 @@ class _ProductListStepState extends ConsumerState<ProductListStep> {
                       fontSize: 14,
                     ),
                     decoration: InputDecoration(
-                      hintText: l10n.searchProducts,
-                      hintStyle: TextStyle(color: AppColors.muted),
-                      prefixIcon: Icon(Icons.search_rounded,
-                          color: AppColors.muted),
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
-                      filled: false,
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
-                    ),
-                    onChanged: (v) => setState(() => _searchQuery = v),
+  hintText: l10n.searchProducts,
+  hintStyle: TextStyle(color: AppColors.muted),
+  prefixIcon: Icon(Icons.search_rounded, color: AppColors.muted),
+  suffixIcon: _searchQuery.isNotEmpty
+      ? IconButton(
+          icon: const Icon(Icons.close_rounded, color: AppColors.muted, size: 18),
+          onPressed: () => setState(() {
+            _searchController.clear();
+            _searchQuery = '';
+          }))
+      : null,
+  border: InputBorder.none,
+  enabledBorder: InputBorder.none,
+  focusedBorder: InputBorder.none,
+  filled: false,
+  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+),
+onChanged: (v) => setState(() => _searchQuery = v),
                   ),
                 ),
               ),
@@ -428,3 +434,7 @@ class _ProductListStepState extends ConsumerState<ProductListStep> {
     );
   }
 }
+
+
+
+

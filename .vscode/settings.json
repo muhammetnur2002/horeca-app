@@ -1,3 +1,19 @@
 {
-    "cmake.sourceDirectory": "C:/Projects/horeca/linux"
+    "cmake.sourceDirectory": "C:/Projects/horeca/linux",
+    "cSpell.words": [
+        "horeca",
+        "inkass",
+        "данные",
+        "категории",
+        "найдено",
+        "никакие",
+        "никогда",
+        "Ничего",
+        "Отмена",
+        "Поиск",
+        "Приложение",
+        "Список",
+        "товара",
+        "товаров"
+    ]
 }
