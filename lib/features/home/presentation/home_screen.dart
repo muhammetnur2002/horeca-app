@@ -290,8 +290,8 @@ class _GreetingHeader extends StatelessWidget {
 
   String _greeting() {
     final h = DateTime.now().hour;
-    if (h < 12) return 'Доброе утро';
-    if (h < 17) return 'Добрый день';
+    if (h < 11) return 'Доброе утро';
+    if (h < 18) return 'Добрый день';
     return 'Добрый вечер';
   }
 
