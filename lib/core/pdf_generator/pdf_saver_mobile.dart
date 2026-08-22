@@ -11,7 +11,3 @@ class PlatformSaver {
     await Share.shareXFiles([XFile(file.path)], subject: fileName);
   }
 }
-
-
-
-

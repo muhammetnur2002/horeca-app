@@ -95,9 +95,9 @@ class FieldMatcher {
         data: {'headers': headers},
         options: Options(
           headers: {'Content-Type': 'application/json'},
-          // Dio in your setup expects timeouts as int? (milliseconds), not Duration
-          sendTimeout: const Duration(seconds: 10).inMilliseconds,
-          receiveTimeout: const Duration(seconds: 10).inMilliseconds,
+          // Dio 5.x: таймауты — Duration напрямую (было int/мс в 4.x).
+          sendTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 10),
         ),
       );
 

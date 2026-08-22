@@ -28,7 +28,3 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
     _prefs.setString('theme_mode', mode == ThemeMode.light ? 'light' : 'dark');
   }
 }
-
-
-
-

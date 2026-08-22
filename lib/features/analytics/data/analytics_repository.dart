@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:horeca_app/app/di.dart';
+import 'package:horeca_app/features/account/data/cloud_auto_sync.dart';
+import 'package:horeca_app/features/venue/data/venue_repository.dart';
 
 class ShiftRecord {
   final DateTime date;
@@ -25,34 +27,37 @@ class ShiftRecord {
   });
 
   Map<String, dynamic> toJson() => {
-  'date': date.toIso8601String(),
-  'revenue': revenue,
-  'qr': qr,
-  'card': card,
-  'cash': cash,
-  'morningCash': morningCash,
-  'eveningCash': eveningCash,
-  'writeOffs': writeOffs,
-};
+    'date': date.toIso8601String(),
+    'revenue': revenue,
+    'qr': qr,
+    'card': card,
+    'cash': cash,
+    'morningCash': morningCash,
+    'eveningCash': eveningCash,
+    'writeOffs': writeOffs,
+  };
 
-factory ShiftRecord.fromJson(Map<String, dynamic> json) => ShiftRecord(
-  date: DateTime.parse(json['date'] as String),
-  revenue: (json['revenue'] as num).toDouble(),
-  qr: (json['qr'] as num?)?.toDouble() ?? 0,
-  card: (json['card'] as num?)?.toDouble() ?? 0,
-  cash: (json['cash'] as num?)?.toDouble() ?? 0,
-  morningCash: (json['morningCash'] as num?)?.toDouble() ?? 0,
-  eveningCash: (json['eveningCash'] as num?)?.toDouble() ?? 0,
-  writeOffs: Map<String, int>.from(json['writeOffs'] as Map),
-);
+  factory ShiftRecord.fromJson(Map<String, dynamic> json) => ShiftRecord(
+    date: DateTime.parse(json['date'] as String),
+    revenue: (json['revenue'] as num).toDouble(),
+    qr: (json['qr'] as num?)?.toDouble() ?? 0,
+    card: (json['card'] as num?)?.toDouble() ?? 0,
+    cash: (json['cash'] as num?)?.toDouble() ?? 0,
+    morningCash: (json['morningCash'] as num?)?.toDouble() ?? 0,
+    eveningCash: (json['eveningCash'] as num?)?.toDouble() ?? 0,
+    writeOffs: Map<String, int>.from(json['writeOffs'] as Map),
+  );
 }
 
 class AnalyticsRepository {
   final SharedPreferences _prefs;
-  static const _key = 'shift_records';
+  final String _key;
+  final void Function()? _onChanged;
   List<ShiftRecord> _records = [];
 
-  AnalyticsRepository(this._prefs) {
+  AnalyticsRepository(this._prefs, String venueCode, {void Function()? onChanged})
+      : _key = 'shift_records${venueKeySuffix(venueCode)}',
+        _onChanged = onChanged {
     _load();
   }
 
@@ -70,6 +75,7 @@ class AnalyticsRepository {
   void _save() {
     final data = _records.map((r) => r.toJson()).toList();
     _prefs.setString(_key, jsonEncode(data));
+    _onChanged?.call();
   }
 
   void addShift(ShiftRecord record) {
@@ -125,7 +131,7 @@ class AnalyticsRepository {
 
 final analyticsRepositoryProvider = Provider<AnalyticsRepository>((ref) {
   final prefs = ref.watch(sharedPreferencesProvider);
-  return AnalyticsRepository(prefs);
+  final venueCode = ref.watch(venueRepositoryProvider).activeVenueCode;
+  return AnalyticsRepository(prefs, venueCode,
+      onChanged: () => ref.read(cloudAutoSyncProvider).scheduleSync());
 });
-
-

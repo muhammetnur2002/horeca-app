@@ -16,7 +16,3 @@ final departmentsProvider = Provider<List<Department>>((ref) {
       .map((d) => Department(id: d.id, name: d.name, icon: d.icon))
       .toList();
 });
-
-
-
-

@@ -1,35 +1,26 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'dart:async';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:horeca_app/app/app_theme.dart';
 import 'package:horeca_app/app/routes.dart';
 import 'package:horeca_app/app/di.dart';
 import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
 import 'package:horeca_app/features/splash/splash_screen.dart';
 import 'package:horeca_app/features/auth/data/auth_repository.dart';
 import 'package:horeca_app/features/auth/presentation/pin_screen.dart';
+import 'package:horeca_app/features/account/data/account_repository.dart';
+import 'package:horeca_app/features/account/data/cloud_auto_sync.dart';
+import 'package:horeca_app/features/account/data/cloud_sync_service.dart';
+import 'package:horeca_app/features/account/presentation/account_gate_screen.dart';
+import 'package:horeca_app/features/venue/data/venue_repository.dart';
 
-// ─── Цветовые константы (меняй только здесь) ───────────────────────────────
-class AppColors {
-  // Тёмная тема
-  static const darkBg       = Color(0xFF0F1629);
-  static const darkSurface  = Color(0xFF1A1E2E);
-  static const darkCard     = Color(0xFF242840);
-  static const darkCard2    = Color(0xFF2E3352);
+export 'app_theme.dart';
 
-  // Светлая тема
-  static const lightBg      = Color(0xFFEEF2FF);
-  static const lightSurface = Color(0xFFF5F7FF);
-  static const lightCard    = Color(0xFFFFFFFF);
-
-  // Акцентные (общие)
-  static const orange       = Color(0xFFF5862E);
-  static const orangeLight  = Color(0xFFFFB067);
-  static const green        = Color(0xFF639922);
-  static const greenLight   = Color(0xFF97C459);
-  static const muted        = Color(0xFF8B8FA8);
-}
-
+/// Корневой виджет приложения: заставка, гейт входа/PIN и MaterialApp.router
+/// с темами. Цвета и ThemeData вынесены в app_theme.dart (и реэкспортированы
+/// отсюда, чтобы `import '.../app/app.dart'` по-прежнему давал AppColors).
 class HorecaApp extends ConsumerStatefulWidget {
   const HorecaApp({super.key});
 
@@ -37,20 +28,66 @@ class HorecaApp extends ConsumerStatefulWidget {
   ConsumerState<HorecaApp> createState() => _HorecaAppState();
 }
 
-class _HorecaAppState extends ConsumerState<HorecaApp> {
+class _HorecaAppState extends ConsumerState<HorecaApp> with WidgetsBindingObserver {
   bool _showSplash = true;
+  bool _accountGateSkipped = false;
+  static const _accountGateSkippedKey = 'account_gate_skipped';
+  Timer? _syncTimer;
+  static const _syncInterval = Duration(minutes: 15);
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     // Прозрачный статус-бар
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.light,
     ));
+    _accountGateSkipped =
+        ref.read(sharedPreferencesProvider).getBool(_accountGateSkippedKey) ?? false;
     Future.delayed(const Duration(seconds: 10), () {
       if (mounted) setState(() => _showSplash = false);
     });
+    // Периодическая фоновая синхронизация, пока приложение открыто — не
+    // только по выходу из экрана, чтобы данные не терялись при долгих
+    // сессиях или если приложение убьют из "недавних" без штатного paused.
+    _syncTimer = Timer.periodic(_syncInterval, (_) => _syncIfLoggedIn());
+  }
+
+  @override
+  void dispose() {
+    _syncTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  void _syncIfLoggedIn() {
+    final account = ref.read(accountRepositoryProvider);
+    if (account.isLoggedIn && account.uid != null) {
+      // Синхронизируем только активное на этом устройстве заведение — это
+      // устройство обычно работает с одним конкретным заведением (касса
+      // на месте), а не со всеми пятью сразу.
+      final venueCode = ref.read(venueRepositoryProvider).activeVenueCode;
+      CloudSyncService.syncSmart(
+          account.uid!, ref.read(sharedPreferencesProvider), venueCode);
+    }
+  }
+
+  // Синхронизируем при сворачивании (отправляем свои изменения) и при
+  // возврате в приложение (подтягиваем то, что могло измениться на другом
+  // устройстве, пока это было в фоне) — используем "умную" синхронизацию
+  // с учётом времени последнего изменения, а не слепую перезапись.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      // Досылаем изменение, которое ещё ждёт дебаунса (см. cloud_auto_sync.dart),
+      // чтобы не потерять его при сворачивании прямо в это окно.
+      ref.read(cloudAutoSyncProvider).flush();
+    }
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.resumed) {
+      _syncIfLoggedIn();
+    }
   }
 
   @override
@@ -58,34 +95,65 @@ class _HorecaAppState extends ConsumerState<HorecaApp> {
     final themeMode = ref.watch(themeModeProvider);
 
     if (_showSplash) {
-  return const Directionality(
-    textDirection: TextDirection.ltr,
-    child: SplashScreen(),
-  );
-}
+      return const Directionality(
+        textDirection: TextDirection.ltr,
+        child: SplashScreen(),
+      );
+    }
 
-final authState = ref.watch(authRepositoryProvider);
-final pinsEnabled = ref.read(authRepositoryProvider.notifier).pinsEnabled;
+    final accountState = ref.watch(accountRepositoryProvider);
+    // Если это устройство хоть раз успешно логинилось в облачный аккаунт —
+    // больше никогда не показываем экран входа автоматически, даже если
+    // именно сейчас Firebase недоступен (нет сети, VPN, временный сбой при
+    // холодном старте). Сессия сама восстановится в фоне, когда сеть
+    // появится; до этого работаем как обычно локально.
+    final everLoggedIn = ref.read(accountRepositoryProvider.notifier).everLoggedIn;
 
-if (pinsEnabled && !authState.isLoggedIn) {
-  return MaterialApp(
-    debugShowCheckedModeBanner: false,
-    themeMode: themeMode,
-    locale: const Locale('ru'),
-    localizationsDelegates: const [
-      AppLocalizations.delegate,
-      GlobalMaterialLocalizations.delegate,
-      GlobalWidgetsLocalizations.delegate,
-      GlobalCupertinoLocalizations.delegate,
-    ],
-    supportedLocales: const [Locale('ru')],
-    theme: ThemeData(brightness: Brightness.light, useMaterial3: true),
-    darkTheme: ThemeData(brightness: Brightness.dark, useMaterial3: true),
-    home: const PinScreen(),
-  );
-}
+    if (!accountState.isLoggedIn && !_accountGateSkipped && !everLoggedIn) {
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        themeMode: themeMode,
+        locale: const Locale('ru'),
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [Locale('ru')],
+        theme: ThemeData(brightness: Brightness.light, useMaterial3: true),
+        darkTheme: ThemeData(brightness: Brightness.dark, useMaterial3: true),
+        home: AccountGateScreen(
+          onSkip: () {
+            ref.read(sharedPreferencesProvider).setBool(_accountGateSkippedKey, true);
+            setState(() => _accountGateSkipped = true);
+          },
+        ),
+      );
+    }
 
-return MaterialApp.router(
+    final authState = ref.watch(authRepositoryProvider);
+    final pinsEnabled = ref.read(authRepositoryProvider.notifier).pinsEnabled;
+
+    if (pinsEnabled && !authState.isLoggedIn) {
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        themeMode: themeMode,
+        locale: const Locale('ru'),
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [Locale('ru')],
+        theme: ThemeData(brightness: Brightness.light, useMaterial3: true),
+        darkTheme: ThemeData(brightness: Brightness.dark, useMaterial3: true),
+        home: const PinScreen(),
+      );
+    }
+
+    return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       themeMode: themeMode,
       locale: const Locale('ru'),
@@ -97,206 +165,10 @@ return MaterialApp.router(
       ],
       supportedLocales: const [Locale('ru')],
 
-      // ── СВЕТЛАЯ ТЕМА ──────────────────────────────────────────────────────
-      theme: ThemeData(
-        brightness: Brightness.light,
-        useMaterial3: true, 
-        dialogTheme: DialogThemeData(
-  backgroundColor: Colors.white,
-  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-  elevation: 0,
-),
-        scaffoldBackgroundColor: AppColors.lightBg,
-        cardColor: AppColors.lightCard,
-        colorScheme: const ColorScheme.light(
-          primary:    AppColors.orange,
-          secondary:  AppColors.green,
-          surface:    AppColors.lightSurface,
-          onPrimary:  Colors.white,
-          onSurface:  Color(0xFF1A1A2E),
-        ),
-        textTheme: const TextTheme(
-          headlineLarge: TextStyle(
-            fontSize: 26, fontWeight: FontWeight.w600,
-            color: Color(0xFF1A1A2E), letterSpacing: -0.5,
-          ),
-          headlineMedium: TextStyle(
-            fontSize: 20, fontWeight: FontWeight.w600,
-            color: Color(0xFF1A1A2E),
-          ),
-          bodyLarge: TextStyle(fontSize: 16, color: Color(0xFF1A1A2E)),
-          bodyMedium: TextStyle(fontSize: 14, color: Color(0xFF4A4A6A)),
-          labelLarge: TextStyle(
-            fontSize: 16, fontWeight: FontWeight.w500,
-            color: Colors.white,
-          ),
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            minimumSize: const Size(double.infinity, 56),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            backgroundColor: AppColors.orange,
-            foregroundColor: Colors.white,
-            elevation: 0,
-          ),
-        ),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          scrolledUnderElevation: 0,
-          iconTheme: IconThemeData(color: Color(0xFF1A1A2E)),
-          titleTextStyle: TextStyle(
-            color: Color(0xFF1A1A2E),
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        switchTheme: SwitchThemeData(
-          thumbColor: WidgetStateProperty.resolveWith(
-            (s) => s.contains(WidgetState.selected)
-                ? AppColors.orange : Colors.white,
-          ),
-          trackColor: WidgetStateProperty.resolveWith(
-            (s) => s.contains(WidgetState.selected)
-                ? AppColors.orange.withOpacity(0.5)
-                : Colors.grey.withOpacity(0.3),
-          ),
-        ),
-        tabBarTheme: const TabBarThemeData(
-          labelColor: AppColors.orange,
-          unselectedLabelColor: AppColors.muted,
-          indicatorColor: AppColors.orange,
-        ),
-        floatingActionButtonTheme: const FloatingActionButtonThemeData(
-          backgroundColor: AppColors.darkCard,
-          foregroundColor: Colors.white,
-          elevation: 4,
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: AppColors.lightCard,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.orange, width: 1.5),
-          ),
-        ),
-      ),
-
-      // ── ТЁМНАЯ ТЕМА ───────────────────────────────────────────────────────
-      darkTheme: ThemeData(
-        brightness: Brightness.dark,
-        useMaterial3: true,
-        dialogTheme: DialogThemeData(
-  backgroundColor: AppColors.darkCard,
-  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-  elevation: 0,
-),
-        scaffoldBackgroundColor: AppColors.darkBg,
-        cardColor: AppColors.darkCard,
-        colorScheme: const ColorScheme.dark(
-          primary:    AppColors.orange,
-          secondary:  AppColors.green,
-          surface:    AppColors.darkSurface,
-          onPrimary:  Colors.white,
-          onSurface:  Colors.white,
-        ),
-        textTheme: const TextTheme(
-          headlineLarge: TextStyle(
-            fontSize: 26, fontWeight: FontWeight.w600,
-            color: Colors.white, letterSpacing: -0.5,
-          ),
-          headlineMedium: TextStyle(
-            fontSize: 20, fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
-          bodyLarge: TextStyle(fontSize: 16, color: Colors.white),
-          bodyMedium: TextStyle(fontSize: 14, color: AppColors.muted),
-          labelLarge: TextStyle(
-            fontSize: 16, fontWeight: FontWeight.w500,
-            color: Colors.white,
-          ),
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            minimumSize: const Size(double.infinity, 56),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            backgroundColor: AppColors.orange,
-            foregroundColor: Colors.white,
-            elevation: 0,
-          ),
-        ),
-        appBarTheme: AppBarTheme(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          scrolledUnderElevation: 0,
-          iconTheme: const IconThemeData(color: Colors.white),
-          titleTextStyle: const TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-          ),
-          systemOverlayStyle: SystemUiOverlayStyle(
-            statusBarColor: Colors.transparent,
-            statusBarIconBrightness: Brightness.light,
-          ),
-        ),
-        switchTheme: SwitchThemeData(
-          thumbColor: WidgetStateProperty.resolveWith(
-            (s) => s.contains(WidgetState.selected)
-                ? AppColors.orange : AppColors.muted,
-          ),
-          trackColor: WidgetStateProperty.resolveWith(
-            (s) => s.contains(WidgetState.selected)
-                ? AppColors.orange.withOpacity(0.4)
-                : Colors.white.withOpacity(0.1),
-          ),
-        ),
-        tabBarTheme: const TabBarThemeData(
-          labelColor: AppColors.orange,
-          unselectedLabelColor: AppColors.muted,
-          indicatorColor: AppColors.orange,
-        ),
-        floatingActionButtonTheme: const FloatingActionButtonThemeData(
-          backgroundColor: AppColors.orange,
-          foregroundColor: Colors.white,
-          elevation: 4,
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: AppColors.darkCard2,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.orange, width: 1.5),
-          ),
-          hintStyle: const TextStyle(color: AppColors.muted),
-        ),
-      ),
+      theme: buildAppLightTheme(),
+      darkTheme: buildAppDarkTheme(),
 
       routerConfig: router,
     );
   }
 }
-
-
-
-

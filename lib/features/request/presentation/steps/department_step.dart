@@ -1,4 +1,4 @@
-import 'dart:ui';
+﻿import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
@@ -12,7 +12,7 @@ class DepartmentStep extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final departments = ref.watch(departmentsProvider);
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (departments.isEmpty) {
@@ -31,8 +31,7 @@ class DepartmentStep extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.store_outlined,
-                  size: 64,
-                  color: AppColors.muted.withOpacity(0.5)),
+                  size: 64, color: AppColors.muted.withOpacity(0.5)),
               const SizedBox(height: 16),
               Text(
                 l10n.noDepartments,
@@ -72,9 +71,8 @@ class DepartmentStep extends ConsumerWidget {
             icon: d.icon,
             label: d.name,
             isDark: isDark,
-            onTap: () => ref
-                .read(requestStateProvider.notifier)
-                .selectDepartment(d.id),
+            onTap: () =>
+                ref.read(requestStateProvider.notifier).selectDepartment(d.id),
           );
         },
       ),
@@ -135,8 +133,8 @@ class _DeptCardState extends State<_DeptCard>
         scale: _scale,
         child: ClipRRect(
           borderRadius: BorderRadius.circular(20),
-          child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
             child: Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
@@ -203,7 +201,3 @@ class _DeptCardState extends State<_DeptCard>
     );
   }
 }
-
-
-
-

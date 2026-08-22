@@ -28,12 +28,14 @@ class _TemplateScreenState extends ConsumerState<TemplateScreen> {
       type: fp.FileType.custom,
       allowedExtensions: ['xlsx', 'xls'],
     );
+    if (!mounted) return;
     if (result == null || result.files.single.path == null) {
       setState(() => _loading = false);
       return;
     }
 
     final parsed = await ExcelParser.parseFile(result.files.single.path!);
+    if (!mounted) return;
     if (parsed == null) {
       setState(() {
         _error = 'Не удалось прочитать файл. Убедитесь, что это Excel-файл с заголовками в первой строке.';
@@ -50,29 +52,31 @@ class _TemplateScreenState extends ConsumerState<TemplateScreen> {
     });
   }
 
-Future<void> _tryAiImprove() async {
-  if (_parsed == null) return;
-  setState(() => _aiLoading = true);
-  final aiMappings = await FieldMatcher.tryAiMatch(_parsed!.headers);
-  setState(() {
-    _aiLoading = false;
-    _aiTried = true;
-    if (aiMappings != null) {
-      _mappings = aiMappings;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Сопоставление улучшено через AI', style: TextStyle(color: Colors.white)),
-        backgroundColor: Color(0xFF378ADD),
-        behavior: SnackBarBehavior.floating,
-      ));
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Не удалось подключиться к AI. Используется офлайн-словарь', style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.orange,
-        behavior: SnackBarBehavior.floating,
-      ));
-    }
-  });
-}
+  Future<void> _tryAiImprove() async {
+    if (_parsed == null) return;
+    setState(() => _aiLoading = true);
+    final aiMappings = await FieldMatcher.tryAiMatch(_parsed!.headers);
+    if (!mounted) return;
+    setState(() {
+      _aiLoading = false;
+      _aiTried = true;
+      if (aiMappings != null) {
+        _mappings = aiMappings;
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Сопоставление улучшено через AI', style: TextStyle(color: Colors.white)),
+          backgroundColor: Color(0xFF378ADD),
+          behavior: SnackBarBehavior.floating,
+        ));
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Не удалось подключиться к AI. Используется офлайн-словарь', style: TextStyle(color: Colors.white)),
+          backgroundColor: Colors.orange,
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
+    });
+  }
+
   void _saveTemplate() {
     if (_parsed == null) return;
     final template = CustomTemplate(

@@ -2,14 +2,19 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:horeca_app/app/di.dart';
+import 'package:horeca_app/features/account/data/cloud_auto_sync.dart';
 import 'package:horeca_app/features/history/domain/history_entry.dart';
+import 'package:horeca_app/features/venue/data/venue_repository.dart';
 
 class HistoryRepository {
   final SharedPreferences _prefs;
-  static const _historyKey = 'history_data';
+  final String _historyKey;
+  final void Function()? _onChanged;
   List<HistoryEntry> _entries = [];
 
-  HistoryRepository(this._prefs) {
+  HistoryRepository(this._prefs, String venueCode, {void Function()? onChanged})
+      : _historyKey = 'history_data${venueKeySuffix(venueCode)}',
+        _onChanged = onChanged {
     _loadFromPrefs();
   }
 
@@ -22,6 +27,7 @@ class HistoryRepository {
       'createdAt': e.createdAt.toIso8601String(),
     }).toList();
     _prefs.setString(_historyKey, jsonEncode(data));
+    _onChanged?.call();
   }
 
   void _loadFromPrefs() {
@@ -61,13 +67,11 @@ class HistoryRepository {
 
 final historyRepositoryProvider = Provider<HistoryRepository>((ref) {
   final prefs = ref.watch(sharedPreferencesProvider);
-  return HistoryRepository(prefs);
+  final venueCode = ref.watch(venueRepositoryProvider).activeVenueCode;
+  return HistoryRepository(prefs, venueCode,
+      onChanged: () => ref.read(cloudAutoSyncProvider).scheduleSync());
 });
 
 final historyEntriesProvider = Provider<List<HistoryEntry>>((ref) {
   return ref.watch(historyRepositoryProvider).getAll();
 });
-
-
-
-

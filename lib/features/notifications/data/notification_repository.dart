@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:horeca_app/app/di.dart';
+import 'package:horeca_app/features/account/data/cloud_auto_sync.dart';
 import 'package:horeca_app/features/notifications/data/notification_service.dart';
 
 enum ReminderFrequency { daily, weekly }
@@ -34,7 +35,10 @@ class ProductReminder {
   factory ProductReminder.fromJson(Map<String, dynamic> json) => ProductReminder(
     id: json['id'] as int,
     productName: json['productName'] as String,
-    frequency: ReminderFrequency.values.firstWhere((e) => e.name == json['frequency']),
+    frequency: ReminderFrequency.values.firstWhere(
+      (e) => e.name == json['frequency'],
+      orElse: () => ReminderFrequency.daily,
+    ),
     hour: json['hour'] as int,
     minute: json['minute'] as int,
     weekday: json['weekday'] as int?,
@@ -103,10 +107,13 @@ class NotificationData {
 class NotificationRepository extends StateNotifier<NotificationData> {
   final SharedPreferences _prefs;
   final NotificationService _service = NotificationService();
+  final void Function()? _onChanged;
   static const _key = 'notification_data';
   int _nextId = 1000;
 
-  NotificationRepository(this._prefs) : super(const NotificationData()) {
+  NotificationRepository(this._prefs, {void Function()? onChanged})
+      : _onChanged = onChanged,
+        super(const NotificationData()) {
     _load();
     _service.init();
   }
@@ -132,6 +139,7 @@ class NotificationRepository extends StateNotifier<NotificationData> {
       'inventoryReminder': state.inventoryReminder.toJson(),
     };
     _prefs.setString(_key, jsonEncode(data));
+    _onChanged?.call();
   }
 
   Future<void> addProductReminder({
@@ -202,5 +210,6 @@ class NotificationRepository extends StateNotifier<NotificationData> {
 final notificationRepositoryProvider =
     StateNotifierProvider<NotificationRepository, NotificationData>((ref) {
   final prefs = ref.watch(sharedPreferencesProvider);
-  return NotificationRepository(prefs);
+  return NotificationRepository(prefs,
+      onChanged: () => ref.read(cloudAutoSyncProvider).scheduleSync());
 });

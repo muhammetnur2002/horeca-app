@@ -14,7 +14,3 @@ class ProductModel {
     this.minStock,
   }) : inventoryUnit = inventoryUnit ?? unit;
 }
-
-
-
-

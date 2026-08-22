@@ -29,12 +29,10 @@ class AppLocalizations {
     'editDepartment': 'Изменить отдел',
     'addCategory': 'Новая категория',
     'editCategory': 'Изменить категорию',
-    'addProduct': 'Новый товар',
     'editProduct': 'Изменить товар',
     'bulkAddProducts': 'Массовое добавление',
     'requestTitle': 'Заявка',
     'reportTitle': 'Отчёт об инвентаризации',
-    'importExcel': 'Импорт Excel',
     'department': 'Отдел',
     'category': 'Категория',
     'product': 'Товар',
@@ -46,52 +44,19 @@ class AppLocalizations {
     'selectCategory': 'Сначала выберите категорию',
     'copySuccess': 'Текст скопирован в буфер обмена',
     'establishmentName': 'Название заведения',
-    'clearHistory': 'Очистить историю',
-    'historyCleared': 'История очищена',
-    'deleteConfirm': 'Вы уверены?',
     'delete': 'Удалить',
-    'theme': 'Тема',
-    'darkTheme': 'Тёмная тема',
-    'darkThemeOn': 'Включена',
-    'lightThemeOn': 'Выключена',
-    'successDepartmentAdded': 'Отдел добавлен',
-    'successDepartmentDeleted': 'Отдел удалён',
-    'successDepartmentUpdated': 'Отдел обновлён',
-    'successCategoryAdded': 'Категория добавлена',
-    'successCategoryDeleted': 'Категория удалена',
-    'successCategoryUpdated': 'Категория обновлена',
-    'successProductAdded': 'Товар добавлен',
-    'successProductDeleted': 'Товар удалён',
-    'successProductUpdated': 'Товар обновлён',
-    'successProductsBulkAdded': 'Товары добавлены',
-    'successHistoryCleared': 'История очищена',
-    'errorSync': 'Ошибка синхронизации',
-    'errorImport': 'Ошибка импорта',
     'add': 'Добавить',
     'cancel': 'Отмена',
     'save': 'Сохранить',
-    'close': 'Закрыть',
     'date': 'Дата',
     'establishment': 'Заведение',
     'responsible': 'Ответственный',
     'loading': 'Загрузка...',
     'noData': 'Нет данных',
     'allDepartments': 'Все отделы',
-    'enterQuantity': 'Введите количество',
     'ok': 'OK',
     'requestsTab': 'Заявки',
     'inventoryTab': 'Инвентаризации',
-    'noRecords': 'Нет записей',
-    'establishmentTab': 'Заведение',
-    'departmentsTab': 'Отделы',
-    'categoriesTab': 'Категории',
-    'productsTab': 'Товары',
-    'themeTab': 'Тема',
-    'kitchen': 'Кухня',
-    'bar': 'Бар',
-    'hall': 'Зал',
-    'warehouse': 'Склад',
-    'cleaning': 'Клининг',
     'generateReport': 'Создать отчёт',
   };
 
@@ -113,12 +78,10 @@ class AppLocalizations {
   String get editDepartment => translate('editDepartment');
   String get addCategory => translate('addCategory');
   String get editCategory => translate('editCategory');
-  String get addProduct => translate('addProduct');
   String get editProduct => translate('editProduct');
   String get bulkAddProducts => translate('bulkAddProducts');
   String get requestTitle => translate('requestTitle');
   String get reportTitle => translate('reportTitle');
-  String get importExcel => translate('importExcel');
   String get department => translate('department');
   String get category => translate('category');
   String get product => translate('product');
@@ -130,64 +93,20 @@ class AppLocalizations {
   String get selectCategory => translate('selectCategory');
   String get copySuccess => translate('copySuccess');
   String get establishmentName => translate('establishmentName');
-  String get clearHistory => translate('clearHistory');
-  String get historyCleared => translate('historyCleared');
-  String get deleteConfirm => translate('deleteConfirm');
   String get delete => translate('delete');
-  String get theme => translate('theme');
-  String get darkTheme => translate('darkTheme');
-  String get darkThemeOn => translate('darkThemeOn');
-  String get lightThemeOn => translate('lightThemeOn');
-  String get successDepartmentAdded => translate('successDepartmentAdded');
-  String get successDepartmentDeleted => translate('successDepartmentDeleted');
-  String get successDepartmentUpdated => translate('successDepartmentUpdated');
-  String get successCategoryAdded => translate('successCategoryAdded');
-  String get successCategoryDeleted => translate('successCategoryDeleted');
-  String get successCategoryUpdated => translate('successCategoryUpdated');
-  String get successProductAdded => translate('successProductAdded');
-  String get successProductDeleted => translate('successProductDeleted');
-  String get successProductUpdated => translate('successProductUpdated');
-  String get successProductsBulkAdded => translate('successProductsBulkAdded');
-  String get successHistoryCleared => translate('successHistoryCleared');
-  String get errorSync => translate('errorSync');
-  String get errorImport => translate('errorImport');
   String get add => translate('add');
   String get cancel => translate('cancel');
   String get save => translate('save');
-  String get close => translate('close');
   String get date => translate('date');
   String get establishment => translate('establishment');
   String get responsible => translate('responsible');
   String get loading => translate('loading');
   String get noData => translate('noData');
   String get allDepartments => translate('allDepartments');
-  String get enterQuantity => translate('enterQuantity');
   String get ok => translate('ok');
   String get requestsTab => translate('requestsTab');
   String get inventoryTab => translate('inventoryTab');
-  String get noRecords => translate('noRecords');
-  String get establishmentTab => translate('establishmentTab');
-  String get departmentsTab => translate('departmentsTab');
-  String get categoriesTab => translate('categoriesTab');
-  String get productsTab => translate('productsTab');
-  String get themeTab => translate('themeTab');
-  String get kitchen => translate('kitchen');
-  String get bar => translate('bar');
-  String get hall => translate('hall');
-  String get warehouse => translate('warehouse');
-  String get cleaning => translate('cleaning');
   String get generateReport => translate('generateReport');
-
-  String getDepartmentName(String id) {
-    switch (id) {
-      case '1': return kitchen;
-      case '2': return bar;
-      case '3': return hall;
-      case '4': return warehouse;
-      case '5': return cleaning;
-      default: return department;
-    }
-  }
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
@@ -204,7 +123,3 @@ class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> 
   @override
   bool shouldReload(covariant LocalizationsDelegate<AppLocalizations> old) => false;
 }
-
-
-
-

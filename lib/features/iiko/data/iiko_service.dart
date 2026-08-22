@@ -21,7 +21,12 @@ class IikoBalanceItem {
 
 class IikoService {
   static const _baseUrl = 'https://api-ru.iiko.services/api/1';
-  final Dio _dio = Dio();
+  // Dio 5.x принимает таймауты как Duration напрямую (было int/мс в 4.x).
+  final Dio _dio = Dio(BaseOptions(
+    connectTimeout: const Duration(seconds: 15),
+    receiveTimeout: const Duration(seconds: 15),
+    sendTimeout: const Duration(seconds: 15),
+  ));
 
   Future<String> getAccessToken(String apiLogin) async {
     final response = await _dio.post(
@@ -101,6 +106,3 @@ List<IikoBalanceItem> getDemoBalances() {
     IikoBalanceItem(productName: 'Сливки 33%', amount: 0.5, unit: 'л'),
   ];
 }
-
-
-

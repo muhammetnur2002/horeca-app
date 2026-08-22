@@ -6,6 +6,7 @@ import 'package:horeca_app/features/request/data/repositories/product_repository
 import 'package:horeca_app/features/request/domain/usecases/request_state.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
 import 'package:horeca_app/shared/models/category_model.dart';
+import 'package:horeca_app/shared/widgets/quantity_stepper.dart';
 import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
 
 class ProductListStep extends ConsumerStatefulWidget {
@@ -25,73 +26,10 @@ class _ProductListStepState extends ConsumerState<ProductListStep> {
     super.dispose();
   }
 
-  String _formatQuantity(double q) {
-    return (q % 1 == 0) ? q.toInt().toString() : q.toStringAsFixed(1);
-  }
-
-  void _showQuantityDialog(BuildContext context, String productId,
-      String productName, double currentQuantity, String unit, WidgetRef ref) {
-    final controller =
-        TextEditingController(text: currentQuantity.toStringAsFixed(0));
-    final l10n = AppLocalizations.of(context)!;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: isDark ? AppColors.darkCard : Colors.white,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(
-          '${l10n.enterQuantity} ($productName)',
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          keyboardType:
-              const TextInputType.numberWithOptions(decimal: false),
-          decoration: InputDecoration(
-            hintText: '0',
-            suffixText: unit,
-            prefixIcon: const Icon(Icons.inventory_2_outlined,
-                color: AppColors.orange),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(l10n.cancel,
-                style: const TextStyle(color: AppColors.muted)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final val = int.tryParse(controller.text) ?? 0;
-              ref.read(requestStateProvider.notifier).updateItem(
-                    productId,
-                    val.toDouble(),
-                    productName: productName,
-                    unit: unit,
-                  );
-              Navigator.pop(ctx);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.orange,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-            ),
-            child: Text(l10n.ok),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(requestStateProvider);
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (state.categoryId == null) {
@@ -136,7 +74,7 @@ class _ProductListStepState extends ConsumerState<ProductListStep> {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(14),
               child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                
+
                 child: Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(14),
@@ -154,24 +92,24 @@ class _ProductListStepState extends ConsumerState<ProductListStep> {
                       fontSize: 14,
                     ),
                     decoration: InputDecoration(
-  hintText: l10n.searchProducts,
-  hintStyle: TextStyle(color: AppColors.muted),
-  prefixIcon: Icon(Icons.search_rounded, color: AppColors.muted),
-  suffixIcon: _searchQuery.isNotEmpty
-      ? IconButton(
-          icon: const Icon(Icons.close_rounded, color: AppColors.muted, size: 18),
-          onPressed: () => setState(() {
-            _searchController.clear();
-            _searchQuery = '';
-          }))
-      : null,
-  border: InputBorder.none,
-  enabledBorder: InputBorder.none,
-  focusedBorder: InputBorder.none,
-  filled: false,
-  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-),
-onChanged: (v) => setState(() => _searchQuery = v),
+                      hintText: l10n.searchProducts,
+                      hintStyle: TextStyle(color: AppColors.muted),
+                      prefixIcon: Icon(Icons.search_rounded, color: AppColors.muted),
+                      suffixIcon: _searchQuery.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.close_rounded, color: AppColors.muted, size: 18),
+                              onPressed: () => setState(() {
+                                _searchController.clear();
+                                _searchQuery = '';
+                              }))
+                          : null,
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      filled: false,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    ),
+                    onChanged: (v) => setState(() => _searchQuery = v),
                   ),
                 ),
               ),
@@ -277,109 +215,20 @@ onChanged: (v) => setState(() => _searchQuery = v),
                                     ],
                                   ),
                                 ),
-                                // Кнопка минус
-                                GestureDetector(
-                                  onTap: () {
-                                    if (currentItem.quantity > 0) {
-                                      ref
-                                          .read(requestStateProvider
-                                              .notifier)
-                                          .updateItem(
-                                            currentItem.productId,
-                                            currentItem.quantity - 1,
-                                            productName: product.name,
-                                            unit: product.unit,
-                                          );
-                                    }
-                                  },
-                                  child: Container(
-                                    width: 32,
-                                    height: 32,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(
-                                          isDark ? 0.08 : 0.6),
-                                      borderRadius:
-                                          BorderRadius.circular(8),
-                                      border: Border.all(
-                                          color: Colors.white
-                                              .withOpacity(isDark
-                                                  ? 0.1
-                                                  : 0.3)),
-                                    ),
-                                    child: Icon(Icons.remove,
-                                        size: 16,
-                                        color: isDark
-                                            ? Colors.white
-                                            : const Color(0xFF1A1A2E)),
-                                  ),
-                                ),
-                                // Количество
-                                GestureDetector(
-                                  onTap: () => _showQuantityDialog(
-                                    context,
-                                    product.id,
-                                    product.name,
-                                    currentItem.quantity,
-                                    product.unit,
-                                    ref,
-                                  ),
-                                  child: SizedBox(
-                                    width: 40,
-                                    child: Text(
-                                      _formatQuantity(
-                                          currentItem.quantity),
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w700,
-                                        color: hasQty
-                                            ? AppColors.orange
-                                            : isDark
-                                                ? Colors.white
-                                                : const Color(
-                                                    0xFF1A1A2E),
-                                        decoration:
-                                            TextDecoration.underline,
-                                        decorationColor: hasQty
-                                            ? AppColors.orange
-                                            : AppColors.muted,
+                                QuantityStepper(
+                                  value: currentItem.quantity,
+                                  unit: product.unit,
+                                  isDark: isDark,
+                                  productName: product.name,
+                                  allowDecimal: false,
+                                  onChanged: (v) => ref
+                                      .read(requestStateProvider.notifier)
+                                      .updateItem(
+                                        currentItem.productId,
+                                        v,
+                                        productName: product.name,
+                                        unit: product.unit,
                                       ),
-                                    ),
-                                  ),
-                                ),
-                                // Кнопка плюс
-                                GestureDetector(
-                                  onTap: () {
-                                    ref
-                                        .read(
-                                            requestStateProvider.notifier)
-                                        .updateItem(
-                                          currentItem.productId,
-                                          currentItem.quantity + 1,
-                                          productName: product.name,
-                                          unit: product.unit,
-                                        );
-                                  },
-                                  child: Container(
-                                    width: 32,
-                                    height: 32,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(
-                                          isDark ? 0.08 : 0.6),
-                                      borderRadius:
-                                          BorderRadius.circular(8),
-                                      border: Border.all(
-                                          color: Colors.white
-                                              .withOpacity(isDark
-                                                  ? 0.1
-                                                  : 0.3)),
-                                    ),
-                                    child: Icon(Icons.add,
-                                        size: 16,
-                                        color: isDark
-                                            ? Colors.white
-                                            : const Color(0xFF1A1A2E)),
-                                  ),
                                 ),
                               ],
                             ),
@@ -400,7 +249,7 @@ onChanged: (v) => setState(() => _searchQuery = v),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16),
                 child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                  
+
                   child: Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 16),
@@ -434,7 +283,3 @@ onChanged: (v) => setState(() => _searchQuery = v),
     );
   }
 }
-
-
-
-

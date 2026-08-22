@@ -15,6 +15,18 @@ import 'package:horeca_app/features/notifications/presentation/notifications_scr
 import 'package:horeca_app/features/custom_template/presentation/template_screen.dart';
 import 'package:horeca_app/features/auth/data/auth_repository.dart';
 
+/// Настройки и аналитика видны только администратору — соответствующие
+/// кнопки и так скрыты для сотрудников (см. HomeScreen, MainShell), но это
+/// только UI: без проверки прямо в роуте сотрудник мог бы всё равно
+/// оказаться на этих экранах (восстановление состояния роутера после
+/// сворачивания, диплинк и т.п.) и получить доступ к PIN администратора,
+/// удалению заведений и финансовым показателям.
+String? _adminOnlyRedirect(BuildContext context, GoRouterState state) {
+  final authState = ProviderScope.containerOf(context).read(authRepositoryProvider);
+  if (authState.role == UserRole.staff) return '/';
+  return null;
+}
+
 final router = GoRouter(
   initialLocation: '/',
   routes: [
@@ -25,7 +37,11 @@ final router = GoRouter(
         GoRoute(path: '/request', builder: (_, __) => const RequestScreen()),
         GoRoute(path: '/inventory', builder: (_, __) => const InventoryScreen()),
         GoRoute(path: '/history', builder: (_, __) => const HistoryScreen()),
-        GoRoute(path: '/settings', builder: (_, __) => const SettingsScreen()),
+        GoRoute(
+          path: '/settings',
+          redirect: _adminOnlyRedirect,
+          builder: (_, __) => const SettingsScreen(),
+        ),
       ],
     ),
     // Закрытие смены — без BottomBar, отдельный экран
@@ -39,6 +55,7 @@ final router = GoRouter(
     ),
     GoRoute(
       path: '/analytics',
+      redirect: _adminOnlyRedirect,
       builder: (_, __) => const AnalyticsScreen(),
     ),
     GoRoute(
@@ -57,11 +74,11 @@ class MainShell extends ConsumerWidget {
   const MainShell({required this.child, super.key});
 
   @override
-Widget build(BuildContext context, WidgetRef ref) {
-  final l10n = AppLocalizations.of(context);
-  final isDark = Theme.of(context).brightness == Brightness.dark;
-  final authState = ref.watch(authRepositoryProvider);
-  final isAdmin = authState.role != UserRole.staff;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final authState = ref.watch(authRepositoryProvider);
+    final isAdmin = authState.role != UserRole.staff;
 
     return Scaffold(
       body: child,
@@ -100,23 +117,23 @@ Widget build(BuildContext context, WidgetRef ref) {
           ),
           unselectedLabelStyle: const TextStyle(fontSize: 11),
           items: [
-  BottomNavigationBarItem(
-    icon: const Icon(Icons.home_outlined),
-    activeIcon: const Icon(Icons.home_rounded),
-    label: l10n.appTitle,
-  ),
-  BottomNavigationBarItem(
-    icon: const Icon(Icons.history_outlined),
-    activeIcon: const Icon(Icons.history_rounded),
-    label: l10n.history,
-  ),
-  if (isAdmin)
-    BottomNavigationBarItem(
-      icon: const Icon(Icons.settings_outlined),
-      activeIcon: const Icon(Icons.settings_rounded),
-      label: l10n.settings,
-    ),
-],
+            BottomNavigationBarItem(
+              icon: const Icon(Icons.home_outlined),
+              activeIcon: const Icon(Icons.home_rounded),
+              label: l10n.appTitle,
+            ),
+            BottomNavigationBarItem(
+              icon: const Icon(Icons.history_outlined),
+              activeIcon: const Icon(Icons.history_rounded),
+              label: l10n.history,
+            ),
+            if (isAdmin)
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.settings_outlined),
+                activeIcon: const Icon(Icons.settings_rounded),
+                label: l10n.settings,
+              ),
+          ],
         ),
       ),
     );
@@ -137,7 +154,3 @@ Widget build(BuildContext context, WidgetRef ref) {
     }
   }
 }
-
-
-
-

@@ -1,0 +1,68 @@
+{
+  "project_info": {
+    "project_number": "631741722733",
+    "project_id": "akyl-b8775",
+    "storage_bucket": "akyl-b8775.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:631741722733:android:54d066a371363c1e680f64",
+        "android_client_info": {
+          "package_name": "com.akyl.horeca"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "631741722733-lp336ncel9rbs3ak1g99jjg8ralph16m.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCqZia4NIV2_p720P7tbuaFHsJbrMCYTwI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "631741722733-lp336ncel9rbs3ak1g99jjg8ralph16m.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:631741722733:android:2ce6a539a3c23efc680f64",
+        "android_client_info": {
+          "package_name": "com.example.horeca_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "631741722733-lp336ncel9rbs3ak1g99jjg8ralph16m.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCqZia4NIV2_p720P7tbuaFHsJbrMCYTwI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "631741722733-lp336ncel9rbs3ak1g99jjg8ralph16m.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

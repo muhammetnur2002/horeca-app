@@ -112,14 +112,24 @@ class InventoryStateNotifier extends StateNotifier<InventoryState> {
     state = const InventoryState();
   }
 
-  void updateItem(String id, String name, String inventoryUnit, double value) {}
+  void updateItem(String id, String name, String inventoryUnit, double value) {
+    final index = state.items.indexWhere((i) => i.productId == id);
+    final updated = List<InventoryItem>.from(state.items);
+    if (index >= 0) {
+      updated[index] = updated[index].copyWith(remaining: value);
+    } else {
+      updated.add(InventoryItem(
+        productId: id,
+        productName: name,
+        remaining: value,
+        unit: inventoryUnit,
+      ));
+    }
+    state = state.copyWith(items: updated);
+  }
 }
 
 final inventoryStateProvider =
     StateNotifierProvider<InventoryStateNotifier, InventoryState>((ref) {
   return InventoryStateNotifier();
 });
-
-
-
-
