@@ -34,9 +34,9 @@ class ThemeTab extends ConsumerWidget {
                 padding: const EdgeInsets.all(32),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(24),
-                  color: Colors.white.withOpacity(isDark ? 0.06 : 0.55),
+                  color: Colors.white.withValues(alpha: isDark ? 0.06 : 0.55),
                   border: Border.all(
-                    color: Colors.white.withOpacity(isDark ? 0.1 : 0.8),
+                    color: Colors.white.withValues(alpha: isDark ? 0.1 : 0.8),
                   ),
                 ),
                 child: Column(
@@ -89,12 +89,12 @@ class ThemeTab extends ConsumerWidget {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
                       color: themeMode == ThemeMode.light
-                          ? AppColors.orange.withOpacity(0.12)
-                          : Colors.white.withOpacity(isDark ? 0.04 : 0.4),
+                          ? AppColors.orange.withValues(alpha: 0.12)
+                          : Colors.white.withValues(alpha: isDark ? 0.04 : 0.4),
                       border: Border.all(
                         color: themeMode == ThemeMode.light
-                            ? AppColors.orange.withOpacity(0.4)
-                            : Colors.white.withOpacity(0.1),
+                            ? AppColors.orange.withValues(alpha: 0.4)
+                            : Colors.white.withValues(alpha: 0.1),
                         width: themeMode == ThemeMode.light ? 1.5 : 1,
                       ),
                     ),
@@ -131,12 +131,12 @@ class ThemeTab extends ConsumerWidget {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
                       color: themeMode == ThemeMode.system
-                          ? AppColors.green.withOpacity(0.12)
-                          : Colors.white.withOpacity(isDark ? 0.04 : 0.4),
+                          ? AppColors.green.withValues(alpha: 0.12)
+                          : Colors.white.withValues(alpha: isDark ? 0.04 : 0.4),
                       border: Border.all(
                         color: themeMode == ThemeMode.system
-                            ? AppColors.green.withOpacity(0.4)
-                            : Colors.white.withOpacity(0.1),
+                            ? AppColors.green.withValues(alpha: 0.4)
+                            : Colors.white.withValues(alpha: 0.1),
                         width: themeMode == ThemeMode.system ? 1.5 : 1,
                       ),
                     ),
@@ -173,12 +173,12 @@ class ThemeTab extends ConsumerWidget {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
                       color: themeMode == ThemeMode.dark
-                          ? AppColors.orange.withOpacity(0.12)
-                          : Colors.white.withOpacity(isDark ? 0.04 : 0.4),
+                          ? AppColors.orange.withValues(alpha: 0.12)
+                          : Colors.white.withValues(alpha: isDark ? 0.04 : 0.4),
                       border: Border.all(
                         color: themeMode == ThemeMode.dark
-                            ? AppColors.orange.withOpacity(0.4)
-                            : Colors.white.withOpacity(0.1),
+                            ? AppColors.orange.withValues(alpha: 0.4)
+                            : Colors.white.withValues(alpha: 0.1),
                         width: themeMode == ThemeMode.dark ? 1.5 : 1,
                       ),
                     ),
@@ -267,7 +267,7 @@ _AboutRow(
 
 const SizedBox(height: 20),
 Text('Akyl v1.0.0 — управляй с умом',
-    style: TextStyle(fontSize: 11, color: AppColors.muted.withOpacity(0.6))),
+    style: TextStyle(fontSize: 11, color: AppColors.muted.withValues(alpha: 0.6))),
       ],
     ),
   );
@@ -315,7 +315,7 @@ Text('Akyl v1.0.0 — управляй с умом',
                 margin: const EdgeInsets.only(top: 12),
                 width: 40, height: 4,
                 decoration: BoxDecoration(
-                    color: AppColors.muted.withOpacity(0.3),
+                    color: AppColors.muted.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(2))),
               Padding(
                 padding: const EdgeInsets.all(20),
@@ -388,7 +388,7 @@ Text('Akyl v1.0.0 — управляй с умом',
   '9. КОНТАКТЫ\n'
   'По вопросам обработки данных пишите на support@akylapp.com',
   style: TextStyle(fontSize: 14, height: 1.6,
-      color: isDark ? Colors.white.withOpacity(0.85) : const Color(0xFF1A1A2E)),
+      color: isDark ? Colors.white.withValues(alpha: 0.85) : const Color(0xFF1A1A2E)),
 ),
                 ),
               ),
@@ -419,7 +419,7 @@ Text('Akyl v1.0.0 — управляй с умом',
               margin: const EdgeInsets.only(top: 12),
               width: 40, height: 4,
               decoration: BoxDecoration(
-                  color: AppColors.muted.withOpacity(0.3),
+                  color: AppColors.muted.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(2))),
             Padding(
               padding: const EdgeInsets.all(20),
@@ -496,7 +496,7 @@ Text('Akyl v1.0.0 — управляй с умом',
   '11. КОНТАКТЫ\n'
   'По всем вопросам — support@akylapp.com',
   style: TextStyle(fontSize: 14, height: 1.6,
-      color: isDark ? Colors.white.withOpacity(0.85) : const Color(0xFF1A1A2E)),
+      color: isDark ? Colors.white.withValues(alpha: 0.85) : const Color(0xFF1A1A2E)),
 ),
               ),
             ),
@@ -562,13 +562,13 @@ class _AboutRow extends StatelessWidget {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
-          color: Colors.white.withOpacity(isDark ? 0.06 : 0.6),
-          border: Border.all(color: Colors.white.withOpacity(isDark ? 0.1 : 0.4)),
+          color: Colors.white.withValues(alpha: isDark ? 0.06 : 0.6),
+          border: Border.all(color: Colors.white.withValues(alpha: isDark ? 0.1 : 0.4)),
         ),
         child: Row(children: [
           Container(width: 40, height: 40,
               decoration: BoxDecoration(
-                  color: color.withOpacity(0.12),
+                  color: color.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12)),
               child: Icon(icon, color: color, size: 20)),
           const SizedBox(width: 12),
@@ -577,7 +577,7 @@ class _AboutRow extends StatelessWidget {
             const SizedBox(height: 2),
             Text(subtitle, style: const TextStyle(fontSize: 12, color: AppColors.muted)),
           ])),
-          Icon(Icons.chevron_right_rounded, color: AppColors.muted.withOpacity(0.5)),
+          Icon(Icons.chevron_right_rounded, color: AppColors.muted.withValues(alpha: 0.5)),
         ]),
       ),
     );
@@ -658,7 +658,7 @@ class _IconPainter extends CustomPainter {
     // орбиты
     final orbitPaint = Paint()
       ..color = (isDark ? const Color(0xFF8C5020) : const Color(0xFFB05A10))
-          .withOpacity(0.55)
+          .withValues(alpha: 0.55)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
 

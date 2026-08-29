@@ -66,8 +66,8 @@ class _ProductsTabState extends ConsumerState<ProductsTab> {
           child: Container(
             decoration: BoxDecoration(
               color: Theme.of(context).brightness == Brightness.dark
-                  ? AppColors.darkCard.withOpacity(0.95)
-                  : Colors.white.withOpacity(0.95),
+                  ? AppColors.darkCard.withValues(alpha: 0.95)
+                  : Colors.white.withValues(alpha: 0.95),
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(20)),
             ),
@@ -79,7 +79,7 @@ class _ProductsTabState extends ConsumerState<ProductsTab> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: AppColors.muted.withOpacity(0.3),
+                    color: AppColors.muted.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -245,10 +245,10 @@ class _ProductsTabState extends ConsumerState<ProductsTab> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(14),
                     color: Colors.white
-                        .withOpacity(isDark ? 0.06 : 0.55),
+                        .withValues(alpha: isDark ? 0.06 : 0.55),
                     border: Border.all(
                       color: Colors.white
-                          .withOpacity(isDark ? 0.1 : 0.8),
+                          .withValues(alpha: isDark ? 0.1 : 0.8),
                     ),
                   ),
                   child: TextField(
@@ -346,7 +346,7 @@ onChanged: (v) => setState(() => _searchQuery = v),
                           height: 80,
                           decoration: BoxDecoration(
                             color:
-                                AppColors.muted.withOpacity(0.08),
+                                AppColors.muted.withValues(alpha: 0.08),
                             borderRadius:
                                 BorderRadius.circular(24),
                           ),
@@ -354,7 +354,7 @@ onChanged: (v) => setState(() => _searchQuery = v),
                               Icons.inventory_2_outlined,
                               size: 36,
                               color: AppColors.muted
-                                  .withOpacity(0.5)),
+                                  .withValues(alpha: 0.5)),
                         ),
                         const SizedBox(height: 16),
                         Text('Нет товаров',
@@ -429,8 +429,8 @@ onChanged: (v) => setState(() => _searchQuery = v),
                 filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                 child: Container(
                   color: isDark
-                      ? AppColors.darkSurface.withOpacity(0.9)
-                      : Colors.white.withOpacity(0.9),
+                      ? AppColors.darkSurface.withValues(alpha: 0.9)
+                      : Colors.white.withValues(alpha: 0.9),
                   padding: const EdgeInsets.symmetric(
                       horizontal: 12, vertical: 8),
                   child: SafeArea(
@@ -594,11 +594,11 @@ onChanged: (v) => setState(() => _searchQuery = v),
           borderRadius: BorderRadius.circular(20),
           color: selected
               ? color
-              : Colors.white.withOpacity(isDark ? 0.06 : 0.5),
+              : Colors.white.withValues(alpha: isDark ? 0.06 : 0.5),
           border: Border.all(
             color: selected
                 ? color
-                : Colors.white.withOpacity(isDark ? 0.1 : 0.4),
+                : Colors.white.withValues(alpha: isDark ? 0.1 : 0.4),
           ),
         ),
         child: Text(
@@ -1129,14 +1129,14 @@ class _ProductItem extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(14),
               color: isSelected
-                  ? AppColors.orange.withOpacity(0.12)
+                  ? AppColors.orange.withValues(alpha: 0.12)
                   : Colors.white
-                      .withOpacity(isDark ? 0.06 : 0.55),
+                      .withValues(alpha: isDark ? 0.06 : 0.55),
               border: Border.all(
                 color: isSelected
-                    ? AppColors.orange.withOpacity(0.4)
+                    ? AppColors.orange.withValues(alpha: 0.4)
                     : Colors.white
-                        .withOpacity(isDark ? 0.1 : 0.8),
+                        .withValues(alpha: isDark ? 0.1 : 0.8),
               ),
             ),
             child: Row(
@@ -1156,7 +1156,7 @@ class _ProductItem extends StatelessWidget {
                     height: 36,
                     decoration: BoxDecoration(
                       color:
-                          AppColors.orange.withOpacity(0.1),
+                          AppColors.orange.withValues(alpha: 0.1),
                       borderRadius:
                           BorderRadius.circular(10),
                     ),
@@ -1239,9 +1239,9 @@ class _BatchBtn extends StatelessWidget {
             horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
-          color: AppColors.orange.withOpacity(0.12),
+          color: AppColors.orange.withValues(alpha: 0.12),
           border: Border.all(
-              color: AppColors.orange.withOpacity(0.3)),
+              color: AppColors.orange.withValues(alpha: 0.3)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

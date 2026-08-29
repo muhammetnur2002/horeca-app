@@ -160,10 +160,10 @@ class GenerateStep extends ConsumerWidget {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
                       color:
-                          Colors.white.withOpacity(isDark ? 0.06 : 0.55),
+                          Colors.white.withValues(alpha: isDark ? 0.06 : 0.55),
                       border: Border.all(
                         color: Colors.white
-                            .withOpacity(isDark ? 0.1 : 0.8),
+                            .withValues(alpha: isDark ? 0.1 : 0.8),
                       ),
                     ),
                     child: SingleChildScrollView(
@@ -173,7 +173,7 @@ class GenerateStep extends ConsumerWidget {
                           fontSize: 13,
                           height: 1.6,
                           color: isDark
-                              ? Colors.white.withOpacity(0.85)
+                              ? Colors.white.withValues(alpha: 0.85)
                               : const Color(0xFF1A1A2E),
                         ),
                       ),
@@ -328,10 +328,10 @@ class GenerateStep extends ConsumerWidget {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
                         color: Colors.white
-                            .withOpacity(isDark ? 0.06 : 0.5),
+                            .withValues(alpha: isDark ? 0.06 : 0.5),
                         border: Border.all(
                             color: Colors.white
-                                .withOpacity(isDark ? 0.1 : 0.4)),
+                                .withValues(alpha: isDark ? 0.1 : 0.4)),
                       ),
                       child: Text(
                         l10n.edit,
@@ -354,9 +354,9 @@ class GenerateStep extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
-                        color: AppColors.green.withOpacity(0.1),
+                        color: AppColors.green.withValues(alpha: 0.1),
                         border: Border.all(
-                            color: AppColors.green.withOpacity(0.3)),
+                            color: AppColors.green.withValues(alpha: 0.3)),
                       ),
                       child: Text(
                         l10n.newRequest,
@@ -408,8 +408,8 @@ class _ActionBtn extends StatelessWidget {
                 vertical: 13, horizontal: 16),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              color: color.withOpacity(isDark ? 0.15 : 0.1),
-              border: Border.all(color: color.withOpacity(0.3)),
+              color: color.withValues(alpha: isDark ? 0.15 : 0.1),
+              border: Border.all(color: color.withValues(alpha: 0.3)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,

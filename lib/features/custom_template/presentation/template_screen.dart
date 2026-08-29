@@ -162,8 +162,8 @@ Future<void> _tryAiImprove() async {
                     padding: const EdgeInsets.symmetric(vertical: 24),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
-                      color: AppColors.orange.withOpacity(0.1),
-                      border: Border.all(color: AppColors.orange.withOpacity(0.3), style: BorderStyle.solid)),
+                      color: AppColors.orange.withValues(alpha: 0.1),
+                      border: Border.all(color: AppColors.orange.withValues(alpha: 0.3), style: BorderStyle.solid)),
                     child: Column(children: [
                       _loading
                           ? const CircularProgressIndicator(color: AppColors.orange)
@@ -189,8 +189,8 @@ Future<void> _tryAiImprove() async {
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),
-            color: const Color(0xFF378ADD).withOpacity(0.15),
-            border: Border.all(color: const Color(0xFF378ADD).withOpacity(0.3))),
+            color: const Color(0xFF378ADD).withValues(alpha: 0.15),
+            border: Border.all(color: const Color(0xFF378ADD).withValues(alpha: 0.3))),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
             _aiLoading
                 ? const SizedBox(width: 12, height: 12,
@@ -215,7 +215,7 @@ Future<void> _tryAiImprove() async {
                     onPressed: () => setState(() { _parsed = null; _mappings = []; }),
                     style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: BorderSide(color: AppColors.muted.withOpacity(0.3)),
+                        side: BorderSide(color: AppColors.muted.withValues(alpha: 0.3)),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
                     child: const Text('Отмена', style: TextStyle(color: AppColors.muted)),
                   )),
@@ -251,8 +251,8 @@ class _ActiveTemplateCard extends StatelessWidget {
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
-            color: AppColors.green.withOpacity(isDark ? 0.1 : 0.06),
-            border: Border.all(color: AppColors.green.withOpacity(0.3))),
+            color: AppColors.green.withValues(alpha: isDark ? 0.1 : 0.06),
+            border: Border.all(color: AppColors.green.withValues(alpha: 0.3))),
           child: Row(children: [
             const Icon(Icons.check_circle_rounded, color: AppColors.green, size: 22),
             const SizedBox(width: 10),
@@ -285,8 +285,8 @@ class _MappingRow extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
-        color: Colors.white.withOpacity(isDark ? 0.06 : 0.6),
-        border: Border.all(color: Colors.white.withOpacity(isDark ? 0.1 : 0.4))),
+        color: Colors.white.withValues(alpha: isDark ? 0.06 : 0.6),
+        border: Border.all(color: Colors.white.withValues(alpha: isDark ? 0.1 : 0.4))),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
           Expanded(child: Text('«${mapping.originalHeader}»',
@@ -294,7 +294,7 @@ class _MappingRow extends StatelessWidget {
           if (autoMatched)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(color: AppColors.green.withOpacity(0.15), borderRadius: BorderRadius.circular(8)),
+              decoration: BoxDecoration(color: AppColors.green.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(8)),
               child: const Text('авто', style: TextStyle(fontSize: 10, color: AppColors.green, fontWeight: FontWeight.w600)),
             ),
         ]),

@@ -31,12 +31,12 @@ class ShiftTab extends ConsumerWidget {
                     width: 80,
                     height: 80,
                     decoration: BoxDecoration(
-                      color: AppColors.muted.withOpacity(0.08),
+                      color: AppColors.muted.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(24),
                     ),
                     child: Icon(Icons.people_outline,
                         size: 36,
-                        color: AppColors.muted.withOpacity(0.5)),
+                        color: AppColors.muted.withValues(alpha: 0.5)),
                   ),
                   const SizedBox(height: 16),
                   Text(
@@ -50,7 +50,7 @@ class ShiftTab extends ConsumerWidget {
                   Text(
                     'Добавьте сотрудников для закрытия смены',
                     style: TextStyle(
-                        color: AppColors.muted.withOpacity(0.6),
+                        color: AppColors.muted.withValues(alpha: 0.6),
                         fontSize: 13),
                   ),
                 ],
@@ -238,9 +238,9 @@ class _StaffItem extends StatelessWidget {
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(14),
-              color: Colors.white.withOpacity(isDark ? 0.06 : 0.55),
+              color: Colors.white.withValues(alpha: isDark ? 0.06 : 0.55),
               border: Border.all(
-                color: Colors.white.withOpacity(isDark ? 0.1 : 0.8),
+                color: Colors.white.withValues(alpha: isDark ? 0.1 : 0.8),
               ),
             ),
             child: Row(
@@ -249,7 +249,7 @@ class _StaffItem extends StatelessWidget {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: AppColors.orange.withOpacity(0.12),
+                    color: AppColors.orange.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Center(

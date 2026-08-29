@@ -139,19 +139,19 @@ class _DeptCardState extends State<_DeptCard>
                   end: Alignment.bottomRight,
                   colors: [
                     widget.accentColor
-                        .withOpacity(widget.isDark ? 0.15 : 0.1),
+                        .withValues(alpha: widget.isDark ? 0.15 : 0.1),
                     widget.accentColor
-                        .withOpacity(widget.isDark ? 0.05 : 0.04),
+                        .withValues(alpha: widget.isDark ? 0.05 : 0.04),
                   ],
                 ),
                 border: Border.all(
-                  color: widget.accentColor.withOpacity(0.25),
+                  color: widget.accentColor.withValues(alpha: 0.25),
                   width: 1,
                 ),
                 boxShadow: [
                   BoxShadow(
                     color:
-                        widget.accentColor.withOpacity(0.08),
+                        widget.accentColor.withValues(alpha: 0.08),
                     blurRadius: 20,
                     offset: const Offset(0, 4),
                   ),
@@ -166,7 +166,7 @@ class _DeptCardState extends State<_DeptCard>
                     height: 56,
                     decoration: BoxDecoration(
                       color: widget.accentColor
-                          .withOpacity(widget.isDark ? 0.15 : 0.1),
+                          .withValues(alpha: widget.isDark ? 0.15 : 0.1),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Icon(

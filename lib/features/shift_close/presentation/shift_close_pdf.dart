@@ -6,7 +6,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
-import 'package:horeca_app/features/shift_close/presentation/shift_close_screen.dart';
+import 'package:horeca_app/features/shift_close/domain/shift_models.dart';
 
 class ShiftClosePdf {
   static Future<void> generateAndShare({

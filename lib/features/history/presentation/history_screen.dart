@@ -58,7 +58,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
           IconButton(
             icon: Icon(
               Icons.delete_sweep_outlined,
-              color: isDark ? Colors.white.withOpacity(0.6) : AppColors.muted,
+              color: isDark ? Colors.white.withValues(alpha: 0.6) : AppColors.muted,
             ),
             onPressed: () => _confirmClear(context, repo, l10n),
           ),
@@ -75,9 +75,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                   height: 40,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    color: Colors.white.withOpacity(isDark ? 0.08 : 0.5),
+                    color: Colors.white.withValues(alpha: isDark ? 0.08 : 0.5),
                     border: Border.all(
-                      color: Colors.white.withOpacity(isDark ? 0.1 : 0.6),
+                      color: Colors.white.withValues(alpha: isDark ? 0.1 : 0.6),
                     ),
                   ),
                   child: TabBar(
@@ -154,13 +154,13 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: AppColors.muted.withOpacity(0.08),
+                color: AppColors.muted.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(24),
               ),
               child: Icon(
                 emptyIcon,
                 size: 36,
-                color: AppColors.muted.withOpacity(0.5),
+                color: AppColors.muted.withValues(alpha: 0.5),
               ),
             ),
             const SizedBox(height: 16),
@@ -177,7 +177,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
               '$tabName появятся здесь',
               style: TextStyle(
                 fontSize: 13,
-                color: AppColors.muted.withOpacity(0.6),
+                color: AppColors.muted.withValues(alpha: 0.6),
               ),
             ),
           ],
@@ -217,12 +217,12 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
             child: Container(
               decoration: BoxDecoration(
                 color: isDark
-                    ? AppColors.darkCard.withOpacity(0.95)
-                    : Colors.white.withOpacity(0.95),
+                    ? AppColors.darkCard.withValues(alpha: 0.95)
+                    : Colors.white.withValues(alpha: 0.95),
                 borderRadius:
                     const BorderRadius.vertical(top: Radius.circular(24)),
                 border: Border.all(
-                  color: Colors.white.withOpacity(isDark ? 0.1 : 0.5),
+                  color: Colors.white.withValues(alpha: isDark ? 0.1 : 0.5),
                 ),
               ),
               child: Column(
@@ -233,7 +233,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: AppColors.muted.withOpacity(0.3),
+                      color: AppColors.muted.withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -274,7 +274,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                           fontSize: 14,
                           height: 1.6,
                           color: isDark
-                              ? Colors.white.withOpacity(0.85)
+                              ? Colors.white.withValues(alpha: 0.85)
                               : const Color(0xFF1A1A2E),
                         ),
                       ),
@@ -345,9 +345,9 @@ class _HistoryCard extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
-              color: Colors.white.withOpacity(isDark ? 0.06 : 0.55),
+              color: Colors.white.withValues(alpha: isDark ? 0.06 : 0.55),
               border: Border.all(
-                color: Colors.white.withOpacity(isDark ? 0.1 : 0.8),
+                color: Colors.white.withValues(alpha: isDark ? 0.1 : 0.8),
               ),
             ),
             child: Row(
@@ -357,7 +357,7 @@ class _HistoryCard extends StatelessWidget {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: AppColors.orange.withOpacity(0.12),
+                    color: AppColors.orange.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
@@ -402,7 +402,7 @@ class _HistoryCard extends StatelessWidget {
                         _formatDate(entry.createdAt),
                         style: TextStyle(
                           fontSize: 11,
-                          color: AppColors.muted.withOpacity(0.6),
+                          color: AppColors.muted.withValues(alpha: 0.6),
                         ),
                       ),
                     ],

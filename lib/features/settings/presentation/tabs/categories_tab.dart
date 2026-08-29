@@ -36,11 +36,11 @@ class CategoriesTab extends ConsumerWidget {
                     width: 80,
                     height: 80,
                     decoration: BoxDecoration(
-                      color: AppColors.muted.withOpacity(0.08),
+                      color: AppColors.muted.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(24),
                     ),
                     child: Icon(Icons.folder_open_outlined,
-                        size: 36, color: AppColors.muted.withOpacity(0.5)),
+                        size: 36, color: AppColors.muted.withValues(alpha: 0.5)),
                   ),
                   const SizedBox(height: 16),
                   Text(l10n.noCategories,
@@ -309,9 +309,9 @@ class _CatItem extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(14),
               color:
-                  Colors.white.withOpacity(isDark ? 0.06 : 0.55),
+                  Colors.white.withValues(alpha: isDark ? 0.06 : 0.55),
               border: Border.all(
-                color: Colors.white.withOpacity(isDark ? 0.1 : 0.8),
+                color: Colors.white.withValues(alpha: isDark ? 0.1 : 0.8),
               ),
             ),
             child: Row(
@@ -320,7 +320,7 @@ class _CatItem extends StatelessWidget {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: AppColors.orange.withOpacity(0.12),
+                    color: AppColors.orange.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(Icons.folder_outlined,

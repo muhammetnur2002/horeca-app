@@ -43,3 +43,9 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Скриншоты и временные артефакты, попавшие в репозиторий по ошибке
+flutter_*.png
+*.jks
+*.keystore
+key.properties

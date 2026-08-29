@@ -141,10 +141,10 @@ class _ProductListStepState extends ConsumerState<ProductListStep> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(14),
                     color: Colors.white
-                        .withOpacity(isDark ? 0.06 : 0.55),
+                        .withValues(alpha: isDark ? 0.06 : 0.55),
                     border: Border.all(
                       color: Colors.white
-                          .withOpacity(isDark ? 0.1 : 0.8),
+                          .withValues(alpha: isDark ? 0.1 : 0.8),
                     ),
                   ),
                   child: TextField(
@@ -189,12 +189,12 @@ onChanged: (v) => setState(() => _searchQuery = v),
                           width: 80,
                           height: 80,
                           decoration: BoxDecoration(
-                            color: AppColors.muted.withOpacity(0.08),
+                            color: AppColors.muted.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(24),
                           ),
                           child: Icon(Icons.inventory_2_outlined,
                               size: 36,
-                              color: AppColors.muted.withOpacity(0.5)),
+                              color: AppColors.muted.withValues(alpha: 0.5)),
                         ),
                         const SizedBox(height: 16),
                         Text('Нет товаров',
@@ -240,13 +240,13 @@ onChanged: (v) => setState(() => _searchQuery = v),
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(14),
                               color: hasQty
-                                  ? AppColors.orange.withOpacity(0.08)
-                                  : Colors.white.withOpacity(
+                                  ? AppColors.orange.withValues(alpha: 0.08)
+                                  : Colors.white.withValues(alpha: 
                                       isDark ? 0.06 : 0.55),
                               border: Border.all(
                                 color: hasQty
-                                    ? AppColors.orange.withOpacity(0.3)
-                                    : Colors.white.withOpacity(
+                                    ? AppColors.orange.withValues(alpha: 0.3)
+                                    : Colors.white.withValues(alpha: 
                                         isDark ? 0.1 : 0.8),
                               ),
                             ),
@@ -296,13 +296,13 @@ onChanged: (v) => setState(() => _searchQuery = v),
                                     width: 32,
                                     height: 32,
                                     decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(
+                                      color: Colors.white.withValues(alpha: 
                                           isDark ? 0.08 : 0.6),
                                       borderRadius:
                                           BorderRadius.circular(8),
                                       border: Border.all(
                                           color: Colors.white
-                                              .withOpacity(isDark
+                                              .withValues(alpha: isDark
                                                   ? 0.1
                                                   : 0.3)),
                                     ),
@@ -364,13 +364,13 @@ onChanged: (v) => setState(() => _searchQuery = v),
                                     width: 32,
                                     height: 32,
                                     decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(
+                                      color: Colors.white.withValues(alpha: 
                                           isDark ? 0.08 : 0.6),
                                       borderRadius:
                                           BorderRadius.circular(8),
                                       border: Border.all(
                                           color: Colors.white
-                                              .withOpacity(isDark
+                                              .withValues(alpha: isDark
                                                   ? 0.1
                                                   : 0.3)),
                                     ),
@@ -409,7 +409,7 @@ onChanged: (v) => setState(() => _searchQuery = v),
                       color: AppColors.orange,
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.orange.withOpacity(0.3),
+                          color: AppColors.orange.withValues(alpha: 0.3),
                           blurRadius: 20,
                           offset: const Offset(0, 4),
                         ),

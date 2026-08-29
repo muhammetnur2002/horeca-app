@@ -94,14 +94,14 @@ class CategoryFilterStep extends ConsumerWidget {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(14),
                           color: isSelected
-                              ? AppColors.orange.withOpacity(0.12)
+                              ? AppColors.orange.withValues(alpha: 0.12)
                               : Colors.white
-                                  .withOpacity(isDark ? 0.06 : 0.55),
+                                  .withValues(alpha: isDark ? 0.06 : 0.55),
                           border: Border.all(
                             color: isSelected
-                                ? AppColors.orange.withOpacity(0.4)
+                                ? AppColors.orange.withValues(alpha: 0.4)
                                 : Colors.white
-                                    .withOpacity(isDark ? 0.1 : 0.8),
+                                    .withValues(alpha: isDark ? 0.1 : 0.8),
                           ),
                         ),
                         child: Row(

@@ -76,8 +76,8 @@ class _InputRemainingStepState extends ConsumerState<InputRemainingStep> {
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(14),
-                  color: Colors.white.withOpacity(isDark ? 0.06 : 0.55),
-                  border: Border.all(color: Colors.white.withOpacity(isDark ? 0.1 : 0.8)),
+                  color: Colors.white.withValues(alpha: isDark ? 0.06 : 0.55),
+                  border: Border.all(color: Colors.white.withValues(alpha: isDark ? 0.1 : 0.8)),
                 ),
                 child: TextField(
                   controller: _searchCtrl,
@@ -238,9 +238,9 @@ class _ProductRow extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
-            color: Colors.white.withOpacity(isDark ? 0.06 : 0.55),
+            color: Colors.white.withValues(alpha: isDark ? 0.06 : 0.55),
             border: Border.all(
-                color: Colors.white.withOpacity(isDark ? 0.1 : 0.8)),
+                color: Colors.white.withValues(alpha: isDark ? 0.1 : 0.8)),
           ),
           child: Row(children: [
             Expanded(
@@ -309,11 +309,11 @@ class _QtyBtn extends StatelessWidget {
           height: 30,
           decoration: BoxDecoration(
               color:
-                  Colors.white.withOpacity(isDark ? 0.08 : 0.6),
+                  Colors.white.withValues(alpha: isDark ? 0.08 : 0.6),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
                   color: Colors.white
-                      .withOpacity(isDark ? 0.1 : 0.3))),
+                      .withValues(alpha: isDark ? 0.1 : 0.3))),
           child: Icon(icon,
               size: 16,
               color: isDark

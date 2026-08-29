@@ -172,8 +172,8 @@ class _GalaxyPainter extends CustomPainter {
   double eo(double v, [double p = 3]) => 1 - pow(1 - v.clamp(0, 1), p).toDouble();
 
   Color get _orbitCol => isDark
-      ? const Color(0xFF8C5020).withOpacity(1)
-      : const Color(0xFFB05A10).withOpacity(1);
+      ? const Color(0xFF8C5020).withValues(alpha: 1)
+      : const Color(0xFFB05A10).withValues(alpha: 1);
   Color get _Acol => isDark ? Colors.white : const Color(0xFF1A1A2E);
   Color get _textCol => isDark ? Colors.white : const Color(0xFF1A1A2E);
   Color get _tagCol => isDark ? AppColors.orange : const Color(0xFFC85000);
@@ -208,15 +208,15 @@ class _GalaxyPainter extends CustomPainter {
     final nebColors = isDark
         ? [const Color(0xFF0F1629), const Color(0xFF140C32)]
         : [const Color(0xFFC8DAFF), const Color(0xFFDCE8FF)];
-    _drawNebula(canvas, CX * 0.5, CY * 0.5, W * 0.3, nebColors[0].withOpacity(isDark ? 0.3 : 0.6));
-    _drawNebula(canvas, CX * 1.5, CY * 1.4, W * 0.25, nebColors[1].withOpacity(isDark ? 0.25 : 0.5));
+    _drawNebula(canvas, CX * 0.5, CY * 0.5, W * 0.3, nebColors[0].withValues(alpha: isDark ? 0.3 : 0.6));
+    _drawNebula(canvas, CX * 1.5, CY * 1.4, W * 0.25, nebColors[1].withValues(alpha: isDark ? 0.25 : 0.5));
 
     for (final s in stars) {
       final opacity = (isDark ? 0.07 : 0.05) + 0.09 * sin(t * s.speed + s.phase);
       canvas.drawCircle(
         Offset(s.x * W, s.y * H),
         s.r * (isDark ? 1 : 0.45),
-        Paint()..color = (isDark ? Colors.white : const Color(0xFF5060C8)).withOpacity(opacity.clamp(0, 1)),
+        Paint()..color = (isDark ? Colors.white : const Color(0xFF5060C8)).withValues(alpha: opacity.clamp(0, 1)),
       );
     }
 
@@ -224,7 +224,7 @@ class _GalaxyPainter extends CustomPainter {
       radius: 0.85,
       colors: [
         Colors.transparent,
-        isDark ? const Color(0xFF00000A).withOpacity(0.65) : const Color(0xFFB4C8F0).withOpacity(0.3),
+        isDark ? const Color(0xFF00000A).withValues(alpha: 0.65) : const Color(0xFFB4C8F0).withValues(alpha: 0.3),
       ],
     ).createShader(Rect.fromLTWH(0, 0, W, H));
     canvas.drawRect(Rect.fromLTWH(0, 0, W, H), Paint()..shader = vig);
@@ -232,7 +232,7 @@ class _GalaxyPainter extends CustomPainter {
 
   void _drawNebula(Canvas canvas, double x, double y, double r, Color color) {
     final paint = Paint()
-      ..shader = RadialGradient(colors: [color, color.withOpacity(0)])
+      ..shader = RadialGradient(colors: [color, color.withValues(alpha: 0)])
           .createShader(Rect.fromCircle(center: Offset(x, y), radius: r));
     canvas.drawCircle(Offset(x, y), r, paint);
   }
@@ -244,7 +244,7 @@ class _GalaxyPainter extends CustomPainter {
     final alpha = p * (isDark ? lerpDouble(0.62, 0.25, settle) : lerpDouble(0.55, 0.2, settle));
 
     final paint = Paint()
-      ..color = _orbitCol.withOpacity(alpha.clamp(0, 1))
+      ..color = _orbitCol.withValues(alpha: alpha.clamp(0, 1))
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.5;
 
@@ -275,7 +275,7 @@ class _GalaxyPainter extends CustomPainter {
       canvas.drawCircle(
         Offset(CX + cos(a) * R, CY + sin(a) * R),
         4.5,
-        Paint()..color = _orbitCol.withOpacity(alpha.toDouble()),
+        Paint()..color = _orbitCol.withValues(alpha: alpha.toDouble()),
       );
     }
   }
@@ -317,7 +317,7 @@ class _GalaxyPainter extends CustomPainter {
     canvas.scale(p, p);
 
     final gr = RadialGradient(colors: [
-      AppColors.orange.withOpacity(lerpDouble(0.12, 0.04, settle)),
+      AppColors.orange.withValues(alpha: lerpDouble(0.12, 0.04, settle)),
       Colors.transparent,
     ]).createShader(Rect.fromCircle(center: Offset.zero, radius: W * 0.14));
     canvas.drawCircle(Offset.zero, W * 0.14, Paint()..shader = gr);
@@ -345,8 +345,8 @@ class _GalaxyPainter extends CustomPainter {
     if (p <= 0) return;
     final fade = p < 0.3 ? p / 0.3 : 1 - (p - 0.3) / 0.7;
     final shader = RadialGradient(colors: [
-      const Color(0xFFFFE896).withOpacity(fade * 0.8),
-      AppColors.orange.withOpacity(fade * 0.4),
+      const Color(0xFFFFE896).withValues(alpha: fade * 0.8),
+      AppColors.orange.withValues(alpha: fade * 0.4),
       Colors.transparent,
     ], stops: const [0, 0.3, 1]).createShader(
       Rect.fromCircle(center: Offset(CX, CY), radius: eo(p, 2) * W * 0.36));
@@ -363,7 +363,7 @@ class _GalaxyPainter extends CustomPainter {
       canvas.drawCircle(
         Offset(CX, CY), r,
         Paint()
-          ..color = AppColors.orange.withOpacity(fade * 0.28)
+          ..color = AppColors.orange.withValues(alpha: fade * 0.28)
           ..style = PaintingStyle.stroke
           ..strokeWidth = (3 * (1 - p) + 0.5),
       );
@@ -377,7 +377,7 @@ class _GalaxyPainter extends CustomPainter {
     final tp1 = TextPainter(
       text: TextSpan(text: 'Akyl', style: TextStyle(
         fontSize: 44, fontWeight: FontWeight.w800,
-        color: _textCol.withOpacity(p), letterSpacing: -1.5,
+        color: _textCol.withValues(alpha: p), letterSpacing: -1.5,
       )),
       textDirection: TextDirection.ltr,
     );
@@ -387,7 +387,7 @@ class _GalaxyPainter extends CustomPainter {
     final tp2 = TextPainter(
       text: TextSpan(text: 'управляй с умом', style: TextStyle(
         fontSize: 13, fontWeight: FontWeight.w500,
-        color: _tagCol.withOpacity(p), letterSpacing: 1.5,
+        color: _tagCol.withValues(alpha: p), letterSpacing: 1.5,
       )),
       textDirection: TextDirection.ltr,
     );
@@ -401,7 +401,7 @@ class _GalaxyPainter extends CustomPainter {
       canvas.drawCircle(
         Offset(CX - 18 + i * 18.0, H * 0.88),
         5 * dotScale,
-        Paint()..color = AppColors.orange.withOpacity(dotAlpha),
+        Paint()..color = AppColors.orange.withValues(alpha: dotAlpha),
       );
     }
   }
@@ -411,7 +411,7 @@ class _GalaxyPainter extends CustomPainter {
       if (p.life <= 0) continue;
       canvas.drawCircle(
         Offset(p.x, p.y), p.r,
-        Paint()..color = p.color.withOpacity(p.life * p.life),
+        Paint()..color = p.color.withValues(alpha: p.life * p.life),
       );
     }
   }
@@ -421,8 +421,8 @@ class _GalaxyPainter extends CustomPainter {
       if (s.life <= 0) continue;
       final paint = Paint()
         ..shader = LinearGradient(colors: [
-          Colors.white.withOpacity(0),
-          Colors.white.withOpacity(s.life * 0.6),
+          Colors.white.withValues(alpha: 0),
+          Colors.white.withValues(alpha: s.life * 0.6),
         ]).createShader(Rect.fromPoints(
           Offset(s.x - s.vx * 3, s.y - s.vy * 3), Offset(s.x, s.y)))
         ..strokeWidth = 2

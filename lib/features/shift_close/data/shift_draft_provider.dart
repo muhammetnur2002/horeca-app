@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:horeca_app/features/shift_close/presentation/shift_close_screen.dart';
+import 'package:horeca_app/features/shift_close/domain/shift_models.dart';
 
 class ShiftDraft {
   int step;

@@ -45,10 +45,10 @@ class SettingsScreen extends ConsumerWidget {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
                     color: Colors.white
-                        .withOpacity(isDark ? 0.06 : 0.5),
+                        .withValues(alpha: isDark ? 0.06 : 0.5),
                     border: Border.all(
                       color: Colors.white
-                          .withOpacity(isDark ? 0.1 : 0.6),
+                          .withValues(alpha: isDark ? 0.1 : 0.6),
                     ),
                   ),
                   child: TabBar(

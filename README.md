@@ -1,17 +1,62 @@
-# frontend
+# Akyl
 
-A new Flutter project.
+Приложение для HoReCa: заявки на закупку, инвентаризация, закрытие смены,
+аналитика и напоминания. Flutter, офлайн-первое — все данные хранятся
+локально на устройстве.
 
-## Getting Started
+## Возможности
 
-This project is a starting point for a Flutter application.
+- **Заявки** — сбор позиций по отделам и категориям, выгрузка в PDF и текст
+- **Инвентаризация** — ввод остатков, отчёт в PDF, свои Excel-шаблоны
+- **Закрытие смены** — выручка по способам оплаты, списания, инкассация, PDF
+- **Аналитика** — динамика выручки, топ списаний, сравнение смен
+- **Напоминания** — ежедневные, еженедельные и ежемесячные уведомления
+- **Роли** — раздельный доступ администратора и сотрудника по PIN-коду
+- **Интеграция с iiko** — импорт остатков со складов
+- **Резервные копии** — выгрузка и восстановление данных в JSON
 
-A few resources to get you started if this is your first Flutter project:
+## Требования
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+- Flutter SDK 3.x (канал stable), Dart >= 3.0
+- Android SDK 36, JDK 17
+- Для iOS — Xcode с актуальным CocoaPods
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Запуск
+
+```bash
+flutter pub get
+flutter run
+```
+
+## Проверка перед сдачей
+
+```bash
+flutter pub get
+flutter analyze
+flutter test
+flutter build apk --release
+```
+
+## Подпись release-сборки
+
+Пока файла `android/key.properties` нет, release подписывается debug-ключом
+и **не годится для публикации**. Как создать ключ — см.
+`android/key.properties.example`.
+
+## Структура
+
+```
+lib/
+  app/          точка входа, тема, маршруты, DI
+  core/         общие утилиты: деньги, генерация PDF, локализация
+  features/     функциональные модули (data / domain / presentation)
+  shared/       модели и виджеты, общие для нескольких модулей
+test/           модульные тесты
+```
+
+## Хранение данных
+
+Всё лежит в `SharedPreferences` на устройстве. PIN-коды хранятся в виде
+salted SHA-256, ключ интеграции с iiko и PIN-коды намеренно не попадают
+в резервные копии. Облачный бэкап Android отключён
+(`allowBackup=false` + `dataExtractionRules`).

@@ -15,7 +15,8 @@ class NotificationService {
   factory NotificationService() => _instance;
   NotificationService._internal();
 
-  final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin _plugin =
+      FlutterLocalNotificationsPlugin();
   bool _initialized = false;
 
   Future<void> init() async {
@@ -24,7 +25,8 @@ class NotificationService {
     tz_data.initializeTimeZones();
     await _configureLocalTimeZone();
 
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
     // Раньше настроек для iOS не было вовсе — на iPhone уведомления
     // не инициализировались и не работали.
     const darwinSettings = DarwinInitializationSettings(
@@ -86,6 +88,7 @@ class NotificationService {
       matchDateTimeComponents: DateTimeComponents.time,
     );
   }
+
   Future<void> scheduleWeekly({
     required int id,
     required String title,
@@ -152,7 +155,8 @@ class NotificationService {
 
   tz.TZDateTime _nextInstanceOfTime(int hour, int minute) {
     final now = tz.TZDateTime.now(tz.local);
-    var scheduled = tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
+    var scheduled =
+        tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
     if (scheduled.isBefore(now)) {
       scheduled = scheduled.add(const Duration(days: 1));
     }

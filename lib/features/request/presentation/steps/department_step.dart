@@ -32,7 +32,7 @@ class DepartmentStep extends ConsumerWidget {
             children: [
               Icon(Icons.store_outlined,
                   size: 64,
-                  color: AppColors.muted.withOpacity(0.5)),
+                  color: AppColors.muted.withValues(alpha: 0.5)),
               const SizedBox(height: 16),
               Text(
                 l10n.noDepartments,
@@ -144,17 +144,17 @@ class _DeptCardState extends State<_DeptCard>
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    AppColors.orange.withOpacity(widget.isDark ? 0.15 : 0.1),
-                    AppColors.orange.withOpacity(widget.isDark ? 0.05 : 0.04),
+                    AppColors.orange.withValues(alpha: widget.isDark ? 0.15 : 0.1),
+                    AppColors.orange.withValues(alpha: widget.isDark ? 0.05 : 0.04),
                   ],
                 ),
                 border: Border.all(
-                  color: AppColors.orange.withOpacity(0.25),
+                  color: AppColors.orange.withValues(alpha: 0.25),
                   width: 1,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.orange.withOpacity(0.08),
+                    color: AppColors.orange.withValues(alpha: 0.08),
                     blurRadius: 20,
                     offset: const Offset(0, 4),
                   ),
@@ -168,7 +168,7 @@ class _DeptCardState extends State<_DeptCard>
                     height: 56,
                     decoration: BoxDecoration(
                       color: AppColors.orange
-                          .withOpacity(widget.isDark ? 0.15 : 0.1),
+                          .withValues(alpha: widget.isDark ? 0.15 : 0.1),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Icon(

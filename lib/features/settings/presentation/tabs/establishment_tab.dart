@@ -55,7 +55,7 @@ class EstablishmentTab extends ConsumerWidget {
               Container(
                 width: 40, height: 4,
                 decoration: BoxDecoration(
-                    color: AppColors.muted.withOpacity(0.3),
+                    color: AppColors.muted.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(2))),
               const SizedBox(height: 12),
               ListTile(
@@ -108,9 +108,9 @@ class EstablishmentTab extends ConsumerWidget {
                 padding: const EdgeInsets.all(28),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(24),
-                  color: Colors.white.withOpacity(isDark ? 0.06 : 0.55),
+                  color: Colors.white.withValues(alpha: isDark ? 0.06 : 0.55),
                   border: Border.all(
-                      color: Colors.white.withOpacity(isDark ? 0.1 : 0.8)),
+                      color: Colors.white.withValues(alpha: isDark ? 0.1 : 0.8)),
                 ),
                 child: Column(children: [
                   // Лого / иконка с кнопкой +
@@ -122,7 +122,7 @@ class EstablishmentTab extends ConsumerWidget {
                         child: Container(
                           width: 80, height: 80,
                           decoration: BoxDecoration(
-                            color: AppColors.orange.withOpacity(0.12),
+                            color: AppColors.orange.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(24),
                           ),
                           clipBehavior: Clip.antiAlias,
@@ -171,9 +171,9 @@ class EstablishmentTab extends ConsumerWidget {
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(14),
-                            color: AppColors.orange.withOpacity(0.15),
+                            color: AppColors.orange.withValues(alpha: 0.15),
                             border: Border.all(
-                                color: AppColors.orange.withOpacity(0.3))),
+                                color: AppColors.orange.withValues(alpha: 0.3))),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -201,16 +201,16 @@ class EstablishmentTab extends ConsumerWidget {
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
-                  color: Colors.white.withOpacity(isDark ? 0.06 : 0.55),
+                  color: Colors.white.withValues(alpha: isDark ? 0.06 : 0.55),
                   border: Border.all(
-                      color: Colors.white.withOpacity(isDark ? 0.1 : 0.8))),
+                      color: Colors.white.withValues(alpha: isDark ? 0.1 : 0.8))),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(children: [
                       Container(width: 36, height: 36,
                         decoration: BoxDecoration(
-                            color: AppColors.green.withOpacity(0.12),
+                            color: AppColors.green.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(12)),
                         child: const Icon(Icons.attach_money_rounded,
                             color: AppColors.green, size: 20)),
@@ -240,13 +240,13 @@ class EstablishmentTab extends ConsumerWidget {
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(14),
                               color: selected
-                                  ? AppColors.orange.withOpacity(0.15)
-                                  : Colors.white.withOpacity(
+                                  ? AppColors.orange.withValues(alpha: 0.15)
+                                  : Colors.white.withValues(alpha: 
                                       isDark ? 0.05 : 0.5),
                               border: Border.all(
                                 color: selected
                                     ? AppColors.orange
-                                    : Colors.white.withOpacity(
+                                    : Colors.white.withValues(alpha: 
                                         isDark ? 0.1 : 0.3),
                                 width: selected ? 1.5 : 1,
                               )),
@@ -294,8 +294,8 @@ Row(children: [
           padding: const EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
-            color: AppColors.green.withOpacity(0.12),
-            border: Border.all(color: AppColors.green.withOpacity(0.3))),
+            color: AppColors.green.withValues(alpha: 0.12),
+            border: Border.all(color: AppColors.green.withValues(alpha: 0.3))),
           child: Column(children: [
             const Icon(Icons.cloud_upload_outlined, color: AppColors.green, size: 22),
             const SizedBox(height: 6),
@@ -315,8 +315,8 @@ Row(children: [
           padding: const EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
-            color: AppColors.orange.withOpacity(0.12),
-            border: Border.all(color: AppColors.orange.withOpacity(0.3))),
+            color: AppColors.orange.withValues(alpha: 0.12),
+            border: Border.all(color: AppColors.orange.withValues(alpha: 0.3))),
           child: Column(children: [
             const Icon(Icons.cloud_download_outlined, color: AppColors.orange, size: 22),
             const SizedBox(height: 6),
@@ -344,18 +344,18 @@ GestureDetector(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          color: Colors.white.withOpacity(isDark ? 0.06 : 0.6),
-          border: Border.all(color: Colors.white.withOpacity(isDark ? 0.1 : 0.4))),
+          color: Colors.white.withValues(alpha: isDark ? 0.06 : 0.6),
+          border: Border.all(color: Colors.white.withValues(alpha: isDark ? 0.1 : 0.4))),
         child: Row(children: [
           Container(width: 40, height: 40,
-              decoration: BoxDecoration(color: AppColors.green.withOpacity(0.12), borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(color: AppColors.green.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),
               child: const Icon(Icons.notifications_active_outlined, color: AppColors.green, size: 20)),
           const SizedBox(width: 12),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text('Настройка уведомлений', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textColor)),
             Text('Напоминания о заказе и инвентаризации', style: const TextStyle(fontSize: 12, color: AppColors.muted)),
           ])),
-          Icon(Icons.chevron_right_rounded, color: AppColors.muted.withOpacity(0.5)),
+          Icon(Icons.chevron_right_rounded, color: AppColors.muted.withValues(alpha: 0.5)),
         ]),
       ),
     ),
@@ -375,18 +375,18 @@ GestureDetector(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          color: Colors.white.withOpacity(isDark ? 0.06 : 0.6),
-          border: Border.all(color: Colors.white.withOpacity(isDark ? 0.1 : 0.4))),
+          color: Colors.white.withValues(alpha: isDark ? 0.06 : 0.6),
+          border: Border.all(color: Colors.white.withValues(alpha: isDark ? 0.1 : 0.4))),
         child: Row(children: [
           Container(width: 40, height: 40,
-              decoration: BoxDecoration(color: const Color(0xFF378ADD).withOpacity(0.12), borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(color: const Color(0xFF378ADD).withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),
               child: const Icon(Icons.table_chart_outlined, color: Color(0xFF378ADD), size: 20)),
           const SizedBox(width: 12),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text('Свой шаблон PDF', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textColor)),
             Text('Загрузите Excel-файл для инвентаризации', style: const TextStyle(fontSize: 12, color: AppColors.muted)),
           ])),
-          Icon(Icons.chevron_right_rounded, color: AppColors.muted.withOpacity(0.5)),
+          Icon(Icons.chevron_right_rounded, color: AppColors.muted.withValues(alpha: 0.5)),
         ]),
       ),
     ),
@@ -403,8 +403,8 @@ ClipRRect(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        color: AppColors.green.withOpacity(isDark ? 0.08 : 0.05),
-        border: Border.all(color: AppColors.green.withOpacity(0.2))),
+        color: AppColors.green.withValues(alpha: isDark ? 0.08 : 0.05),
+        border: Border.all(color: AppColors.green.withValues(alpha: 0.2))),
       child: Row(children: [
         const Icon(Icons.info_outline_rounded,
             color: AppColors.green, size: 20),

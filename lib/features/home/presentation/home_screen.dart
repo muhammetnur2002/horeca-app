@@ -180,7 +180,7 @@ class _MiniLogoPainter extends CustomPainter {
 
     // орбиты
     final orbitPaint = Paint()
-      ..color = (isDark ? const Color(0xFF8C5020) : const Color(0xFFB05A10)).withOpacity(0.6)
+      ..color = (isDark ? const Color(0xFF8C5020) : const Color(0xFFB05A10)).withValues(alpha: 0.6)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
     for (final rot in [-0.52, 0.52]) {
@@ -246,11 +246,11 @@ class _Background extends StatelessWidget {
         Positioned(top: -60, right: -60,
             child: Container(width: 220, height: 220,
                 decoration: BoxDecoration(shape: BoxShape.circle,
-                    color: AppColors.orange.withOpacity(isDark ? 0.08 : 0.06)))),
+                    color: AppColors.orange.withValues(alpha: isDark ? 0.08 : 0.06)))),
         Positioned(bottom: 80, left: -40,
             child: Container(width: 160, height: 160,
                 decoration: BoxDecoration(shape: BoxShape.circle,
-                    color: AppColors.green.withOpacity(isDark ? 0.06 : 0.05)))),
+                    color: AppColors.green.withValues(alpha: isDark ? 0.06 : 0.05)))),
       ]),
     );
   }
@@ -267,17 +267,17 @@ class _LowStockBanner extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        color: Colors.redAccent.withOpacity(isDark ? 0.1 : 0.08),
-        border: Border.all(color: Colors.redAccent.withOpacity(0.3)),
+        color: Colors.redAccent.withValues(alpha: isDark ? 0.1 : 0.08),
+        border: Border.all(color: Colors.redAccent.withValues(alpha: 0.3)),
       ),
       child: Row(children: [
         Container(width: 36, height: 36,
-            decoration: BoxDecoration(color: Colors.redAccent.withOpacity(0.15), borderRadius: BorderRadius.circular(10)),
+            decoration: BoxDecoration(color: Colors.redAccent.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
             child: const Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 18)),
         const SizedBox(width: 10),
         Expanded(child: Text(
             '${items.length} ${items.length == 1 ? "товар заканчивается" : "товара заканчиваются"}: ${items.map((p) => p.name).take(2).join(", ")}${items.length > 2 ? "..." : ""}',
-            style: TextStyle(fontSize: 12, color: isDark ? Colors.white.withOpacity(0.85) : const Color(0xFF1A1A2E)))),
+            style: TextStyle(fontSize: 12, color: isDark ? Colors.white.withValues(alpha: 0.85) : const Color(0xFF1A1A2E)))),
       ]),
     );
   }
@@ -346,21 +346,21 @@ class _GlassButton extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.topLeft, end: Alignment.bottomRight,
                 colors: isPrimary
-                    ? [accent.withOpacity(isDark ? 0.25 : 0.18), accent.withOpacity(isDark ? 0.10 : 0.08)]
-                    : [Colors.white.withOpacity(isDark ? 0.08 : 0.55), Colors.white.withOpacity(isDark ? 0.04 : 0.35)],
+                    ? [accent.withValues(alpha: isDark ? 0.25 : 0.18), accent.withValues(alpha: isDark ? 0.10 : 0.08)]
+                    : [Colors.white.withValues(alpha: isDark ? 0.08 : 0.55), Colors.white.withValues(alpha: isDark ? 0.04 : 0.35)],
               ),
               border: Border.all(
-                color: isPrimary ? accent.withOpacity(0.35) : Colors.white.withOpacity(isDark ? 0.12 : 0.80),
+                color: isPrimary ? accent.withValues(alpha: 0.35) : Colors.white.withValues(alpha: isDark ? 0.12 : 0.80),
               ),
               boxShadow: [BoxShadow(
-                color: accent.withOpacity(isPrimary ? 0.12 : 0.04),
+                color: accent.withValues(alpha: isPrimary ? 0.12 : 0.04),
                 blurRadius: 20, offset: const Offset(0, 4),
               )],
             ),
             child: Row(children: [
               Container(width: 48, height: 48,
                 decoration: BoxDecoration(
-                    color: accent.withOpacity(isDark ? 0.18 : 0.12),
+                    color: accent.withValues(alpha: isDark ? 0.18 : 0.12),
                     borderRadius: BorderRadius.circular(14)),
                 child: Icon(icon, color: accent, size: 24)),
               const SizedBox(width: 16),
@@ -369,10 +369,10 @@ class _GlassButton extends StatelessWidget {
                     color: isDark ? Colors.white : const Color(0xFF1A1A2E))),
                 const SizedBox(height: 2),
                 Text(sublabel, style: TextStyle(fontSize: 13,
-                    color: isDark ? Colors.white.withOpacity(0.4) : const Color(0xFF6B7280))),
+                    color: isDark ? Colors.white.withValues(alpha: 0.4) : const Color(0xFF6B7280))),
               ])),
               Icon(Icons.chevron_right_rounded,
-                  color: isDark ? Colors.white.withOpacity(0.25) : Colors.black.withOpacity(0.2),
+                  color: isDark ? Colors.white.withValues(alpha: 0.25) : Colors.black.withValues(alpha: 0.2),
                   size: 20),
             ]),
           ),

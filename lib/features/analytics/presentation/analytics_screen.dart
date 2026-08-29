@@ -133,13 +133,13 @@ class _EmptyState extends StatelessWidget {
     return Center(
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         Container(width: 80, height: 80,
-            decoration: BoxDecoration(color: AppColors.muted.withOpacity(0.08), borderRadius: BorderRadius.circular(24)),
-            child: Icon(Icons.insights_rounded, size: 36, color: AppColors.muted.withOpacity(0.5))),
+            decoration: BoxDecoration(color: AppColors.muted.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(24)),
+            child: Icon(Icons.insights_rounded, size: 36, color: AppColors.muted.withValues(alpha: 0.5))),
         const SizedBox(height: 16),
         Text('Нет данных', style: TextStyle(fontSize: 16, color: AppColors.muted, fontWeight: FontWeight.w500)),
         const SizedBox(height: 6),
         Text('Закройте смену, чтобы увидеть аналитику',
-            style: TextStyle(fontSize: 13, color: AppColors.muted.withOpacity(0.6))),
+            style: TextStyle(fontSize: 13, color: AppColors.muted.withValues(alpha: 0.6))),
       ]),
     );
   }
@@ -161,12 +161,12 @@ class _YesterdayCard extends StatelessWidget {
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            color: Colors.white.withOpacity(isDark ? 0.06 : 0.55),
-            border: Border.all(color: Colors.white.withOpacity(isDark ? 0.1 : 0.8))),
+            color: Colors.white.withValues(alpha: isDark ? 0.06 : 0.55),
+            border: Border.all(color: Colors.white.withValues(alpha: isDark ? 0.1 : 0.8))),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
               Container(width: 40, height: 40,
-                  decoration: BoxDecoration(color: AppColors.orange.withOpacity(0.12), borderRadius: BorderRadius.circular(12)),
+                  decoration: BoxDecoration(color: AppColors.orange.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),
                   child: const Icon(Icons.event_note_rounded, color: AppColors.orange, size: 20)),
               const SizedBox(width: 12),
               Text('Вчерашняя смена', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: textColor)),
@@ -191,7 +191,7 @@ class _YesterdayCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                  color: AppColors.orange.withOpacity(isDark ? 0.1 : 0.08),
+                  color: AppColors.orange.withValues(alpha: isDark ? 0.1 : 0.08),
                   borderRadius: BorderRadius.circular(10)),
               child: Row(children: [
                 const Icon(Icons.info_outline_rounded, color: AppColors.orange, size: 16),
@@ -221,7 +221,7 @@ class _PaymentLine extends StatelessWidget {
     return Row(children: [
       Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
       const SizedBox(width: 10),
-      Expanded(child: Text(label, style: TextStyle(fontSize: 13, color: isDark ? Colors.white.withOpacity(0.8) : const Color(0xFF1A1A2E)))),
+      Expanded(child: Text(label, style: TextStyle(fontSize: 13, color: isDark ? Colors.white.withValues(alpha: 0.8) : const Color(0xFF1A1A2E)))),
       Text('${amount.toStringAsFixed(0)} $currency',
           style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF1A1A2E))),
     ]);
@@ -243,11 +243,11 @@ class _ChangeCard extends StatelessWidget {
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            color: color.withOpacity(isDark ? 0.1 : 0.06),
-            border: Border.all(color: color.withOpacity(0.3))),
+            color: color.withValues(alpha: isDark ? 0.1 : 0.06),
+            border: Border.all(color: color.withValues(alpha: 0.3))),
           child: Row(children: [
             Container(width: 48, height: 48,
-                decoration: BoxDecoration(color: color.withOpacity(0.15), borderRadius: BorderRadius.circular(14)),
+                decoration: BoxDecoration(color: color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(14)),
                 child: Icon(isUp ? Icons.trending_up_rounded : Icons.trending_down_rounded, color: color, size: 26)),
             const SizedBox(width: 14),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -278,8 +278,8 @@ class _PeriodChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          color: selected ? AppColors.orange.withOpacity(0.15) : Colors.white.withOpacity(isDark ? 0.06 : 0.5),
-          border: Border.all(color: selected ? AppColors.orange.withOpacity(0.5) : Colors.white.withOpacity(0.15))),
+          color: selected ? AppColors.orange.withValues(alpha: 0.15) : Colors.white.withValues(alpha: isDark ? 0.06 : 0.5),
+          border: Border.all(color: selected ? AppColors.orange.withValues(alpha: 0.5) : Colors.white.withValues(alpha: 0.15))),
         child: Text(label, style: TextStyle(fontSize: 13,
             fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
             color: selected ? AppColors.orange : AppColors.muted)),
@@ -309,15 +309,15 @@ class _RevenueChart extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(8, 20, 16, 12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            color: Colors.white.withOpacity(isDark ? 0.06 : 0.55),
-            border: Border.all(color: Colors.white.withOpacity(isDark ? 0.1 : 0.8))),
+            color: Colors.white.withValues(alpha: isDark ? 0.06 : 0.55),
+            border: Border.all(color: Colors.white.withValues(alpha: isDark ? 0.1 : 0.8))),
           child: LineChart(
             LineChartData(
               minY: 0,
               maxY: maxY <= 0 ? 100 : maxY,
               gridData: FlGridData(show: true, drawVerticalLine: false,
                   horizontalInterval: maxY / 4,
-                  getDrawingHorizontalLine: (v) => FlLine(color: Colors.white.withOpacity(0.06), strokeWidth: 1)),
+                  getDrawingHorizontalLine: (v) => FlLine(color: Colors.white.withValues(alpha: 0.06), strokeWidth: 1)),
               titlesData: FlTitlesData(
                 leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                 rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
@@ -346,7 +346,7 @@ class _RevenueChart extends StatelessWidget {
                           strokeColor: isDark ? const Color(0xFF1A1E2E) : Colors.white)),
                   belowBarData: BarAreaData(show: true,
                       gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter,
-                          colors: [AppColors.orange.withOpacity(0.25), AppColors.orange.withOpacity(0.0)])),
+                          colors: [AppColors.orange.withValues(alpha: 0.25), AppColors.orange.withValues(alpha: 0.0)])),
                 ),
               ],
               lineTouchData: LineTouchData(
@@ -377,8 +377,8 @@ class _WriteOffRow extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
-        color: Colors.white.withOpacity(isDark ? 0.06 : 0.55),
-        border: Border.all(color: Colors.white.withOpacity(isDark ? 0.1 : 0.8))),
+        color: Colors.white.withValues(alpha: isDark ? 0.06 : 0.55),
+        border: Border.all(color: Colors.white.withValues(alpha: isDark ? 0.1 : 0.8))),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           Expanded(child: Text(name, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
@@ -390,7 +390,7 @@ class _WriteOffRow extends StatelessWidget {
           borderRadius: BorderRadius.circular(6),
           child: LinearProgressIndicator(
             value: ratio, minHeight: 6,
-            backgroundColor: Colors.white.withOpacity(0.08),
+            backgroundColor: Colors.white.withValues(alpha: 0.08),
             valueColor: const AlwaysStoppedAnimation(Colors.redAccent),
           ),
         ),

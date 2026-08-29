@@ -5,28 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/core/money.dart';
+import 'package:horeca_app/features/shift_close/domain/shift_models.dart';
 import 'package:horeca_app/features/shift_close/presentation/shift_close_pdf.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
 import 'package:horeca_app/features/analytics/data/analytics_repository.dart';
 import 'package:horeca_app/features/shift_close/data/shift_draft_provider.dart';
-
-class DessertItem {
-  final String name;
-  int showcase;
-  int stock;
-  int writeOff;
-  DessertItem({required this.name, this.showcase=0, this.stock=0, this.writeOff=0});
-
-  get writeOffType => null;
-}
-
-class ManualWriteOff {
-  String name;
-  int quantity;
-  String unit;
-  ManualWriteOff({required this.name, this.quantity=1, this.unit='шт'});
-}
 
 class ShiftCloseScreen extends ConsumerStatefulWidget {
   const ShiftCloseScreen({super.key});
@@ -359,7 +343,7 @@ void deactivate() {
               decoration: BoxDecoration(borderRadius: BorderRadius.circular(1),
                   color: (i ~/ 2) < _step
                       ? AppColors.orange
-                      : Colors.white.withOpacity(isDark ? 0.1 : 0.0))));
+                      : Colors.white.withValues(alpha: isDark ? 0.1 : 0.0))));
         }
         final di = i ~/ 2;
         final isDone = di < _step; final isActive = di == _step;
@@ -369,13 +353,13 @@ void deactivate() {
             AnimatedContainer(duration: const Duration(milliseconds: 250),
               width: 32, height: 32,
               decoration: BoxDecoration(shape: BoxShape.circle,
-                color: isDone ? AppColors.green.withOpacity(0.2)
+                color: isDone ? AppColors.green.withValues(alpha: 0.2)
                     : isActive ? AppColors.orange
-                    : Colors.white.withOpacity(isDark ? 0.08 : 0.4),
+                    : Colors.white.withValues(alpha: isDark ? 0.08 : 0.4),
                 border: Border.all(
                   color: isDone ? AppColors.green
                       : isActive ? AppColors.orange
-                      : Colors.white.withOpacity(0.15), width: 1.5)),
+                      : Colors.white.withValues(alpha: 0.15), width: 1.5)),
               child: Center(child: isDone
                   ? const Icon(Icons.check_rounded, size: 16, color: AppColors.green)
                   : Text('${di + 1}', style: TextStyle(fontSize: 12,
@@ -447,11 +431,11 @@ const SizedBox(height: 16),
                     child: AnimatedContainer(duration: const Duration(milliseconds: 200),
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(borderRadius: BorderRadius.circular(20),
-                        color: sel ? AppColors.orange.withOpacity(0.15)
-                            : Colors.white.withOpacity(isDark ? 0.06 : 0.5),
+                        color: sel ? AppColors.orange.withValues(alpha: 0.15)
+                            : Colors.white.withValues(alpha: isDark ? 0.06 : 0.5),
                         border: Border.all(color: sel
-                            ? AppColors.orange.withOpacity(0.5)
-                            : Colors.white.withOpacity(0.15))),
+                            ? AppColors.orange.withValues(alpha: 0.5)
+                            : Colors.white.withValues(alpha: 0.15))),
                       child: Row(mainAxisSize: MainAxisSize.min, children: [
                         if (sel) const Padding(padding: EdgeInsets.only(right: 4),
                             child: Icon(Icons.check_rounded, size: 14, color: AppColors.orange)),
@@ -469,8 +453,8 @@ const SizedBox(height: 16),
   padding: const EdgeInsets.symmetric(horizontal: 14),
   decoration: BoxDecoration(
     borderRadius: BorderRadius.circular(14),
-    color: Colors.white.withOpacity(isDark ? 0.06 : 0.55),
-    border: Border.all(color: Colors.white.withOpacity(isDark ? 0.1 : 0.8))),
+    color: Colors.white.withValues(alpha: isDark ? 0.06 : 0.55),
+    border: Border.all(color: Colors.white.withValues(alpha: isDark ? 0.1 : 0.8))),
   child: TextField(
     controller: _dessertSearchCtrl,
     style: TextStyle(fontSize: 14, color: isDark ? Colors.white : const Color(0xFF1A1A2E)),
@@ -547,9 +531,9 @@ const SizedBox(height: 10),
             onTap: () => _addManualWriteOff(isDark),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(color: AppColors.orange.withOpacity(0.15),
+              decoration: BoxDecoration(color: AppColors.orange.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.orange.withOpacity(0.3))),
+                  border: Border.all(color: AppColors.orange.withValues(alpha: 0.3))),
               child: const Row(mainAxisSize: MainAxisSize.min, children: [
                 Icon(Icons.add_rounded, size: 16, color: AppColors.orange),
                 SizedBox(width: 4),
@@ -567,9 +551,9 @@ const SizedBox(height: 10),
             margin: const EdgeInsets.only(top: 10),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-                color: Colors.white.withOpacity(isDark ? 0.04 : 0.4),
+                color: Colors.white.withValues(alpha: isDark ? 0.04 : 0.4),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white.withOpacity(isDark ? 0.08 : 0.5))),
+                border: Border.all(color: Colors.white.withValues(alpha: isDark ? 0.08 : 0.5))),
             child: Row(children: [
               Expanded(child: Text(m.name, style: TextStyle(fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -663,7 +647,7 @@ const SizedBox(height: 10),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
-              color: Colors.white.withOpacity(isDark ? 0.05 : 0.6),
+              color: Colors.white.withValues(alpha: isDark ? 0.05 : 0.6),
               borderRadius: BorderRadius.circular(10)),
           child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             const Text('Касса на следуюущую смену',
@@ -768,14 +752,14 @@ const SizedBox(height: 10),
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface.withOpacity(0.8) : Colors.white.withOpacity(0.8),
-        border: Border(top: BorderSide(color: Colors.white.withOpacity(isDark ? 0.06 : 0.0)))),
+        color: isDark ? AppColors.darkSurface.withValues(alpha: 0.8) : Colors.white.withValues(alpha: 0.8),
+        border: Border(top: BorderSide(color: Colors.white.withValues(alpha: isDark ? 0.06 : 0.0)))),
       child: Row(children: [
         if (_step > 0) ...[
           Expanded(child: OutlinedButton(onPressed: _back,
               style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  side: BorderSide(color: Colors.white.withOpacity(0.2)),
+                  side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   foregroundColor: AppColors.muted),
               child: const Text('Назад'))),
@@ -820,10 +804,10 @@ class _GlassCard extends StatelessWidget {
     final a = accentColor;
     return Container(width: double.infinity, padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(16),
-        color: a != null ? a.withOpacity(isDark ? 0.08 : 0.05)
-            : Colors.white.withOpacity(isDark ? 0.08 : 0.6),
-        border: Border.all(color: a != null ? a.withOpacity(0.25)
-            : Colors.white.withOpacity(isDark ? 0.12 : 0.8))),
+        color: a != null ? a.withValues(alpha: isDark ? 0.08 : 0.05)
+            : Colors.white.withValues(alpha: isDark ? 0.08 : 0.6),
+        border: Border.all(color: a != null ? a.withValues(alpha: 0.25)
+            : Colors.white.withValues(alpha: isDark ? 0.12 : 0.8))),
       child: child);
   }
 }
@@ -896,7 +880,7 @@ class _DessertRow extends StatelessWidget {
     padding: const EdgeInsets.only(bottom: 10),
     child: Row(children: [
       Expanded(child: Text(name, style: TextStyle(fontSize: 13,
-          color: isDark ? Colors.white.withOpacity(0.85) : const Color(0xFF1A1A2E)))),
+          color: isDark ? Colors.white.withValues(alpha: 0.85) : const Color(0xFF1A1A2E)))),
       _QtyBtn(icon: Icons.remove, isDark: isDark,
           onTap: () { if (value > 0) onChanged(value - 1); }),
       GestureDetector(
@@ -915,9 +899,9 @@ class _QtyBtn extends StatelessWidget {
   @override
   Widget build(BuildContext context) => GestureDetector(onTap: onTap,
     child: Container(width: 30, height: 30,
-      decoration: BoxDecoration(color: Colors.white.withOpacity(isDark ? 0.08 : 0.6),
+      decoration: BoxDecoration(color: Colors.white.withValues(alpha: isDark ? 0.08 : 0.6),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.white.withOpacity(isDark ? 0.1 : 0.3))),
+          border: Border.all(color: Colors.white.withValues(alpha: isDark ? 0.1 : 0.3))),
       child: Icon(icon, size: 16,
           color: isDark ? Colors.white : const Color(0xFF1A1A2E))));
 }
@@ -935,11 +919,11 @@ class _PaymentRow extends StatelessWidget {
     child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
       child: Container(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(14),
-          color: Colors.white.withOpacity(isDark ? 0.06 : 0.55),
-          border: Border.all(color: Colors.white.withOpacity(isDark ? 0.1 : 0.8))),
+          color: Colors.white.withValues(alpha: isDark ? 0.06 : 0.55),
+          border: Border.all(color: Colors.white.withValues(alpha: isDark ? 0.1 : 0.8))),
         child: Row(children: [
           Container(width: 40, height: 40,
-              decoration: BoxDecoration(color: color.withOpacity(0.15),
+              decoration: BoxDecoration(color: color.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12)),
               child: Icon(icon, color: color, size: 20)),
           const SizedBox(width: 12),
@@ -973,7 +957,7 @@ class _AmountField extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Row(children: [
     Expanded(child: Text(label, style: TextStyle(fontSize: 13,
-        color: isDark ? Colors.white.withOpacity(0.8) : const Color(0xFF1A1A2E)))),
+        color: isDark ? Colors.white.withValues(alpha: 0.8) : const Color(0xFF1A1A2E)))),
     SizedBox(width: 120, child: TextField(controller: controller,
         keyboardType: TextInputType.number,
         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -1002,9 +986,9 @@ class _CashField extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-    decoration: BoxDecoration(color: Colors.white.withOpacity(isDark ? 0.06 : 0.6),
+    decoration: BoxDecoration(color: Colors.white.withValues(alpha: isDark ? 0.06 : 0.6),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withOpacity(isDark ? 0.1 : 0.4))),
+        border: Border.all(color: Colors.white.withValues(alpha: isDark ? 0.1 : 0.4))),
     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text(label, style: const TextStyle(fontSize: 10, color: AppColors.muted)),
       const SizedBox(height: 4),
@@ -1051,8 +1035,8 @@ class _ShareButton extends StatelessWidget {
     child: Container(width: fullWidth ? double.infinity : null,
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(14),
-          color: color.withOpacity(isDark ? 0.15 : 0.1),
-          border: Border.all(color: color.withOpacity(0.3))),
+          color: color.withValues(alpha: isDark ? 0.15 : 0.1),
+          border: Border.all(color: color.withValues(alpha: 0.3))),
       child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
         Icon(icon, color: color, size: 20),
         const SizedBox(width: 8),
@@ -1065,7 +1049,7 @@ class _Divider extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(height: 0.5,
       margin: const EdgeInsets.symmetric(vertical: 6),
-      color: Colors.white.withOpacity(0.1));
+      color: Colors.white.withValues(alpha: 0.1));
 }
 
 class _ConfirmDialog extends StatelessWidget {

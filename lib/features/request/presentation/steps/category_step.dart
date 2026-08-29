@@ -54,11 +54,11 @@ class CategoryStep extends ConsumerWidget {
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
-                  color: AppColors.muted.withOpacity(0.08),
+                  color: AppColors.muted.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(24),
                 ),
                 child: Icon(Icons.folder_open_outlined,
-                    size: 36, color: AppColors.muted.withOpacity(0.5)),
+                    size: 36, color: AppColors.muted.withValues(alpha: 0.5)),
               ),
               const SizedBox(height: 16),
               Text(
@@ -72,7 +72,7 @@ class CategoryStep extends ConsumerWidget {
               Text(
                 'Добавьте категории в настройках',
                 style: TextStyle(
-                    color: AppColors.muted.withOpacity(0.6), fontSize: 13),
+                    color: AppColors.muted.withValues(alpha: 0.6), fontSize: 13),
               ),
             ],
           ),
@@ -175,18 +175,18 @@ class _CatCardState extends State<_CatCard>
                   end: Alignment.bottomRight,
                   colors: [
                     AppColors.orange
-                        .withOpacity(widget.isDark ? 0.15 : 0.1),
+                        .withValues(alpha: widget.isDark ? 0.15 : 0.1),
                     AppColors.orange
-                        .withOpacity(widget.isDark ? 0.05 : 0.04),
+                        .withValues(alpha: widget.isDark ? 0.05 : 0.04),
                   ],
                 ),
                 border: Border.all(
-                  color: AppColors.orange.withOpacity(0.25),
+                  color: AppColors.orange.withValues(alpha: 0.25),
                   width: 1,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.orange.withOpacity(0.08),
+                    color: AppColors.orange.withValues(alpha: 0.08),
                     blurRadius: 20,
                     offset: const Offset(0, 4),
                   ),
@@ -200,7 +200,7 @@ class _CatCardState extends State<_CatCard>
                     height: 52,
                     decoration: BoxDecoration(
                       color: AppColors.orange
-                          .withOpacity(widget.isDark ? 0.15 : 0.1),
+                          .withValues(alpha: widget.isDark ? 0.15 : 0.1),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: const Icon(

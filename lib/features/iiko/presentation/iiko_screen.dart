@@ -194,8 +194,8 @@ void _loadDemo() {
       padding: const EdgeInsets.symmetric(vertical: 14),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
-        color: AppColors.muted.withOpacity(0.08),
-        border: Border.all(color: AppColors.muted.withOpacity(0.25))),
+        color: AppColors.muted.withValues(alpha: 0.08),
+        border: Border.all(color: AppColors.muted.withValues(alpha: 0.25))),
       child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
         const Icon(Icons.science_outlined, color: AppColors.muted, size: 18),
         const SizedBox(width: 8),
@@ -276,12 +276,12 @@ class _LoginCard extends StatelessWidget {
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            color: Colors.white.withOpacity(isDark ? 0.06 : 0.55),
-            border: Border.all(color: Colors.white.withOpacity(isDark ? 0.1 : 0.8))),
+            color: Colors.white.withValues(alpha: isDark ? 0.06 : 0.55),
+            border: Border.all(color: Colors.white.withValues(alpha: isDark ? 0.1 : 0.8))),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
               Container(width: 40, height: 40,
-                  decoration: BoxDecoration(color: AppColors.orange.withOpacity(0.12), borderRadius: BorderRadius.circular(12)),
+                  decoration: BoxDecoration(color: AppColors.orange.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),
                   child: const Icon(Icons.store_rounded, color: AppColors.orange, size: 20)),
               const SizedBox(width: 12),
               Expanded(child: Text('Подключить iiko', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: textColor))),
@@ -333,8 +333,8 @@ class _ConnectedCard extends StatelessWidget {
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            color: AppColors.green.withOpacity(isDark ? 0.08 : 0.05),
-            border: Border.all(color: AppColors.green.withOpacity(0.25))),
+            color: AppColors.green.withValues(alpha: isDark ? 0.08 : 0.05),
+            border: Border.all(color: AppColors.green.withValues(alpha: 0.25))),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
               const Icon(Icons.check_circle_rounded, color: AppColors.green, size: 22),
@@ -373,8 +373,8 @@ class _SelectRow extends StatelessWidget {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
-          color: Colors.white.withOpacity(isDark ? 0.06 : 0.6),
-          border: Border.all(color: Colors.white.withOpacity(isDark ? 0.1 : 0.4))),
+          color: Colors.white.withValues(alpha: isDark ? 0.06 : 0.6),
+          border: Border.all(color: Colors.white.withValues(alpha: isDark ? 0.1 : 0.4))),
         child: Row(children: [
           Expanded(child: Text(title, style: TextStyle(fontSize: 14, color: isDark ? Colors.white : const Color(0xFF1A1A2E)))),
           const Icon(Icons.chevron_right_rounded, color: AppColors.muted),
@@ -396,8 +396,8 @@ class _CheckRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        color: Colors.white.withOpacity(isDark ? 0.06 : 0.6),
-        border: Border.all(color: Colors.white.withOpacity(isDark ? 0.1 : 0.4))),
+        color: Colors.white.withValues(alpha: isDark ? 0.06 : 0.6),
+        border: Border.all(color: Colors.white.withValues(alpha: isDark ? 0.1 : 0.4))),
       child: CheckboxListTile(
         value: checked,
         onChanged: onChanged,
@@ -421,8 +421,8 @@ class _BalanceRow extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        color: Colors.white.withOpacity(isDark ? 0.06 : 0.6),
-        border: Border.all(color: Colors.white.withOpacity(isDark ? 0.1 : 0.4))),
+        color: Colors.white.withValues(alpha: isDark ? 0.06 : 0.6),
+        border: Border.all(color: Colors.white.withValues(alpha: isDark ? 0.1 : 0.4))),
       child: Row(children: [
         Expanded(child: Text(item.productName, style: TextStyle(fontSize: 14, color: isDark ? Colors.white : const Color(0xFF1A1A2E)))),
         Text('${item.amount} ${item.unit}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.orange)),
