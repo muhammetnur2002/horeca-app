@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/di.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:horeca_app/shared/models/department_icons.dart';
 import 'package:horeca_app/shared/models/department_model.dart';
 import 'package:horeca_app/shared/models/category_model.dart';
 import 'package:horeca_app/shared/models/product_model.dart';
@@ -98,7 +99,7 @@ class SettingsRepository extends StateNotifier<SettingsData> {
   void _saveToPrefs() {
     final data = {
       'departments': state.departments
-          .map((d) => {'id': d.id, 'name': d.name, 'icon': d.icon.codePoint.toString()})
+          .map((d) => {'id': d.id, 'name': d.name, 'icon': DepartmentIcons.keyOf(d.icon)})
           .toList(),
       'categories': state.categories
           .map((c) => {'id': c.id, 'name': c.name, 'departmentId': c.departmentId})
@@ -129,7 +130,7 @@ class SettingsRepository extends StateNotifier<SettingsData> {
       final depts = (data['departments'] as List).map((d) => DepartmentModel(
             id: d['id'],
             name: d['name'],
-            icon: IconData(int.parse(d['icon']), fontFamily: 'MaterialIcons'),
+            icon: DepartmentIcons.resolve(d['icon']),
           )).toList();
       final cats = (data['categories'] as List).map((c) => CategoryModel(
             id: c['id'],

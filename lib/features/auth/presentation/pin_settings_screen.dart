@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/features/auth/data/auth_repository.dart';
@@ -14,14 +15,6 @@ class _PinSettingsScreenState extends ConsumerState<PinSettingsScreen> {
   final _staffCtrl = TextEditingController();
 
   @override
-  void initState() {
-    super.initState();
-    final repo = ref.read(authRepositoryProvider.notifier);
-    _adminCtrl.text = repo.adminPin ?? '';
-    _staffCtrl.text = repo.staffPin ?? '';
-  }
-
-  @override
   void dispose() {
     _adminCtrl.dispose();
     _staffCtrl.dispose();
@@ -29,9 +22,10 @@ class _PinSettingsScreenState extends ConsumerState<PinSettingsScreen> {
   }
 
   void _save() {
-    if (_adminCtrl.text.length < 4 || _staffCtrl.text.length < 4) {
+    final digits = RegExp(r'^\d{4,6}$');
+    if (!digits.hasMatch(_adminCtrl.text) || !digits.hasMatch(_staffCtrl.text)) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('PIN-код должен быть минимум 4 цифры', style: TextStyle(color: Colors.white)),
+        content: Text('PIN-код — от 4 до 6 цифр', style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.redAccent,
         behavior: SnackBarBehavior.floating,
       ));
@@ -46,14 +40,14 @@ class _PinSettingsScreenState extends ConsumerState<PinSettingsScreen> {
       return;
     }
     final repo = ref.read(authRepositoryProvider.notifier);
-    repo.setAdminPin(_adminCtrl.text);
-    repo.setStaffPin(_staffCtrl.text);
-    repo.setPinsEnabled(true);
+    repo.setPins(adminPin: _adminCtrl.text, staffPin: _staffCtrl.text);
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
       content: Text('PIN-коды сохранены', style: TextStyle(color: Colors.white)),
       backgroundColor: AppColors.green,
       behavior: SnackBarBehavior.floating,
     ));
+    _adminCtrl.clear();
+    _staffCtrl.clear();
     Navigator.of(context).pop();
   }
 
@@ -72,7 +66,7 @@ class _PinSettingsScreenState extends ConsumerState<PinSettingsScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
-    final pinsEnabled = ref.watch(authRepositoryProvider.notifier).pinsEnabled;
+    final pinsEnabled = ref.watch(authRepositoryProvider).pinsEnabled;
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -99,7 +93,9 @@ class _PinSettingsScreenState extends ConsumerState<PinSettingsScreen> {
               Text(
                 'Установите PIN-коды для администратора и сотрудников. '
                 'Администратор видит все разделы, включая аналитику и настройки. '
-                'Сотрудники видят только рабочие функции.',
+                'Сотрудники видят только рабочие функции.\n\n'
+                'Действующие коды не отображаются — они хранятся в виде хеша. '
+                'Чтобы сменить их, введите новые значения и сохраните.',
                 style: TextStyle(fontSize: 13, color: AppColors.muted, height: 1.5),
               ),
               const SizedBox(height: 24),
@@ -109,6 +105,8 @@ class _PinSettingsScreenState extends ConsumerState<PinSettingsScreen> {
               TextField(
                 controller: _adminCtrl,
                 keyboardType: TextInputType.number,
+                obscureText: true,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 maxLength: 6,
                 style: TextStyle(color: textColor, letterSpacing: 4),
                 decoration: const InputDecoration(
@@ -124,6 +122,8 @@ class _PinSettingsScreenState extends ConsumerState<PinSettingsScreen> {
               TextField(
                 controller: _staffCtrl,
                 keyboardType: TextInputType.number,
+                obscureText: true,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 maxLength: 6,
                 style: TextStyle(color: textColor, letterSpacing: 4),
                 decoration: const InputDecoration(

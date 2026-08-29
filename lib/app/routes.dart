@@ -15,9 +15,30 @@ import 'package:horeca_app/features/notifications/presentation/notifications_scr
 import 'package:horeca_app/features/custom_template/presentation/template_screen.dart';
 import 'package:horeca_app/features/auth/data/auth_repository.dart';
 
-final router = GoRouter(
-  initialLocation: '/',
-  routes: [
+/// Маршруты, доступные только администратору.
+///
+/// Раньше роль лишь скрывала пункт нижнего меню — сами экраны оставались
+/// доступны через context.go() и через прямой URL в web-сборке.
+const _adminOnlyRoutes = <String>{
+  '/settings',
+  '/analytics',
+  '/iiko',
+  '/notifications',
+  '/template',
+};
+
+final routerProvider = Provider<GoRouter>((ref) {
+  return GoRouter(
+    initialLocation: '/',
+    redirect: (context, state) {
+      final auth = ref.read(authRepositoryProvider);
+      final path = state.uri.path;
+      final needsAdmin = _adminOnlyRoutes
+          .any((p) => path == p || path.startsWith('$p/'));
+      if (needsAdmin && !auth.hasAdminAccess) return '/';
+      return null;
+    },
+    routes: [
     ShellRoute(
       builder: (context, state, child) => MainShell(child: child),
       routes: [
@@ -45,12 +66,13 @@ final router = GoRouter(
       path: '/notifications',
       builder: (_, __) => const NotificationsScreen(),
     ),
-    GoRoute(
-      path: '/template',
-      builder: (_, __) => const TemplateScreen(),
-    ),
-  ],
-);
+      GoRoute(
+        path: '/template',
+        builder: (_, __) => const TemplateScreen(),
+      ),
+    ],
+  );
+});
 
 class MainShell extends ConsumerWidget {
   final Widget child;
@@ -61,7 +83,7 @@ Widget build(BuildContext context, WidgetRef ref) {
   final l10n = AppLocalizations.of(context);
   final isDark = Theme.of(context).brightness == Brightness.dark;
   final authState = ref.watch(authRepositoryProvider);
-  final isAdmin = authState.role != UserRole.staff;
+  final isAdmin = authState.hasAdminAccess;
 
     return Scaffold(
       body: child,
@@ -87,7 +109,7 @@ Widget build(BuildContext context, WidgetRef ref) {
           ],
         ),
         child: BottomNavigationBar(
-          currentIndex: _calculateIndex(context),
+          currentIndex: _calculateIndex(context, isAdmin),
           onTap: (index) => _onTap(context, index),
           type: BottomNavigationBarType.fixed,
           backgroundColor: Colors.transparent,
@@ -122,10 +144,10 @@ Widget build(BuildContext context, WidgetRef ref) {
     );
   }
 
-  int _calculateIndex(BuildContext context) {
+  int _calculateIndex(BuildContext context, bool isAdmin) {
     final location = GoRouterState.of(context).uri.toString();
     if (location.startsWith('/history')) return 1;
-    if (location.startsWith('/settings')) return 2;
+    if (location.startsWith('/settings')) return isAdmin ? 2 : 0;
     return 0;
   }
 
@@ -134,6 +156,7 @@ Widget build(BuildContext context, WidgetRef ref) {
       case 0: context.go('/'); break;
       case 1: context.go('/history'); break;
       case 2: context.go('/settings'); break;
+      default: context.go('/');
     }
   }
 }

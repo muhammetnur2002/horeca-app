@@ -17,10 +17,10 @@ class HomeScreen extends ConsumerWidget {
 
   @override
 Widget build(BuildContext context, WidgetRef ref) {
-  final l10n = AppLocalizations.of(context)!;
+  final l10n = AppLocalizations.of(context);
   final isDark = Theme.of(context).brightness == Brightness.dark;
   final authState = ref.watch(authRepositoryProvider);
-  final isAdmin = authState.role != UserRole.staff;
+  final isAdmin = authState.hasAdminAccess;
 
   final settings = ref.watch(settingsRepositoryProvider);
   final stockLevels = ref.watch(stockLevelsRepositoryProvider);

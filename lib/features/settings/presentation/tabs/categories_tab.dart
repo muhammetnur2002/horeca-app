@@ -12,7 +12,7 @@ class CategoriesTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final categories = ref.watch(settingsRepositoryProvider).categories;
     final departments = ref.watch(settingsRepositoryProvider).departments;
     final repo = ref.read(settingsRepositoryProvider.notifier);

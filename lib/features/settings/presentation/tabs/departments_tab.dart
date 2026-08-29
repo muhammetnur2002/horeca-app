@@ -11,7 +11,7 @@ class DepartmentsTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final departments = ref.watch(settingsRepositoryProvider).departments;
     final repo = ref.read(settingsRepositoryProvider.notifier);
     final isDark = Theme.of(context).brightness == Brightness.dark;

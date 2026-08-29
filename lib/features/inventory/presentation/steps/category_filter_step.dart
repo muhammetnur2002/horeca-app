@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/features/inventory/domain/usecases/inventory_state.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
-import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
+
 
 class CategoryFilterStep extends ConsumerWidget {
   const CategoryFilterStep({super.key});

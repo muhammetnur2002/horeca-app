@@ -35,7 +35,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final entries = ref.watch(historyEntriesProvider);
     final repo = ref.read(historyRepositoryProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;

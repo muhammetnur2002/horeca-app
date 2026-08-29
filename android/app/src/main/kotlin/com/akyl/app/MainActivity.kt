@@ -1,4 +1,4 @@
-package com.example.horeca_app
+package com.akyl.app
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -33,7 +33,7 @@ class ShiftClosePdf {
     final pdf = pw.Document(theme: theme);
 
     final orange  = PdfColor.fromHex('F5862E');
-    final green   = PdfColor.fromHex('639922');
+
     final dark    = PdfColor.fromHex('1A1E2E');
     final muted   = PdfColor.fromHex('8B8FA8');
     final bgLight = PdfColor.fromHex('F8F9FF');

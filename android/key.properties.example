@@ -1,0 +1,15 @@
+# Пример конфигурации ключа подписи release-сборки.
+#
+# 1. Создайте ключ (выполнить один раз, из папки android):
+#
+#    keytool -genkey -v -keystore akyl-release.jks -storetype JKS \
+#      -keyalg RSA -keysize 2048 -validity 10000 -alias akyl
+#
+# 2. Скопируйте этот файл в android/key.properties и подставьте свои значения.
+# 3. НИКОГДА не коммитьте key.properties и .jks — они уже в .gitignore.
+#    Потеряете ключ — не сможете выпускать обновления приложения.
+
+storePassword=ВАШ_ПАРОЛЬ_ХРАНИЛИЩА
+keyPassword=ВАШ_ПАРОЛЬ_КЛЮЧА
+keyAlias=akyl
+storeFile=akyl-release.jks

@@ -1,12 +1,15 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
+
 import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/app/di.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
-  const SplashScreen({super.key});
+  /// Вызывается, когда заставка отыграла (или её пропустили тапом).
+  final VoidCallback? onFinished;
+
+  const SplashScreen({super.key, this.onFinished});
   @override
   ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
@@ -15,7 +18,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _ctrl;
   final Random _rnd = Random(42);
-  bool _navigated = false;
+
+  bool _finished = false;
 
   late List<_Star> _stars;
   final List<_Particle> _particles = [];
@@ -26,8 +30,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     super.initState();
     _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 10),
+      duration: _splashDuration,
     );
+    _ctrl.addStatusListener((status) {
+      if (status == AnimationStatus.completed) _finish();
+    });
 
     _stars = List.generate(160, (i) => _Star(
       x: _rnd.nextDouble(),
@@ -38,7 +45,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     ));
 
     _ctrl.forward();
+  }
 
+  /// Заставка завершается ровно один раз — и по окончании анимации,
+  /// и при пропуске тапом.
+  void _finish() {
+    if (_finished) return;
+    _finished = true;
+    widget.onFinished?.call();
   }
 
   @override
@@ -60,10 +74,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     final isDark = _isDark;
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF060A18) : const Color(0xFFDDE8FF),
-      body: AnimatedBuilder(
+      body: GestureDetector(
+        onTap: _finish,
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedBuilder(
         animation: _ctrl,
         builder: (context, _) {
-          final t = _ctrl.value * 10;
+          final t = _ctrl.value * _splashTimeline;
           _updateParticles();
           _maybeShoot();
           return CustomPaint(
@@ -77,6 +94,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
             child: const SizedBox.expand(),
           );
         },
+        ),
       ),
     );
   }
@@ -107,6 +125,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     }
   }
 }
+
+/// Длительность заставки в реальном времени.
+const _splashDuration = Duration(milliseconds: 3200);
+
+/// Длина хореографии во внутренних "секундах" painter'а.
+const double _splashTimeline = 7.2;
 
 class _Star {
   final double x, y, r, phase, speed;

@@ -80,7 +80,7 @@ class ReportStep extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final state = ref.watch(inventoryStateProvider);
     final settings = ref.watch(settingsRepositoryProvider);
     final establishmentName = settings.establishmentName;

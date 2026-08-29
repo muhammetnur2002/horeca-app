@@ -69,24 +69,6 @@ void initState() {
   _loadDraft();
 }
 
-void _saveDraft() {
-  final notifier = ref.read(shiftDraftProvider.notifier);
-  notifier.state = ShiftDraft(
-    step: _step,
-    selectedStaff: Set.from(_selectedStaff),
-    desserts: _desserts,
-    dessertsLoaded: _dessertsLoaded,
-    manualWriteOffs: List.from(_manualWriteOffs),
-    qr: _qrCtrl.text,
-    card: _cardCtrl.text,
-    cash: _cashCtrl.text,
-    manual: _manualCtrl.text,
-    morningCash: _morningCashCtrl.text,
-    eveningCash: _eveningCashCtrl.text,
-    inkass: _inkassCtrl.text,
-    hasInkass: _hasInkass,
-  );
-}
 void _loadDraft() {
   final draft = ref.read(shiftDraftProvider);
   _step = draft.step;
@@ -123,8 +105,7 @@ void deactivate() {
     inkass: _inkassCtrl.text,
     hasInkass: _hasInkass,
   );
-  final notifier = ref.read(shiftDraftProvider.notifier);
-  Future.microtask(() => notifier.state = draft);
+  ref.read(shiftDraftProvider.notifier).state = draft;
   super.deactivate();
 }
 

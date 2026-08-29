@@ -107,6 +107,7 @@ class _ProductsTabState extends ConsumerState<ProductsTab> {
     SettingsRepository repo,
     List<DepartmentModel> departments,
     List<CategoryModel> allCategories,
+    List<ProductModel> products,
   ) async {
     if (_selectedIds.isEmpty) return;
     final deptNames = departments.map((d) => d.name).toList();
@@ -129,7 +130,7 @@ class _ProductsTabState extends ConsumerState<ProductsTab> {
     final cat = catsInDept.firstWhere((c) => c.name == catName);
     for (final id in _selectedIds.toList()) {
       final product =
-          repo.state.products.firstWhere((p) => p.id == id);
+          products.firstWhere((p) => p.id == id);
       repo.updateProduct(id, product.name, product.unit,
           newCategoryId: cat.id,
           newInventoryUnit: product.inventoryUnit);
@@ -456,7 +457,8 @@ onChanged: (v) => setState(() => _searchQuery = v),
                                         context,
                                         repo,
                                         departments,
-                                        categories),
+                                        categories,
+                                        products),
                               ),
                               const SizedBox(width: 8),
                               _BatchBtn(
@@ -480,8 +482,7 @@ onChanged: (v) => setState(() => _searchQuery = v),
                                               (c) =>
                                                   c.name ==
                                                   newValue);
-                                      final product = repo
-                                          .state.products
+                                      final product = products
                                           .firstWhere(
                                               (p) => p.id == id);
                                       repo.updateProduct(
@@ -512,8 +513,7 @@ onChanged: (v) => setState(() => _searchQuery = v),
                                     options: units,
                                     onApply:
                                         (repo, id, newValue) {
-                                      final product = repo
-                                          .state.products
+                                      final product = products
                                           .firstWhere(
                                               (p) => p.id == id);
                                       repo.updateProduct(
@@ -545,8 +545,7 @@ onChanged: (v) => setState(() => _searchQuery = v),
                                     options: units,
                                     onApply:
                                         (repo, id, newValue) {
-                                      final product = repo
-                                          .state.products
+                                      final product = products
                                           .firstWhere(
                                               (p) => p.id == id);
                                       repo.updateProduct(

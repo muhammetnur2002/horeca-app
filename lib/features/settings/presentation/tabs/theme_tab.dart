@@ -14,7 +14,7 @@ class ThemeTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final themeMode = ref.watch(themeModeProvider);
     final notifier = ref.read(themeModeProvider.notifier);
     final isDark = themeMode == ThemeMode.dark;
@@ -51,7 +51,7 @@ class ThemeTab extends ConsumerWidget {
                     ),
                     const SizedBox(height: 20),
                     Text(
-                      l10n.translate('theme') ?? 'Тема',
+                      l10n.translate('theme'),
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w700,
@@ -497,52 +497,6 @@ Text('Akyl v1.0.0 — управляй с умом',
   style: TextStyle(fontSize: 14, height: 1.6,
       color: isDark ? Colors.white.withOpacity(0.85) : const Color(0xFF1A1A2E)),
 ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
-}
-
-void _showThirdPartyLicenses(BuildContext context, bool isDark) async {
-  final text = await DefaultAssetBundle.of(context)
-      .loadString('assets/licenses/third_party_licenses.txt');
-  if (!context.mounted) return;
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (_) => DraggableScrollableSheet(
-      initialChildSize: 0.7,
-      maxChildSize: 0.9,
-      minChildSize: 0.4,
-      builder: (_, scrollCtrl) => Container(
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.darkCard : Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          children: [
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              width: 40, height: 4,
-              decoration: BoxDecoration(
-                  color: AppColors.muted.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(2))),
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Text('Лицензии открытого ПО',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700,
-                      color: isDark ? Colors.white : const Color(0xFF1A1A2E)))),
-            Expanded(
-              child: SingleChildScrollView(
-                controller: scrollCtrl,
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 30),
-                child: Text(text,
-                    style: TextStyle(fontSize: 12, height: 1.5, fontFamily: 'monospace',
-                        color: isDark ? Colors.white.withOpacity(0.8) : const Color(0xFF1A1A2E))),
               ),
             ),
           ],

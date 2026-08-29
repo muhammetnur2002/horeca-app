@@ -7,7 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
 import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
-import 'package:file_picker/file_picker.dart';
+
 import 'package:horeca_app/features/backup/data/backup_service.dart';
 import 'package:horeca_app/app/di.dart';
 import 'package:file_picker/file_picker.dart' as fp;
@@ -80,7 +80,7 @@ class EstablishmentTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final settings = ref.watch(settingsRepositoryProvider);
     final name = settings.establishmentName;
     final currency = settings.currency;

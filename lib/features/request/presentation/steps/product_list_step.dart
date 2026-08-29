@@ -33,7 +33,7 @@ class _ProductListStepState extends ConsumerState<ProductListStep> {
       String productName, double currentQuantity, String unit, WidgetRef ref) {
     final controller =
         TextEditingController(text: currentQuantity.toStringAsFixed(0));
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     showDialog(
@@ -91,7 +91,7 @@ class _ProductListStepState extends ConsumerState<ProductListStep> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(requestStateProvider);
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (state.categoryId == null) {

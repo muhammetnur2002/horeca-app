@@ -25,7 +25,7 @@ final inventoryProductsProvider = Provider.family<List<InventoryProduct>, String
       // Возвращаем все товары, помечая их departmentId как 'all'
       return allProducts
           .map((p) {
-            final cat = allCategories.firstWhere(
+            allCategories.firstWhere(
               (c) => c.id == p.categoryId,
               orElse: () => CategoryModel(id: '', name: '', departmentId: ''),
             );
