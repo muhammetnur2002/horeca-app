@@ -37,7 +37,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final entries = ref.watch(historyEntriesProvider);
-    final repo = ref.read(historyRepositoryProvider);
+    final repo = ref.read(historyRepositoryProvider.notifier);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -295,7 +295,6 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
       ? HistoryType.request
       : HistoryType.inventory;
   repo.clearByType(type);
-  ref.invalidate(historyEntriesProvider);
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       content: const Text('История очищена', style: TextStyle(color: Colors.white)),

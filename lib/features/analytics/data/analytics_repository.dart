@@ -1,7 +1,9 @@
 import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:horeca_app/app/di.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ShiftRecord {
   final DateTime date;
@@ -25,34 +27,63 @@ class ShiftRecord {
   });
 
   Map<String, dynamic> toJson() => {
-  'date': date.toIso8601String(),
-  'revenue': revenue,
-  'qr': qr,
-  'card': card,
-  'cash': cash,
-  'morningCash': morningCash,
-  'eveningCash': eveningCash,
-  'writeOffs': writeOffs,
-};
+        'date': date.toIso8601String(),
+        'revenue': revenue,
+        'qr': qr,
+        'card': card,
+        'cash': cash,
+        'morningCash': morningCash,
+        'eveningCash': eveningCash,
+        'writeOffs': writeOffs,
+      };
 
-factory ShiftRecord.fromJson(Map<String, dynamic> json) => ShiftRecord(
-  date: DateTime.parse(json['date'] as String),
-  revenue: (json['revenue'] as num).toDouble(),
-  qr: (json['qr'] as num?)?.toDouble() ?? 0,
-  card: (json['card'] as num?)?.toDouble() ?? 0,
-  cash: (json['cash'] as num?)?.toDouble() ?? 0,
-  morningCash: (json['morningCash'] as num?)?.toDouble() ?? 0,
-  eveningCash: (json['eveningCash'] as num?)?.toDouble() ?? 0,
-  writeOffs: Map<String, int>.from(json['writeOffs'] as Map),
-);
+  factory ShiftRecord.fromJson(Map<String, dynamic> json) => ShiftRecord(
+        date: DateTime.parse(json['date'] as String),
+        revenue: _toDouble(json['revenue']),
+        qr: _toDouble(json['qr']),
+        card: _toDouble(json['card']),
+        cash: _toDouble(json['cash']),
+        morningCash: _toDouble(json['morningCash']),
+        eveningCash: _toDouble(json['eveningCash']),
+        writeOffs: _toIntMap(json['writeOffs']),
+      );
+
+  static double _toDouble(Object? v) =>
+      v is num ? v.toDouble() : (v is String ? double.tryParse(v) ?? 0 : 0);
+
+  /// Раньше здесь было `Map<String, int>.from(...)`, и одно дробное значение
+  /// роняло разбор всего файла — вся аналитика молча обнулялась.
+  static Map<String, int> _toIntMap(Object? v) {
+    if (v is! Map) return <String, int>{};
+    final out = <String, int>{};
+    v.forEach((key, value) {
+      final k = key?.toString();
+      if (k == null) return;
+      if (value is num) {
+        out[k] = value.round();
+      } else if (value is String) {
+        final parsed = num.tryParse(value);
+        if (parsed != null) out[k] = parsed.round();
+      }
+    });
+    return out;
+  }
 }
 
-class AnalyticsRepository {
+/// Хранилище закрытых смен.
+///
+/// Как и история, раньше это был Provider с изменяемым списком: addShift()
+/// не вызывал перестроение, и только что закрытая смена не появлялась
+/// в аналитике до перезапуска приложения.
+class AnalyticsRepository extends StateNotifier<List<ShiftRecord>> {
   final SharedPreferences _prefs;
-  static const _key = 'shift_records';
-  List<ShiftRecord> _records = [];
 
-  AnalyticsRepository(this._prefs) {
+  static const _key = 'shift_records';
+  static const _schemaKey = 'shift_records_schema';
+  static const _schemaVersion = 1;
+  static const maxRecords = 1000;
+
+  AnalyticsRepository(this._prefs) : super(const []) {
     _load();
   }
 
@@ -60,54 +91,68 @@ class AnalyticsRepository {
     final jsonString = _prefs.getString(_key);
     if (jsonString == null) return;
     try {
-      final List<dynamic> data = jsonDecode(jsonString);
-      _records = data.map((e) => ShiftRecord.fromJson(e)).toList();
-    } catch (_) {
-      _records = [];
+      final List<dynamic> data = jsonDecode(jsonString) as List<dynamic>;
+      state = data
+          .map((e) => ShiftRecord.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e, st) {
+      _prefs.setString('${_key}_corrupt', jsonString);
+      _prefs.remove(_key);
+      state = const [];
+      debugPrint('AnalyticsRepository: не удалось прочитать смены: $e\n$st');
     }
   }
 
   void _save() {
-    final data = _records.map((r) => r.toJson()).toList();
-    _prefs.setString(_key, jsonEncode(data));
+    _prefs.setInt(_schemaKey, _schemaVersion);
+    _prefs.setString(_key, jsonEncode(state.map((r) => r.toJson()).toList()));
   }
 
   void addShift(ShiftRecord record) {
-    _records.add(record);
+    final next = [...state, record];
+    state = next.length > maxRecords
+        ? next.sublist(next.length - maxRecords)
+        : next;
     _save();
   }
 
-  List<ShiftRecord> getAll() => List.unmodifiable(_records);
-
+  /// Смены за последние [n] календарных дней, от старых к новым.
+  ///
+  /// Раньше отсечка бралась как `now - n дней` с учётом времени суток, из-за
+  /// чего сегодняшняя смена могла не попасть в выборку.
   List<ShiftRecord> getLastNDays(int n) {
-    final cutoff = DateTime.now().subtract(Duration(days: n));
-    return _records.where((r) => r.date.isAfter(cutoff)).toList()
+    final now = DateTime.now();
+    final cutoff = DateTime(now.year, now.month, now.day)
+        .subtract(Duration(days: n - 1));
+    return state.where((r) => !r.date.isBefore(cutoff)).toList()
       ..sort((a, b) => a.date.compareTo(b.date));
   }
 
   ShiftRecord? getYesterdayShift() {
     final now = DateTime.now();
-    final yesterday = DateTime(now.year, now.month, now.day - 1);
     final todayStart = DateTime(now.year, now.month, now.day);
-    final candidates = _records.where((r) =>
-        r.date.isAfter(yesterday) && r.date.isBefore(todayStart)).toList();
-    if (candidates.isEmpty) return null;
-    candidates.sort((a, b) => b.date.compareTo(a.date));
-    return candidates.first;
-  }
-  double? getRevenueChangePercent() {
-    final sorted = List<ShiftRecord>.from(_records)
+    final yesterdayStart = todayStart.subtract(const Duration(days: 1));
+    final candidates = state
+        .where((r) =>
+            !r.date.isBefore(yesterdayStart) && r.date.isBefore(todayStart))
+        .toList()
       ..sort((a, b) => b.date.compareTo(a.date));
-    if (sorted.length < 2) return null;
-    final today = sorted[0].revenue;
-    final yesterday = sorted[1].revenue;
-    if (yesterday == 0) return null;
-    return ((today - yesterday) / yesterday) * 100;
+    return candidates.isEmpty ? null : candidates.first;
+  }
+
+  /// Изменение выручки последней смены к предыдущей, в процентах.
+  double? getRevenueChangePercent() {
+    if (state.length < 2) return null;
+    final sorted = [...state]..sort((a, b) => b.date.compareTo(a.date));
+    final latest = sorted[0].revenue;
+    final previous = sorted[1].revenue;
+    if (previous == 0) return null;
+    return ((latest - previous) / previous) * 100;
   }
 
   Map<String, int> getTopWriteOffs({int limit = 5}) {
-    final Map<String, int> totals = {};
-    for (final record in _records) {
+    final totals = <String, int>{};
+    for (final record in state) {
       record.writeOffs.forEach((name, qty) {
         totals[name] = (totals[name] ?? 0) + qty;
       });
@@ -118,14 +163,13 @@ class AnalyticsRepository {
   }
 
   void clear() {
-    _records.clear();
+    state = const [];
     _save();
   }
 }
 
-final analyticsRepositoryProvider = Provider<AnalyticsRepository>((ref) {
+final analyticsRepositoryProvider =
+    StateNotifierProvider<AnalyticsRepository, List<ShiftRecord>>((ref) {
   final prefs = ref.watch(sharedPreferencesProvider);
   return AnalyticsRepository(prefs);
 });
-
-

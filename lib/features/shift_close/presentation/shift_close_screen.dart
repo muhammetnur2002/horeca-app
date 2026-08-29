@@ -1,7 +1,10 @@
+import 'dart:async';
 import 'dart:ui';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:horeca_app/app/app.dart';
+import 'package:horeca_app/core/money.dart';
 import 'package:horeca_app/features/shift_close/presentation/shift_close_pdf.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
@@ -50,17 +53,23 @@ class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
   final _eveningCashCtrl = TextEditingController();
   final _inkassCtrl = TextEditingController();
   bool _hasInkass = false;
+  bool _submitting = false;
 
-  double get _autoTotal =>
-      (double.tryParse(_qrCtrl.text) ?? 0) +
-      (double.tryParse(_cardCtrl.text) ?? 0) +
-      (double.tryParse(_cashCtrl.text) ?? 0);
-  double get _finalTotal => double.tryParse(_manualCtrl.text) ?? _autoTotal;
-  double get _tomorrowCash {
-    final e = double.tryParse(_eveningCashCtrl.text) ?? 0;
-    final i = _hasInkass ? (double.tryParse(_inkassCtrl.text) ?? 0) : 0;
-    return e - i;
-  }
+  double get _qr => Money.parse(_qrCtrl.text);
+  double get _card => Money.parse(_cardCtrl.text);
+  double get _cash => Money.parse(_cashCtrl.text);
+  double get _morningCash => Money.parse(_morningCashCtrl.text);
+  double get _eveningCash => Money.parse(_eveningCashCtrl.text);
+  double get _inkass => _hasInkass ? Money.parse(_inkassCtrl.text) : 0;
+
+  double get _autoTotal => Money.sum([_qr, _card, _cash]);
+
+  /// Ручная сумма перекрывает автоматическую, только если она действительно
+  /// введена — пустое поле не должно обнулять выручку.
+  double get _finalTotal =>
+      _manualCtrl.text.trim().isEmpty ? _autoTotal : Money.parse(_manualCtrl.text);
+
+  double get _tomorrowCash => Money.round(_eveningCash - _inkass);
 
 
 @override
@@ -145,24 +154,22 @@ void deactivate() {
     _showWarning('Укажите сумму наличными (или 0, если не было)');
     return;
   }
-  final qr   = double.tryParse(_qrCtrl.text) ?? 0;
-  final card = double.tryParse(_cardCtrl.text) ?? 0;
-  final cash = double.tryParse(_cashCtrl.text) ?? 0;
-  if (qr == 0 && card == 0 && cash == 0) {
+  if (_qr == 0 && _card == 0 && _cash == 0) {
     _showWarning('Хотя бы один способ оплаты должен быть больше нуля');
     return;
   }
 }
     if (_step == 2) {
-      final morning = double.tryParse(_morningCashCtrl.text) ?? 0;
-      final evening = double.tryParse(_eveningCashCtrl.text) ?? 0;
-      if (morning == 0 && evening == 0) {
+      if (_morningCash == 0 && _eveningCash == 0) {
         _showWarning('Заполните наличные в кассе');
         return;
       }
     }
-    if (_step < _totalSteps - 1) setState(() => _step++);
-    else _onSubmit();
+    if (_step < _totalSteps - 1) {
+      setState(() => _step++);
+    } else {
+      unawaited(_onSubmit());
+    }
   }
 
   void _showWarning(String msg) {
@@ -182,49 +189,77 @@ void deactivate() {
 
   void _back() { if (_step > 0) setState(() => _step--); }
 
-  void _onSubmit() async {
-  final confirm = await showDialog<bool>(
-    context: context, builder: (_) => _ConfirmDialog());
-  if (confirm == true && mounted) {
-    // Сохраняем запись для аналитики
-    final writeOffsMap = <String, int>{};
-    for (final d in _desserts.where((d) => d.writeOff > 0)) {
-      writeOffsMap[d.name] = d.writeOff;
-    }
-    for (final m in _manualWriteOffs) {
-      writeOffsMap[m.name] = (writeOffsMap[m.name] ?? 0) + m.quantity;
-    }
-    ref.read(analyticsRepositoryProvider).addShift(ShiftRecord(
-  date: DateTime.now(),
-  revenue: _finalTotal,
-  qr: double.tryParse(_qrCtrl.text) ?? 0,
-  card: double.tryParse(_cardCtrl.text) ?? 0,
-  cash: double.tryParse(_cashCtrl.text) ?? 0,
-  morningCash: double.tryParse(_morningCashCtrl.text) ?? 0,
-  eveningCash: double.tryParse(_eveningCashCtrl.text) ?? 0,
-  writeOffs: writeOffsMap,
-));
+  /// Закрытие смены.
+  ///
+  /// Раньше запись в аналитику делалась ДО генерации PDF и без try/catch:
+  /// сбой генерации оставлял смену записанной, черновик не сбрасывался, и
+  /// повторное нажатие удваивало выручку. Теперь сначала формируется отчёт,
+  /// а флаг _submitting не даёт нажать кнопку дважды.
+  Future<void> _onSubmit() async {
+    if (_submitting) return;
 
-    await ShiftClosePdf.generateAndShare(
-      currency: ref.read(settingsRepositoryProvider).currency,
-      context: context,
-      staffName: _selectedStaff.isEmpty ? '—' : _selectedStaff.join(', '),
-      desserts: _desserts,
-      manualWriteOffs: _manualWriteOffs,
-      qr: double.tryParse(_qrCtrl.text) ?? 0,
-      card: double.tryParse(_cardCtrl.text) ?? 0,
-      cash: double.tryParse(_cashCtrl.text) ?? 0,
-      totalRevenue: _finalTotal,
-      morningCash: double.tryParse(_morningCashCtrl.text) ?? 0,
-      eveningCash: double.tryParse(_eveningCashCtrl.text) ?? 0,
-      inkass: _hasInkass ? (double.tryParse(_inkassCtrl.text) ?? 0) : 0,
-      tomorrowCash: _tomorrowCash,
-      date: DateTime.now(),
-    );
-    ref.read(shiftDraftProvider.notifier).reset();
-    if (mounted) Navigator.of(context).pop();
+    final confirm = await showDialog<bool>(
+        context: context, builder: (_) => _ConfirmDialog());
+    if (confirm != true || !mounted) return;
+
+    setState(() => _submitting = true);
+    try {
+      final writeOffsMap = <String, int>{};
+      for (final d in _desserts.where((d) => d.writeOff > 0)) {
+        writeOffsMap[d.name] = d.writeOff;
+      }
+      for (final m in _manualWriteOffs) {
+        writeOffsMap[m.name] = (writeOffsMap[m.name] ?? 0) + m.quantity;
+      }
+
+      final closedAt = DateTime.now();
+
+      await ShiftClosePdf.generateAndShare(
+        currency: ref.read(settingsRepositoryProvider).currency,
+        context: context,
+        staffName: _selectedStaff.isEmpty ? '—' : _selectedStaff.join(', '),
+        desserts: _desserts,
+        manualWriteOffs: _manualWriteOffs,
+        qr: _qr,
+        card: _card,
+        cash: _cash,
+        totalRevenue: _finalTotal,
+        morningCash: _morningCash,
+        eveningCash: _eveningCash,
+        inkass: _inkass,
+        tomorrowCash: _tomorrowCash,
+        date: closedAt,
+      );
+
+      if (!mounted) return;
+
+      ref.read(analyticsRepositoryProvider.notifier).addShift(ShiftRecord(
+            date: closedAt,
+            revenue: _finalTotal,
+            qr: _qr,
+            card: _card,
+            cash: _cash,
+            morningCash: _morningCash,
+            eveningCash: _eveningCash,
+            writeOffs: writeOffsMap,
+          ));
+      ref.read(shiftDraftProvider.notifier).reset();
+      if (mounted) Navigator.of(context).pop();
+    } catch (e, st) {
+      debugPrint('Закрытие смены не удалось: $e\n$st');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text(
+              'Не удалось сформировать отчёт. Смена не записана — попробуйте ещё раз.',
+              style: TextStyle(color: Colors.white)),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
   }
-}
 
   void _addManualWriteOff(bool isDark) {
   final nameCtrl = TextEditingController();
@@ -682,18 +717,18 @@ const SizedBox(height: 10),
         _SummaryRow(label: 'Сотрудники',
             value: _selectedStaff.isEmpty ? '—' : _selectedStaff.join(', '), isDark: isDark),
         _SummaryRow(label: 'QR-код',
-            value: '${_formatMoney(double.tryParse(_qrCtrl.text) ?? 0)} $currency', isDark: isDark),
+            value: '${_formatMoney(_qr)} $currency', isDark: isDark),
         _SummaryRow(label: 'Банк. карта',
-            value: '${_formatMoney(double.tryParse(_cardCtrl.text) ?? 0)} $currency', isDark: isDark),
+            value: '${_formatMoney(_card)} $currency', isDark: isDark),
         _SummaryRow(label: 'Наличные',
-            value: '${_formatMoney(double.tryParse(_cashCtrl.text) ?? 0)} $currency', isDark: isDark),
+            value: '${_formatMoney(_cash)} $currency', isDark: isDark),
         const _Divider(),
         _SummaryRow(label: 'Касса Начало смены',
-            value: '${_formatMoney(double.tryParse(_morningCashCtrl.text) ?? 0)} $currency', isDark: isDark),
+            value: '${_formatMoney(_morningCash)} $currency', isDark: isDark),
         _SummaryRow(label: 'Касса Конец смены',
-            value: '${_formatMoney(double.tryParse(_eveningCashCtrl.text) ?? 0)} $currency', isDark: isDark),
+            value: '${_formatMoney(_eveningCash)} $currency', isDark: isDark),
         if (_hasInkass) _SummaryRow(label: 'Инкассация',
-            value: '${_formatMoney(double.tryParse(_inkassCtrl.text) ?? 0)} $currency', isDark: isDark),
+            value: '${_formatMoney(_inkass)} $currency', isDark: isDark),
         _SummaryRow(label: 'Касса на завтра',
             value: '${_formatMoney(_tomorrowCash)} $currency', isDark: isDark, highlight: true),
         if (writeOffs.isNotEmpty) ...[
@@ -746,15 +781,21 @@ const SizedBox(height: 10),
               child: const Text('Назад'))),
           const SizedBox(width: 12),
         ],
-        Expanded(flex: 2, child: ElevatedButton(onPressed: _next,
+        Expanded(flex: 2, child: ElevatedButton(onPressed: _submitting ? null : _next,
             style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 backgroundColor: isLast ? AppColors.green : AppColors.orange,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 elevation: 0),
-            child: Text(isLast ? '✓ Закрыть смену' : 'Далее →',
-                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)))),
+            child: _submitting
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white))
+                : Text(isLast ? '✓ Закрыть смену' : 'Далее →',
+                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)))),
       ]),
     );
   }
@@ -766,11 +807,9 @@ const SizedBox(height: 10),
     return '${now.day} ${months[now.month]} ${now.year}';
   }
 
-  String _formatMoney(double v) {
-    if (v == 0) return '0';
-    return v.toStringAsFixed(0).replaceAllMapped(
-        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]} ');
-  }
+  /// Единое форматирование сумм — раньше копейки просто отбрасывались
+  /// через toStringAsFixed(0).
+  String _formatMoney(double v) => Money.format(v);
 }
 
 class _GlassCard extends StatelessWidget {

@@ -38,16 +38,19 @@ class InventoryState {
     this.selectedCategoryIds = const [],
   });
 
+  /// clearDepartment нужен, потому что `field ?? this.field` не даёт сбросить
+  /// значение в null — передача null означала «не менять».
   InventoryState copyWith({
     int? step,
     String? departmentId,
     List<InventoryItem>? items,
     bool? isGenerated,
     List<String>? selectedCategoryIds,
+    bool clearDepartment = false,
   }) {
     return InventoryState(
       step: step ?? this.step,
-      departmentId: departmentId ?? this.departmentId,
+      departmentId: clearDepartment ? null : (departmentId ?? this.departmentId),
       items: items ?? this.items,
       isGenerated: isGenerated ?? this.isGenerated,
       selectedCategoryIds: selectedCategoryIds ?? this.selectedCategoryIds,
@@ -112,7 +115,26 @@ class InventoryStateNotifier extends StateNotifier<InventoryState> {
     state = const InventoryState();
   }
 
-  void updateItem(String id, String name, String inventoryUnit, double value) {}
+  /// Записывает введённый остаток по товару.
+  ///
+  /// Метод был объявлен с пустым телом: экран ввода вызывал его на каждое
+  /// изменение, но ничего не сохранялось — итоговый отчёт всегда получался
+  /// нулевым. Товара может ещё не быть в списке, поэтому здесь upsert.
+  void updateItem(String id, String name, String inventoryUnit, double value) {
+    final items = [...state.items];
+    final index = items.indexWhere((i) => i.productId == id);
+    if (index != -1) {
+      items[index] = items[index].copyWith(remaining: value);
+    } else {
+      items.add(InventoryItem(
+        productId: id,
+        productName: name,
+        remaining: value,
+        unit: inventoryUnit,
+      ));
+    }
+    state = state.copyWith(items: items);
+  }
 }
 
 final inventoryStateProvider =

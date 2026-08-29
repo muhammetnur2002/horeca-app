@@ -34,7 +34,9 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
-    final repo = ref.read(analyticsRepositoryProvider);
+    // watch — чтобы экран обновлялся сразу после закрытия смены.
+    ref.watch(analyticsRepositoryProvider);
+    final repo = ref.read(analyticsRepositoryProvider.notifier);
     final currency = ref.watch(settingsRepositoryProvider).currency;
     final records = repo.getLastNDays(_periodDays);
     final changePercent = repo.getRevenueChangePercent();

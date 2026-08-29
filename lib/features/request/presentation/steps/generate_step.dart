@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -256,38 +257,61 @@ class GenerateStep extends ConsumerWidget {
               isDark: isDark,
               fullWidth: true,
               onTap: () async {
-  if (state.items.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(l10n.noData),
-      backgroundColor: const Color(0xFF2E3352),
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12)),
-    ));
-    return;
-  }
-  final repo = ref.read(historyRepositoryProvider);
-  repo.add(HistoryEntry(
-    id: DateTime.now().millisecondsSinceEpoch.toString(),
-    type: HistoryType.request,
-    title: '${l10n.requestTitle} ${state.departmentId}',
-    text: text,
-    createdAt: DateTime.now(),
-  ));
-  final pdfBytes = await PdfGenerator.generateRequestPdf(
-    title: l10n.requestTitle,
-    establishmentName: establishmentName,
-                  department: state.departmentId ?? '',
-                  items: state.items
-                      .map((i) => {
-                            'name': i.productName,
-                            'quantity': _formatDouble(i.quantity),
-                            'unit': i.unit,
-                          })
-                      .toList(),
-                );
-                PdfGenerator.downloadFile(pdfBytes,
-                    'zayavka_${DateTime.now().millisecondsSinceEpoch}.pdf');
+                if (state.items.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text(l10n.noData),
+                    backgroundColor: const Color(0xFF2E3352),
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ));
+                  return;
+                }
+
+                // В заголовке истории раньше подставлялся departmentId —
+                // пользователь видел «Заявка 3» вместо названия отдела.
+                final departmentName = allDepartments
+                    .where((d) => d.id == state.departmentId)
+                    .map((d) => d.name)
+                    .firstWhere((_) => true, orElse: () => '');
+
+                try {
+                  // Сначала документ: раньше запись в историю делалась до
+                  // генерации PDF, и сбой оставлял запись-призрак.
+                  final pdfBytes = await PdfGenerator.generateRequestPdf(
+                    title: l10n.requestTitle,
+                    establishmentName: establishmentName,
+                    department: departmentName,
+                    items: state.items
+                        .map((i) => {
+                              'name': i.productName,
+                              'quantity': _formatDouble(i.quantity),
+                              'unit': i.unit,
+                            })
+                        .toList(),
+                  );
+                  await PdfGenerator.downloadFile(pdfBytes,
+                      'zayavka_${DateTime.now().millisecondsSinceEpoch}.pdf');
+
+                  ref.read(historyRepositoryProvider.notifier).add(HistoryEntry(
+                        id: DateTime.now().millisecondsSinceEpoch.toString(),
+                        type: HistoryType.request,
+                        title: departmentName.isEmpty
+                            ? l10n.requestTitle
+                            : '${l10n.requestTitle} — $departmentName',
+                        text: text,
+                        createdAt: DateTime.now(),
+                      ));
+                } catch (e, st) {
+                  debugPrint('Не удалось сформировать PDF заявки: $e\n$st');
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text('Не удалось сформировать PDF. Заявка не сохранена.',
+                        style: TextStyle(color: Colors.white)),
+                    backgroundColor: Colors.redAccent,
+                    behavior: SnackBarBehavior.floating,
+                  ));
+                }
               },
             ),
 

@@ -15,13 +15,13 @@ class RequestItem {
     this.comment,
   });
 
-  RequestItem copyWith({double? quantity, String? comment}) {
+  RequestItem copyWith({double? quantity, String? comment, bool clearComment = false}) {
     return RequestItem(
       productId: productId,
       productName: productName,
       quantity: quantity ?? this.quantity,
       unit: unit,
-      comment: comment ?? this.comment,
+      comment: clearComment ? null : (comment ?? this.comment),
     );
   }
 }
@@ -39,16 +39,21 @@ class RequestState {
     this.items = const [],
   });
 
+  /// Флаги clearXxx нужны, потому что `field ?? this.field` не позволяет
+  /// сбросить значение в null: передача null трактовалась как «не менять»,
+  /// из-за чего выбранная категория не сбрасывалась при смене отдела.
   RequestState copyWith({
     int? step,
     String? departmentId,
     String? categoryId,
     List<RequestItem>? items,
+    bool clearDepartment = false,
+    bool clearCategory = false,
   }) {
     return RequestState(
       step: step ?? this.step,
-      departmentId: departmentId ?? this.departmentId,
-      categoryId: categoryId ?? this.categoryId,
+      departmentId: clearDepartment ? null : (departmentId ?? this.departmentId),
+      categoryId: clearCategory ? null : (categoryId ?? this.categoryId),
       items: items ?? this.items,
     );
   }
@@ -59,7 +64,7 @@ class RequestStateNotifier extends StateNotifier<RequestState> {
 
   void selectDepartment(String deptId) {
     // Не очищаем items, чтобы сохранить товары из предыдущих отделов
-    state = state.copyWith(departmentId: deptId, step: 1, categoryId: null);
+    state = state.copyWith(departmentId: deptId, step: 1, clearCategory: true);
   }
 
   void selectCategory(String catId) {
@@ -93,9 +98,10 @@ class RequestStateNotifier extends StateNotifier<RequestState> {
 
   void goBack() {
     if (state.step == 1) {
-      state = state.copyWith(step: 0, departmentId: null, categoryId: null);
+      state = state.copyWith(
+          step: 0, clearDepartment: true, clearCategory: true);
     } else if (state.step == 2) {
-      state = state.copyWith(step: 1, categoryId: null);
+      state = state.copyWith(step: 1, clearCategory: true);
     } else if (state.step == 3) {
       state = state.copyWith(step: 2);
     }

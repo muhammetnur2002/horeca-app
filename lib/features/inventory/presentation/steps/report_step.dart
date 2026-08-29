@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -221,23 +222,7 @@ class ReportStep extends ConsumerWidget {
     ));
     return;
   }
-  final repo = ref.read(historyRepositoryProvider);
-repo.add(HistoryEntry(
-  id: DateTime.now().millisecondsSinceEpoch.toString(),
-  type: HistoryType.inventory,
-  title: '${l10n.inventory} $deptName',
-  text: text,
-  createdAt: DateTime.now(),
-));
-
-// Обновляем текущие остатки для отслеживания низких запасов
-final levels = <String, double>{};
-for (final item in state.items) {
-  levels[item.productId] = item.remaining;
-}
-ref.read(stockLevelsRepositoryProvider.notifier).updateLevels(levels);
-
-try {
+  try {
                   final pdfItems = state.items
                       .map((i) => {
                             'name': i.productName,
@@ -267,9 +252,30 @@ final pdfBytes = await PdfGenerator.generateInventoryPdf(
 );
                   await PdfGenerator.downloadFile(pdfBytes,
                       'inventory_${DateTime.now().millisecondsSinceEpoch}.pdf');
-                } catch (e) {
+
+                  // Запись в историю и обновление остатков — только после
+                  // успешной генерации, иначе оставались записи-призраки.
+                  ref.read(historyRepositoryProvider.notifier).add(HistoryEntry(
+                        id: DateTime.now().millisecondsSinceEpoch.toString(),
+                        type: HistoryType.inventory,
+                        title: '${l10n.inventory} $deptName',
+                        text: text,
+                        createdAt: DateTime.now(),
+                      ));
+
+                  final levels = <String, double>{};
+                  for (final item in state.items) {
+                    levels[item.productId] = item.remaining;
+                  }
+                  ref
+                      .read(stockLevelsRepositoryProvider.notifier)
+                      .updateLevels(levels);
+                } catch (e, st) {
+                  debugPrint('Не удалось сформировать отчёт инвентаризации: $e\n$st');
+                  if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text('Ошибка: $e'),
+                    content: Text('Не удалось сформировать PDF: $e',
+                        style: const TextStyle(color: Colors.white)),
                     backgroundColor: Colors.redAccent,
                     behavior: SnackBarBehavior.floating,
                     shape: RoundedRectangleBorder(

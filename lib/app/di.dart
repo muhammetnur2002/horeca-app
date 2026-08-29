@@ -7,25 +7,45 @@ final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
 });
 
 final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>((ref) {
-  final prefs = ref.read(sharedPreferencesProvider);
+  final prefs = ref.watch(sharedPreferencesProvider);
   return ThemeModeNotifier(prefs);
 });
 
 class ThemeModeNotifier extends StateNotifier<ThemeMode> {
   final SharedPreferences _prefs;
+  static const _key = 'theme_mode';
+
   ThemeModeNotifier(this._prefs) : super(ThemeMode.system) {
-    final saved = _prefs.getString('theme_mode');
-    if (saved == 'light') {
-      state = ThemeMode.light;
-    } else if (saved == 'dark') {
-      state = ThemeMode.dark;
-    } else {
-      state = ThemeMode.system; // по умолчанию — системная
+    state = _decode(_prefs.getString(_key));
+  }
+
+  static ThemeMode _decode(String? saved) {
+    switch (saved) {
+      case 'light':
+        return ThemeMode.light;
+      case 'dark':
+        return ThemeMode.dark;
+      default:
+        return ThemeMode.system;
     }
   }
+
+  static String _encode(ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.light:
+        return 'light';
+      case ThemeMode.dark:
+        return 'dark';
+      case ThemeMode.system:
+        return 'system';
+    }
+  }
+
+  /// Раньше здесь было `mode == ThemeMode.light ? 'light' : 'dark'`, из-за чего
+  /// выбор «Системная» сохранялся как тёмная тема.
   void setThemeMode(ThemeMode mode) {
     state = mode;
-    _prefs.setString('theme_mode', mode == ThemeMode.light ? 'light' : 'dark');
+    _prefs.setString(_key, _encode(mode));
   }
 }
 

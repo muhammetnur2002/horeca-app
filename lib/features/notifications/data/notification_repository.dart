@@ -1,4 +1,7 @@
+import 'dart:async';
 import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:horeca_app/app/di.dart';
@@ -34,7 +37,12 @@ class ProductReminder {
   factory ProductReminder.fromJson(Map<String, dynamic> json) => ProductReminder(
     id: json['id'] as int,
     productName: json['productName'] as String,
-    frequency: ReminderFrequency.values.firstWhere((e) => e.name == json['frequency']),
+    frequency: ReminderFrequency.values.firstWhere(
+      (e) => e.name == json['frequency'],
+      // Без orElse неизвестное значение бросало исключение, которое ловил
+      // пустой catch выше — и все напоминания молча пропадали.
+      orElse: () => ReminderFrequency.daily,
+    ),
     hour: json['hour'] as int,
     minute: json['minute'] as int,
     weekday: json['weekday'] as int?,
@@ -108,7 +116,11 @@ class NotificationRepository extends StateNotifier<NotificationData> {
 
   NotificationRepository(this._prefs) : super(const NotificationData()) {
     _load();
-    _service.init();
+    // Инициализация плагина (в т.ч. запрос разрешений) асинхронная; ошибку
+    // логируем, а не теряем в незавершённом Future.
+    unawaited(_service.init().catchError((Object e) {
+      debugPrint('NotificationRepository: init уведомлений не удался: $e');
+    }));
   }
 
   void _load() {
@@ -123,7 +135,12 @@ class NotificationRepository extends StateNotifier<NotificationData> {
       if (reminders.isNotEmpty) {
         _nextId = reminders.map((r) => r.id).reduce((a, b) => a > b ? a : b) + 1;
       }
-    } catch (_) {}
+    } catch (e, st) {
+      // Повреждённые данные больше не исчезают молча.
+      _prefs.setString('${_key}_corrupt', jsonString);
+      _prefs.remove(_key);
+      debugPrint('NotificationRepository: не удалось прочитать напоминания: $e\n$st');
+    }
   }
 
   void _save() {

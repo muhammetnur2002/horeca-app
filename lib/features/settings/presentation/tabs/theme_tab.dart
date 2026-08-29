@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/app/di.dart';
 import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
+import 'package:horeca_app/features/analytics/data/analytics_repository.dart';
 import 'package:horeca_app/features/history/data/history_repository.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
 import 'package:horeca_app/features/auth/presentation/pin_settings_screen.dart';
@@ -515,8 +516,8 @@ Text('Akyl v1.0.0 — управляй с умом',
         title: const Text('Очистить все данные?',
             style: TextStyle(fontWeight: FontWeight.w600)),
         content: const Text(
-            'Будут удалены все настройки, товары, сотрудники и история. '
-            'Это действие нельзя отменить.',
+            'Будут удалены все настройки, товары, сотрудники, история '
+            'и статистика закрытых смен. Это действие нельзя отменить.',
             style: TextStyle(color: AppColors.muted, fontSize: 14)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx),
@@ -525,7 +526,8 @@ Text('Akyl v1.0.0 — управляй с умом',
             onPressed: () {
               Navigator.pop(ctx);
               ref.read(settingsRepositoryProvider.notifier).resetAll();
-              ref.read(historyRepositoryProvider).clear();
+              ref.read(historyRepositoryProvider.notifier).clear();
+              ref.read(analyticsRepositoryProvider.notifier).clear();
               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                 content: Text('Все данные очищены'),
                 behavior: SnackBarBehavior.floating,
