@@ -85,7 +85,7 @@ class _ProductListStepState extends ConsumerState<ProductListStep> {
           ),
         ],
       ),
-    );
+    ).whenComplete(() { controller.dispose(); });
   }
 
   @override

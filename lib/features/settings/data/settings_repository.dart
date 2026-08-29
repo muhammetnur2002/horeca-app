@@ -1,4 +1,6 @@
 import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/di.dart';
@@ -21,8 +23,8 @@ class SettingsData {
     required this.departments,
     required this.categories,
     required this.products,
-    this.establishmentName = 'Спартак',
-    this.staff = const ['Настя', 'Никита', 'Медина', 'Бэлла', 'Альбина'],
+    this.establishmentName = '',
+    this.staff = const [],
     this.currency = '₸',
     this.logoPath,
   });
@@ -81,8 +83,10 @@ class SettingsData {
         ProductModel(id: '9', name: 'Пакеты бумажные', unit: 'упаковка', categoryId: '9'),
         ProductModel(id: '10', name: 'Салфетки', unit: 'шт', categoryId: '10'),
       ],
-      establishmentName: 'Спартак',
-      staff: ['Настя', 'Никита', 'Медина', 'Бэлла', 'Альбина'],
+      // Раньше здесь были зашиты название и список сотрудников конкретного
+      // заведения — они попадали в сборку ко всем пользователям.
+      establishmentName: 'Моё заведение',
+      staff: const [],
       currency: '₸',
     );
   }
@@ -91,6 +95,8 @@ class SettingsData {
 class SettingsRepository extends StateNotifier<SettingsData> {
   final SharedPreferences _prefs;
   static const _settingsKey = 'settings_data';
+  static const _schemaKey = 'settings_schema';
+  static const _schemaVersion = 1;
 
   SettingsRepository(this._prefs) : super(SettingsData.initial()) {
     _loadFromPrefs();
@@ -119,6 +125,7 @@ class SettingsRepository extends StateNotifier<SettingsData> {
       'currency': state.currency,
       'logoPath': state.logoPath,
     };
+    _prefs.setInt(_schemaKey, _schemaVersion);
     _prefs.setString(_settingsKey, jsonEncode(data));
   }
 
@@ -126,7 +133,7 @@ class SettingsRepository extends StateNotifier<SettingsData> {
     final jsonString = _prefs.getString(_settingsKey);
     if (jsonString == null) return;
     try {
-      final data = jsonDecode(jsonString);
+      final data = jsonDecode(jsonString) as Map<String, dynamic>;
       final depts = (data['departments'] as List).map((d) => DepartmentModel(
             id: d['id'],
             name: d['name'],
@@ -145,17 +152,13 @@ inventoryUnit: p['inventoryUnit'] ?? p['unit'],
 categoryId: p['categoryId'],
 minStock: (p['minStock'] as num?)?.toDouble(),
 )).toList();
-      final name = data['establishmentName'] as String? ?? 'Спартак';
+      final name = data['establishmentName'] as String? ?? '';
       final currency = data['currency'] as String? ?? '₸';
       final logoPath = data['logoPath'] as String?;
-      List<String> staff;
-      try {
-        staff = data['staff'] != null
-            ? List<String>.from(data['staff'] as List)
-            : ['Настя', 'Никита', 'Медина', 'Бэлла', 'Альбина'];
-      } catch (_) {
-        staff = ['Настя', 'Никита', 'Медина', 'Бэлла', 'Альбина'];
-      }
+      final rawStaff = data['staff'];
+      final staff = rawStaff is List
+          ? rawStaff.whereType<String>().toList(growable: false)
+          : const <String>[];
       state = SettingsData(
         departments: depts,
         categories: cats,
@@ -165,7 +168,14 @@ minStock: (p['minStock'] as num?)?.toDouble(),
         currency: currency,
         logoPath: logoPath,
       );
-    } catch (_) {}
+    } catch (e, st) {
+      // Раньше здесь стоял пустой catch: любая ошибка разбора молча
+      // обнуляла все настройки, товары и сотрудников. Теперь исходные
+      // данные сохраняются отдельно, чтобы их можно было восстановить.
+      _prefs.setString('${_settingsKey}_corrupt', jsonString);
+      _prefs.remove(_settingsKey);
+      debugPrint('SettingsRepository: не удалось прочитать настройки: $e\n$st');
+    }
   }
 
   // ── Сброс всех данных ─────────────────────────────────────────────────────

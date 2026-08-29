@@ -1,4 +1,6 @@
 import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:horeca_app/app/di.dart';
@@ -15,9 +17,16 @@ class StockLevelsRepository extends StateNotifier<Map<String, double>> {
     final jsonString = _prefs.getString(_key);
     if (jsonString == null) return;
     try {
-      final Map<String, dynamic> data = jsonDecode(jsonString);
-      state = data.map((k, v) => MapEntry(k, (v as num).toDouble()));
-    } catch (_) {}
+      final data = jsonDecode(jsonString) as Map<String, dynamic>;
+      state = {
+        for (final e in data.entries)
+          if (e.value is num) e.key: (e.value as num).toDouble(),
+      };
+    } catch (e, st) {
+      _prefs.setString('${_key}_corrupt', jsonString);
+      _prefs.remove(_key);
+      debugPrint('StockLevelsRepository: не удалось прочитать остатки: $e\n$st');
+    }
   }
 
   void updateLevels(Map<String, double> levels) {

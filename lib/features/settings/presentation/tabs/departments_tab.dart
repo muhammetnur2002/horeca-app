@@ -167,7 +167,7 @@ class DepartmentsTab extends ConsumerWidget {
           ),
         ],
       ),
-    );
+    ).whenComplete(() { nameCtrl.dispose(); });
   }
 
   void _showEditDialog(BuildContext context, SettingsRepository repo,
@@ -222,7 +222,7 @@ class DepartmentsTab extends ConsumerWidget {
           ),
         ],
       ),
-    );
+    ).whenComplete(() { nameCtrl.dispose(); });
   }
 }
 

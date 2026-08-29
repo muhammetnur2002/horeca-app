@@ -1,4 +1,6 @@
 import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:horeca_app/app/di.dart';
@@ -17,8 +19,11 @@ class TemplateRepository extends StateNotifier<CustomTemplate?> {
     if (jsonString == null) return;
     try {
       state = CustomTemplate.fromJson(jsonDecode(jsonString));
-    } catch (_) {
+    } catch (e, st) {
+      _prefs.setString('${_key}_corrupt', jsonString);
+      _prefs.remove(_key);
       state = null;
+      debugPrint('TemplateRepository: не удалось прочитать шаблон: $e\n$st');
     }
   }
 

@@ -180,7 +180,7 @@ class NotificationsScreen extends ConsumerWidget {
           ],
         ),
       ),
-    );
+    ).whenComplete(() { nameCtrl.dispose(); });
   }
 }
 

@@ -307,7 +307,7 @@ void deactivate() {
             child: const Text('Добавить')),
         ],)
       ),
-    );
+    ).whenComplete(() { nameCtrl.dispose(); });
   }
 
   @override
@@ -888,7 +888,7 @@ class _DessertRow extends StatelessWidget {
             child: const Text('OK')),
         ],
       ),
-    );
+    ).whenComplete(() { ctrl.dispose(); });
   }
 
   @override

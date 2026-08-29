@@ -1,4 +1,6 @@
 import 'dart:typed_data';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -11,18 +13,33 @@ class PdfGenerator {
   static final _bgLight = PdfColor.fromHex('F8F9FF');
   static final _green   = PdfColor.fromHex('639922');
 
+  // Шрифты грузились заново при каждой генерации PDF; кешируем их.
+  static pw.Font? _cachedRegular;
+  static pw.Font? _cachedBold;
+
   static Future<pw.Font> _loadFont() async {
+    final cached = _cachedRegular;
+    if (cached != null) return cached;
     try {
       final d = await rootBundle.load('assets/fonts/NotoSans-Regular.ttf');
-      return pw.Font.ttf(d.buffer.asByteData());
-    } catch (_) { return pw.Font.helvetica(); }
+      return _cachedRegular = pw.Font.ttf(d.buffer.asByteData());
+    } catch (e, st) {
+      // Helvetica не содержит кириллицы — раньше отчёт молча выходил пустым.
+      debugPrint('PdfGenerator: не удалось загрузить NotoSans-Regular: $e\n$st');
+      return _cachedRegular = pw.Font.helvetica();
+    }
   }
 
   static Future<pw.Font> _loadBoldFont() async {
+    final cached = _cachedBold;
+    if (cached != null) return cached;
     try {
       final d = await rootBundle.load('assets/fonts/NotoSans-Bold.ttf');
-      return pw.Font.ttf(d.buffer.asByteData());
-    } catch (_) { return pw.Font.helveticaBold(); }
+      return _cachedBold = pw.Font.ttf(d.buffer.asByteData());
+    } catch (e, st) {
+      debugPrint('PdfGenerator: не удалось загрузить NotoSans-Bold: $e\n$st');
+      return _cachedBold = pw.Font.helveticaBold();
+    }
   }
 
   static String _formatQuantity(String? value) {

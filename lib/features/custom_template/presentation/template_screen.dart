@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,13 +28,28 @@ class _TemplateScreenState extends ConsumerState<TemplateScreen> {
     final result = await fp.FilePicker.platform.pickFiles(
       type: fp.FileType.custom,
       allowedExtensions: ['xlsx', 'xls'],
+      withData: true,
     );
-    if (result == null || result.files.single.path == null) {
-      setState(() => _loading = false);
+    if (result == null || result.files.isEmpty) {
+      if (mounted) setState(() => _loading = false);
       return;
     }
 
-    final parsed = await ExcelParser.parseFile(result.files.single.path!);
+    final picked = result.files.single;
+    final bytes = picked.bytes ??
+        (picked.path != null ? await File(picked.path!).readAsBytes() : null);
+    if (bytes == null) {
+      if (mounted) {
+        setState(() {
+          _error = 'Не удалось прочитать выбранный файл.';
+          _loading = false;
+        });
+      }
+      return;
+    }
+
+    final parsed = await ExcelParser.parseBytes(bytes);
+    if (!mounted) return;
     if (parsed == null) {
       setState(() {
         _error = 'Не удалось прочитать файл. Убедитесь, что это Excel-файл с заголовками в первой строке.';

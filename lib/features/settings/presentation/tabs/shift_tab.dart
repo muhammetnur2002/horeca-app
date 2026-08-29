@@ -117,7 +117,7 @@ class ShiftTab extends ConsumerWidget {
           ),
         ],
       ),
-    );
+    ).whenComplete(() { ctrl.dispose(); });
   }
 
   void _showEditDialog(BuildContext context, SettingsRepository repo,
@@ -164,7 +164,7 @@ class ShiftTab extends ConsumerWidget {
           ),
         ],
       ),
-    );
+    ).whenComplete(() { ctrl.dispose(); });
   }
 
   void _confirmDelete(BuildContext context, SettingsRepository repo,

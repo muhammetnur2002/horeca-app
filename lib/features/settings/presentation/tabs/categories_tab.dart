@@ -190,7 +190,7 @@ class CategoriesTab extends ConsumerWidget {
           ),
         );
       },
-    );
+    ).whenComplete(() { nameCtrl.dispose(); });
   }
 
   void _showEditDialog(
@@ -275,7 +275,7 @@ class CategoriesTab extends ConsumerWidget {
           ),
         );
       },
-    );
+    ).whenComplete(() { nameCtrl.dispose(); });
   }
 }
 

@@ -9,6 +9,11 @@ import 'package:horeca_app/features/settings/data/settings_repository.dart';
 import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
 
 import 'package:horeca_app/features/backup/data/backup_service.dart';
+import 'package:horeca_app/features/analytics/data/analytics_repository.dart';
+import 'package:horeca_app/features/history/data/history_repository.dart';
+import 'package:horeca_app/features/notifications/data/notification_repository.dart';
+import 'package:horeca_app/features/custom_template/data/template_repository.dart';
+import 'package:horeca_app/features/inventory/data/stock_levels_repository.dart';
 import 'package:horeca_app/app/di.dart';
 import 'package:file_picker/file_picker.dart' as fp;
 import 'package:horeca_app/features/custom_template/presentation/template_screen.dart';
@@ -431,7 +436,7 @@ ClipRRect(
   }
 }
 
-void _restoreBackup(BuildContext context, WidgetRef ref, bool isDark) async {
+Future<void> _restoreBackup(BuildContext context, WidgetRef ref, bool isDark) async {
   final confirm = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
@@ -456,17 +461,35 @@ void _restoreBackup(BuildContext context, WidgetRef ref, bool isDark) async {
   final result = await fp.FilePicker.platform.pickFiles(
     type: fp.FileType.custom,
     allowedExtensions: ['json'],
+    withData: true,
   );
-  if (result == null || result.files.single.path == null) return;
+  if (result == null || result.files.isEmpty) return;
+
+  final picked = result.files.single;
+  final bytes = picked.bytes ??
+      (picked.path != null ? await File(picked.path!).readAsBytes() : null);
+  if (bytes == null) return;
 
   final prefs = ref.read(sharedPreferencesProvider);
-  final success = await BackupService.restoreFromFile(result.files.single.path!, prefs);
+  final restore = await BackupService.restoreFromBytes(bytes, prefs);
+
+  // Раньше здесь просили «перезапустите приложение»: репозитории читают
+  // SharedPreferences в конструкторе, поэтому после восстановления их надо
+  // пересоздать — тогда данные видны сразу.
+  if (restore.success) {
+    ref.invalidate(settingsRepositoryProvider);
+    ref.invalidate(historyRepositoryProvider);
+    ref.invalidate(analyticsRepositoryProvider);
+    ref.invalidate(notificationRepositoryProvider);
+    ref.invalidate(templateRepositoryProvider);
+    ref.invalidate(stockLevelsRepositoryProvider);
+  }
 
   if (context.mounted) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(success ? 'Данные восстановлены. Перезапустите приложение' : 'Ошибка: неверный файл резервной копии',
+      content: Text(restore.message,
           style: const TextStyle(color: Colors.white)),
-      backgroundColor: success ? AppColors.green : Colors.redAccent,
+      backgroundColor: restore.success ? AppColors.green : Colors.redAccent,
       behavior: SnackBarBehavior.floating,
     ));
   }
@@ -509,7 +532,7 @@ void _restoreBackup(BuildContext context, WidgetRef ref, bool isDark) async {
             child: Text(l10n.save)),
         ],
       ),
-    );
+    ).whenComplete(() { ctrl.dispose(); });
   }
 }
 

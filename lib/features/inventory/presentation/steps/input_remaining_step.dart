@@ -224,7 +224,7 @@ class _ProductRow extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ).whenComplete(() { ctrl.dispose(); });
   }
 
   @override

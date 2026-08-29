@@ -658,7 +658,7 @@ onChanged: (v) => setState(() => _searchQuery = v),
           child: const Text('Сохранить')),
       ],
     ),
-  );
+  ).whenComplete(() { ctrl.dispose(); });
 }
 
   void _confirmDelete(BuildContext context, SettingsRepository repo,
@@ -1016,7 +1016,7 @@ defaultInventoryUnit: sInvUnit);
           );
         },
       ),
-    );
+    ).whenComplete(() { ctrl.dispose(); });
   }
 
   void _showEdit(
@@ -1084,7 +1084,7 @@ defaultInventoryUnit: sInvUnit);
           isEdit: true,
         ),
       ),
-    );
+    ).whenComplete(() { ctrl.dispose(); });
   }
 }
 
