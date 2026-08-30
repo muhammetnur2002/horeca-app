@@ -18,6 +18,15 @@ dependencies:
   flutter_riverpod: ^2.6.1
   go_router: ^13.2.5
 
+  # Локальная база. Заменяет хранение данных в SharedPreferences:
+  # построчные метки времени и запросы по индексам — то, без чего
+  # синхронизация невозможна.
+  drift: ^2.34.3
+  drift_flutter: ^0.3.1
+
+  # Идентификаторы записей генерирует устройство
+  uuid: ^4.6.0
+
   # Хранение и сеть
   shared_preferences: ^2.5.5
   dio: ^5.11.0
@@ -45,6 +54,10 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+
+  # Кодогенерация drift
+  build_runner: ^2.16.0
+  drift_dev: ^2.34.5
   flutter_launcher_icons: ^0.14.4
 
 flutter:

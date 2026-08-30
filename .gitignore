@@ -49,3 +49,7 @@ flutter_*.png
 *.jks
 *.keystore
 key.properties
+
+# Сгенерированный код drift — восстанавливается командой
+# dart run build_runner build
+*.g.dart
