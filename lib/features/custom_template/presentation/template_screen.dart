@@ -300,7 +300,7 @@ class _MappingRow extends StatelessWidget {
         ]),
         const SizedBox(height: 8),
         DropdownButtonFormField<TemplateField>(
-          value: mapping.mappedField,
+          initialValue: mapping.mappedField,
           dropdownColor: isDark ? AppColors.darkCard : Colors.white,
           items: TemplateField.values.map((f) => DropdownMenuItem(value: f, child: Text(f.label))).toList(),
           onChanged: (v) => onChanged(v!),

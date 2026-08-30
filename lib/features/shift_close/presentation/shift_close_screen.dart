@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:ui';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:horeca_app/app/app.dart';
@@ -55,7 +54,6 @@ class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
 
   double get _tomorrowCash => Money.round(_eveningCash - _inkass);
 
-
 @override
 void initState() {
   super.initState();
@@ -98,7 +96,7 @@ void deactivate() {
     inkass: _inkassCtrl.text,
     hasInkass: _hasInkass,
   );
-  ref.read(shiftDraftProvider.notifier).state = draft;
+  ref.read(shiftDraftProvider.notifier).save(draft);
   super.deactivate();
 }
 
@@ -264,7 +262,7 @@ void deactivate() {
                 prefixIcon: Icon(Icons.edit_outlined, color: AppColors.orange))),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
-            value: selectedUnit,
+            initialValue: selectedUnit,
             dropdownColor: isDark ? AppColors.darkCard : Colors.white,
             items: units.map((u) => DropdownMenuItem(value: u, child: Text(u))).toList(),
             onChanged: (v) => setS(() => selectedUnit = v!),
@@ -403,10 +401,12 @@ void deactivate() {
       final prods = settings.products
           .where((p) => catIds.contains(p.categoryId)).toList();
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) setState(() {
-          _desserts = prods.map((p) => DessertItem(name: p.name)).toList();
-          _dessertsLoaded = true;
-        });
+        if (mounted) {
+          setState(() {
+            _desserts = prods.map((p) => DessertItem(name: p.name)).toList();
+            _dessertsLoaded = true;
+          });
+        }
       });
     }
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -662,7 +662,7 @@ const SizedBox(height: 10),
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           Text('Была инкассация?', style: TextStyle(fontSize: 14,
               color: isDark ? Colors.white : const Color(0xFF1A1A2E))),
-          Switch(value: _hasInkass, activeColor: AppColors.orange,
+          Switch(value: _hasInkass, activeThumbColor: AppColors.orange,
               onChanged: (v) => setState(() {
                 _hasInkass = v; if (!v) _inkassCtrl.text = '0'; })),
         ]),

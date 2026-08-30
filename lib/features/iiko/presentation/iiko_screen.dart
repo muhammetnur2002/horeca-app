@@ -218,8 +218,11 @@ void _loadDemo() {
                   title: s.name, isDark: isDark,
                   checked: _selectedStoreIds.contains(s.id),
                   onChanged: (v) => setState(() {
-                    if (v == true) _selectedStoreIds.add(s.id);
-                    else _selectedStoreIds.remove(s.id);
+                    if (v == true) {
+                      _selectedStoreIds.add(s.id);
+                    } else {
+                      _selectedStoreIds.remove(s.id);
+                    }
                   }),
                 )),
                 const SizedBox(height: 16),

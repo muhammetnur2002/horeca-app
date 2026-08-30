@@ -113,7 +113,7 @@ class _ProductsTabState extends ConsumerState<ProductsTab> {
     final deptNames = departments.map((d) => d.name).toList();
     final deptName =
         await _showOptionsDialog(context, 'Выберите отдел', deptNames);
-    if (deptName == null) return;
+    if (deptName == null || !context.mounted) return;
     final dept = departments.firstWhere((d) => d.name == deptName);
     final catsInDept =
         allCategories.where((c) => c.departmentId == dept.id).toList();
@@ -126,7 +126,7 @@ class _ProductsTabState extends ConsumerState<ProductsTab> {
     final catNames = catsInDept.map((c) => c.name).toList();
     final catName =
         await _showOptionsDialog(context, 'Выберите категорию', catNames);
-    if (catName == null) return;
+    if (catName == null || !context.mounted) return;
     final cat = catsInDept.firstWhere((c) => c.name == catName);
     for (final id in _selectedIds.toList()) {
       final product =
@@ -160,7 +160,7 @@ class _ProductsTabState extends ConsumerState<ProductsTab> {
   }) async {
     final result =
         await _showOptionsDialog(context, title, options);
-    if (result != null) {
+    if (result != null && context.mounted) {
       for (final id in ids) {
         onApply(repo, id, result);
       }
@@ -176,7 +176,7 @@ class _ProductsTabState extends ConsumerState<ProductsTab> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final products = ref.watch(settingsRepositoryProvider).products;
     final categories =
         ref.watch(settingsRepositoryProvider).categories;
@@ -398,10 +398,11 @@ onChanged: (v) => setState(() => _searchQuery = v),
   onSetMinStock: () => _showMinStockDialog(context, repo, p, isDark),
   onSelect: (v) {
     setState(() {
-                            if (v == true)
+                            if (v == true) {
                               _selectedIds.add(p.id);
-                            else
+                            } else {
                               _selectedIds.remove(p.id);
+                            }
                           });
                         },
                         onDelete: () => _confirmDelete(
@@ -409,10 +410,11 @@ onChanged: (v) => setState(() => _searchQuery = v),
                         onTap: _selectMode
                             ? () {
                                 setState(() {
-                                  if (isSelected)
+                                  if (isSelected) {
                                     _selectedIds.remove(p.id);
-                                  else
+                                  } else {
                                     _selectedIds.add(p.id);
+                                  }
                                 });
                               }
                             : () => _showEdit(context, repo, p,
@@ -745,7 +747,7 @@ onChanged: (v) => setState(() => _searchQuery = v),
           mainAxisSize: MainAxisSize.min,
           children: [
             DropdownButtonFormField<String>(
-              value: selectedDeptId,
+              initialValue: selectedDeptId,
               dropdownColor:
                   isDark ? AppColors.darkCard : Colors.white,
               items: depts
@@ -758,7 +760,7 @@ onChanged: (v) => setState(() => _searchQuery = v),
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: filteredCats.any((c) => c.id == selectedCatId)
+              initialValue: filteredCats.any((c) => c.id == selectedCatId)
                   ? selectedCatId
                   : (filteredCats.isNotEmpty
                       ? filteredCats.first.id
@@ -786,7 +788,7 @@ onChanged: (v) => setState(() => _searchQuery = v),
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: sUnit,
+              initialValue: sUnit,
               dropdownColor:
                   isDark ? AppColors.darkCard : Colors.white,
               items: units
@@ -799,7 +801,7 @@ onChanged: (v) => setState(() => _searchQuery = v),
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: sInvUnit,
+              initialValue: sInvUnit,
               dropdownColor:
                   isDark ? AppColors.darkCard : Colors.white,
               items: units
@@ -878,7 +880,7 @@ onChanged: (v) => setState(() => _searchQuery = v),
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   DropdownButtonFormField<String>(
-                    value: selectedDeptId,
+                    initialValue: selectedDeptId,
                     dropdownColor: isDark
                         ? AppColors.darkCard
                         : Colors.white,
@@ -896,7 +898,7 @@ onChanged: (v) => setState(() => _searchQuery = v),
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    value: filteredCats.any(
+                    initialValue: filteredCats.any(
                             (c) => c.id == selectedCatId)
                         ? selectedCatId
                         : (filteredCats.isNotEmpty
@@ -927,7 +929,7 @@ onChanged: (v) => setState(() => _searchQuery = v),
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    value: sUnit,
+                    initialValue: sUnit,
                     dropdownColor: isDark
                         ? AppColors.darkCard
                         : Colors.white,
@@ -942,7 +944,7 @@ onChanged: (v) => setState(() => _searchQuery = v),
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    value: sInvUnit,
+                    initialValue: sInvUnit,
                     dropdownColor: isDark
                         ? AppColors.darkCard
                         : Colors.white,

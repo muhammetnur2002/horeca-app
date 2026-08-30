@@ -637,7 +637,7 @@ class _IconPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final W = size.width, H = size.height;
-    final CX = W / 2, CY = H / 2;
+    final cx = W / 2, cy = H / 2;
 
     // фон иконки
     final rrect = RRect.fromRectAndRadius(
@@ -664,7 +664,7 @@ class _IconPainter extends CustomPainter {
 
     for (final rot in [-0.52, 0.52]) {
       canvas.save();
-      canvas.translate(CX, CY);
+      canvas.translate(cx, cy);
       canvas.rotate(rot);
       canvas.drawOval(
           Rect.fromCenter(
@@ -680,8 +680,8 @@ class _IconPainter extends CustomPainter {
       final r = i == 0 ? 5.5 : 4.5;
       final px = cos(ang) * W * 0.41;
       final py = sin(ang) * H * 0.125;
-      final wx = CX + px * cos(rot) - py * sin(rot);
-      final wy = CY + px * sin(rot) + py * cos(rot);
+      final wx = cx + px * cos(rot) - py * sin(rot);
+      final wy = cy + px * sin(rot) + py * cos(rot);
       canvas.drawCircle(
         Offset(wx, wy),
         r,
@@ -708,7 +708,7 @@ class _IconPainter extends CustomPainter {
     );
     tp.layout();
     tp.paint(canvas,
-        Offset(CX - tp.width / 2, CY - tp.height / 2 + W * 0.02));
+        Offset(cx - tp.width / 2, cy - tp.height / 2 + W * 0.02));
   }
 
   @override

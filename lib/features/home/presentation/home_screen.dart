@@ -1,5 +1,4 @@
 ﻿import 'dart:math';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -8,7 +7,6 @@ import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
 import 'package:horeca_app/features/auth/data/auth_repository.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
 import 'package:horeca_app/features/inventory/data/stock_levels_repository.dart';
-
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -166,7 +164,7 @@ class _MiniLogoPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final W = size.width, H = size.height;
-    final CX = W / 2, CY = H / 2;
+    final cx = W / 2, cy = H / 2;
 
     // фон
     final rrect = RRect.fromRectAndRadius(
@@ -185,7 +183,7 @@ class _MiniLogoPainter extends CustomPainter {
       ..strokeWidth = 1;
     for (final rot in [-0.52, 0.52]) {
       canvas.save();
-      canvas.translate(CX, CY);
+      canvas.translate(cx, cy);
       canvas.rotate(rot);
       canvas.drawOval(
           Rect.fromCenter(center: Offset.zero, width: W * 0.88, height: H * 0.28),
@@ -200,8 +198,8 @@ class _MiniLogoPainter extends CustomPainter {
       final r = i == 0 ? W * 0.11 : W * 0.09;
       final px = cos(ang) * W * 0.44;
       final py = sin(ang) * H * 0.14;
-      final wx = CX + px * cos(rot) - py * sin(rot);
-      final wy = CY + px * sin(rot) + py * cos(rot);
+      final wx = cx + px * cos(rot) - py * sin(rot);
+      final wy = cy + px * sin(rot) + py * cos(rot);
       canvas.drawCircle(Offset(wx, wy), r, Paint()
         ..shader = RadialGradient(
             colors: const [Color(0xFFFFB067), Color(0xFFF5862E)])
@@ -217,7 +215,7 @@ class _MiniLogoPainter extends CustomPainter {
       textDirection: TextDirection.ltr,
     );
     tp.layout();
-    tp.paint(canvas, Offset(CX - tp.width / 2, CY - tp.height / 2 + W * 0.02));
+    tp.paint(canvas, Offset(cx - tp.width / 2, cy - tp.height / 2 + W * 0.02));
   }
 
   @override

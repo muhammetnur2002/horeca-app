@@ -1,8 +1,11 @@
 {
     "dart.lineLength": 100,
-    "editor.rulers": [100],
+    "editor.rulers": [
+        100
+    ],
     "editor.formatOnSave": true,
     "[dart]": {
         "editor.defaultFormatter": "Dart-Code.dart-code"
-    }
+    },
+    "cmake.sourceDirectory": "C:/dev/horeca-app/linux"
 }

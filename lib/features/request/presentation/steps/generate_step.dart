@@ -1,5 +1,4 @@
 import 'dart:ui';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -109,7 +108,6 @@ class GenerateStep extends ConsumerWidget {
     final text = _generateText(
         state, establishmentName, allProducts, allCategories, allDepartments);
 
-
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -197,6 +195,7 @@ class GenerateStep extends ConsumerWidget {
                     onTap: () {
                       Clipboard.setData(ClipboardData(text: text))
                           .then((_) {
+                        if (!context.mounted) return;
                         ScaffoldMessenger.of(context)
                             .showSnackBar(SnackBar(
                           content: Text(l10n.copySuccess),

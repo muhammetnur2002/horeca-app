@@ -32,6 +32,14 @@ class ShiftDraft {
 class ShiftDraftNotifier extends StateNotifier<ShiftDraft> {
   ShiftDraftNotifier() : super(ShiftDraft());
 
+  /// Сохранение черновика.
+  ///
+  /// Экран раньше присваивал notifier.state напрямую — это @protected-член
+  /// StateNotifier, и анализатор справедливо на это ругался.
+  void save(ShiftDraft draft) {
+    state = draft;
+  }
+
   void reset() {
     state = ShiftDraft();
   }

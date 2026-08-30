@@ -1,5 +1,4 @@
 import 'dart:ui';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -178,6 +177,7 @@ class ReportStep extends ConsumerWidget {
                     isDark: isDark,
                     onTap: () {
                       Clipboard.setData(ClipboardData(text: text)).then((_) {
+                        if (!context.mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                           content: Text(l10n.copySuccess),
                           backgroundColor: const Color(0xFF2E3352),
@@ -406,7 +406,4 @@ class _ActionBtn extends StatelessWidget {
     );
   }
 }
-
-
-
 

@@ -205,7 +205,7 @@ class _InventoryReminderCard extends StatelessWidget {
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
               Text('Напоминать об инвентаризации', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textColor)),
-              Switch(value: reminder.enabled, activeColor: AppColors.orange,
+              Switch(value: reminder.enabled, activeThumbColor: AppColors.orange,
                   onChanged: (v) => onChanged(reminder.copyWith(enabled: v))),
             ]),
             if (reminder.enabled) ...[

@@ -145,7 +145,7 @@ class CategoriesTab extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
-                  value: selectedDeptId,
+                  initialValue: selectedDeptId,
                   dropdownColor:
                       isDark ? AppColors.darkCard : Colors.white,
                   items: departments
@@ -228,7 +228,7 @@ class CategoriesTab extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
-                  value: selectedDeptId,
+                  initialValue: selectedDeptId,
                   dropdownColor:
                       isDark ? AppColors.darkCard : Colors.white,
                   items: departments

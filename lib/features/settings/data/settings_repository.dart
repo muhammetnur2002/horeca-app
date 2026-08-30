@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/di.dart';
@@ -242,8 +241,9 @@ minStock: (p['minStock'] as num?)?.toDouble(),
   void updateDepartment(String id, String newName, IconData? newIcon) {
     state = state.copyWith(
       departments: state.departments.map((d) {
-        if (d.id == id)
+        if (d.id == id) {
           return DepartmentModel(id: d.id, name: newName, icon: newIcon ?? d.icon);
+        }
         return d;
       }).toList());
     _saveToPrefs();
@@ -274,10 +274,11 @@ minStock: (p['minStock'] as num?)?.toDouble(),
   void updateCategory(String id, String newName, {String? newDepartmentId}) {
     state = state.copyWith(
       categories: state.categories.map((c) {
-        if (c.id == id)
+        if (c.id == id) {
           return CategoryModel(
               id: c.id, name: newName,
               departmentId: newDepartmentId ?? c.departmentId);
+        }
         return c;
       }).toList());
     _saveToPrefs();
@@ -363,7 +364,4 @@ final settingsRepositoryProvider =
   final prefs = ref.watch(sharedPreferencesProvider);
   return SettingsRepository(prefs);
 });
-
-
-
 

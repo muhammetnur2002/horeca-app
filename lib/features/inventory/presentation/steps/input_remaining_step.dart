@@ -39,7 +39,9 @@ class _InputRemainingStepState extends ConsumerState<InputRemainingStep> {
       if (!state.selectedCategoryIds.contains(cat.id)) return false;
       if (state.departmentId != 'all') {
         if (cat.departmentId.isNotEmpty &&
-            cat.departmentId != state.departmentId) return false;
+            cat.departmentId != state.departmentId) {
+          return false;
+        }
       }
       if (_searchQuery.isNotEmpty) {
         return p.name.toLowerCase().contains(_searchQuery.toLowerCase());
@@ -263,8 +265,9 @@ class _ProductRow extends StatelessWidget {
                 icon: Icons.remove,
                 isDark: isDark,
                 onTap: () {
-                  if (item.remaining > 0)
+                  if (item.remaining > 0) {
                     onChanged(item.remaining - 1);
+                  }
                 }),
             GestureDetector(
               onTap: () => _showManualInput(context),
