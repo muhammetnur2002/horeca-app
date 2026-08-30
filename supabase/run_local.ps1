@@ -70,8 +70,18 @@ function Read-DbPassword {
 # пароля, перехватывает ввод и возвращает успех — а переменная остаётся
 # пустой, и следующий же вызов psql падает с fe_sendauth.
 function Test-DbConnection {
-    & psql -w -d postgres -tAc "select 1" 2>$null | Out-Null
-    return ($LASTEXITCODE -eq 0)
+    # $ErrorActionPreference временно снимается неспроста. При перенаправлении
+    # потока ошибок нативной программы PowerShell превращает её вывод
+    # в объекты-ошибки, а режим Stop делает такую ошибку фатальной —
+    # скрипт падал вместо того, чтобы переспросить пароль.
+    $previous = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+        & psql -w -d postgres -tAc "select 1" 2>&1 | Out-Null
+        return ($LASTEXITCODE -eq 0)
+    } finally {
+        $ErrorActionPreference = $previous
+    }
 }
 
 function Invoke-Sql {
@@ -111,7 +121,11 @@ while (-not (Test-DbConnection)) {
         throw "Пароль, переданный параметром -Password, не подошёл для пользователя $DbUser."
     }
     if ($attempt -gt 3) {
-        throw "Не удалось подключиться к PostgreSQL на $DbHost`:$Port под пользователем $DbUser. Проверьте, что служба PostgreSQL запущена (services.msc -> postgresql-x64-16). Если пароль забыт, его можно сбросить: в файле pg_hba.conf временно замените метод scram-sha-256 на trust, перезапустите службу и задайте новый пароль командой ALTER USER postgres PASSWORD '...'."
+        throw ("Не удалось подключиться к PostgreSQL на $DbHost`:$Port под пользователем $DbUser.`n" +
+               "  * Сервер запущен? Проверить: Test-NetConnection 127.0.0.1 -Port $Port -InformationLevel Quiet`n" +
+               "    Запустить: & 'C:\Program Files\PostgreSQL\16\bin\pg_ctl.exe' -D C:\pgdata start`n" +
+               "  * Пароль забыт? В pg_hba.conf временно поставьте trust вместо scram-sha-256,`n" +
+               "    перезапустите сервер и задайте новый: ALTER USER postgres PASSWORD '...'")
     }
     $env:PGPASSWORD = Read-DbPassword "Пароль пользователя $DbUser"
 }
