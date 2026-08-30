@@ -21,8 +21,10 @@ dependencies:
   # Локальная база. Заменяет хранение данных в SharedPreferences:
   # построчные метки времени и запросы по индексам — то, без чего
   # синхронизация невозможна.
-  drift: ^2.34.3
-  drift_flutter: ^0.3.1
+  # Нижние границы намеренно занижены: точные версии подбирает pub,
+  # исходя из того, что допускает flutter_test из вашего SDK.
+  drift: ^2.30.0
+  drift_flutter: ^0.2.0
 
   # Идентификаторы записей генерирует устройство
   uuid: ^4.6.0
@@ -55,9 +57,11 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^6.0.0
 
-  # Кодогенерация drift
-  build_runner: ^2.16.0
-  drift_dev: ^2.34.5
+  # Кодогенерация drift. Версии не фиксируем сверху: analyzer, от которого
+  # зависит build_runner, конфликтует с meta, закреплённым flutter_test
+  # из SDK. Пусть pub выберет совместимую пару сам.
+  build_runner: ^2.4.0
+  drift_dev: ^2.30.0
   flutter_launcher_icons: ^0.14.4
 
 flutter:
