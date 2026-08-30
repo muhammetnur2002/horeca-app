@@ -15,6 +15,10 @@ import 'package:drift/drift.dart';
 //    синхронизировать: устройство, которое было оффлайн, не узнает
 //    об исчезнувшей строке.
 //
+// Классы данных получают суффикс Row через @DataClassName. Без него drift
+// назвал бы их HistoryEntry и ShiftRecord — а такие классы уже есть
+// в приложении, и репозиторий, импортирующий оба, не собрался бы.
+//
 // Внешних ключей намеренно нет. При синхронизации порядок прихода строк
 // не гарантирован, и дочерняя запись вполне может приехать раньше
 // родительской — жёсткая ссылка отвергла бы её.
@@ -28,6 +32,7 @@ mixin _Syncable on Table {
 }
 
 /// Настройки заведения. Строка ровно одна.
+@DataClassName('EstablishmentRow')
 class EstablishmentSettings extends Table with _Syncable {
   TextColumn get name => text().withDefault(const Constant('Моё заведение'))();
   TextColumn get currency => text().withLength(min: 1, max: 8)();
@@ -38,6 +43,7 @@ class EstablishmentSettings extends Table with _Syncable {
   Set<Column<Object>> get primaryKey => {id};
 }
 
+@DataClassName('DepartmentRow')
 class Departments extends Table with _Syncable {
   TextColumn get establishmentId => text()();
   TextColumn get name => text().withLength(min: 1, max: 120)();
@@ -51,6 +57,7 @@ class Departments extends Table with _Syncable {
   Set<Column<Object>> get primaryKey => {id};
 }
 
+@DataClassName('CategoryRow')
 class Categories extends Table with _Syncable {
   TextColumn get establishmentId => text()();
   TextColumn get departmentId => text().nullable()();
@@ -61,6 +68,7 @@ class Categories extends Table with _Syncable {
   Set<Column<Object>> get primaryKey => {id};
 }
 
+@DataClassName('ProductRow')
 class Products extends Table with _Syncable {
   TextColumn get establishmentId => text()();
   TextColumn get categoryId => text().nullable()();
@@ -79,6 +87,7 @@ class Products extends Table with _Syncable {
 
 /// Справочник имён для отметки «кто работал в смену».
 /// Это не учётные записи — те появятся на четвёртом этапе.
+@DataClassName('StaffMemberRow')
 class StaffMembers extends Table with _Syncable {
   TextColumn get establishmentId => text()();
   TextColumn get fullName => text().withLength(min: 1, max: 200)();
@@ -92,6 +101,7 @@ class StaffMembers extends Table with _Syncable {
 ///
 /// Хранит готовый текст документа — так это работает в приложении сегодня.
 /// Разбор на позиции появится вместе с синхронизацией.
+@DataClassName('HistoryEntryRow')
 class HistoryEntries extends Table with _Syncable {
   TextColumn get establishmentId => text()();
 
@@ -106,6 +116,7 @@ class HistoryEntries extends Table with _Syncable {
 
 /// Закрытые смены. Правило синхронизации — только добавление:
 /// закрытая смена это факт, а не изменяемая строка.
+@DataClassName('ShiftRow')
 class ShiftRecords extends Table with _Syncable {
   TextColumn get establishmentId => text()();
   DateTimeColumn get closedAt => dateTime()();
@@ -127,6 +138,7 @@ class ShiftRecords extends Table with _Syncable {
   Set<Column<Object>> get primaryKey => {id};
 }
 
+@DataClassName('ShiftWriteoffRow')
 class ShiftWriteoffs extends Table {
   TextColumn get id => text()();
   TextColumn get shiftId => text()();
@@ -142,6 +154,7 @@ class ShiftWriteoffs extends Table {
 }
 
 /// Последний известный остаток по товару.
+@DataClassName('StockLevelRow')
 class StockLevels extends Table {
   TextColumn get establishmentId => text()();
   TextColumn get productId => text()();
@@ -153,6 +166,7 @@ class StockLevels extends Table {
   Set<Column<Object>> get primaryKey => {establishmentId, productId};
 }
 
+@DataClassName('ReminderRow')
 class Reminders extends Table with _Syncable {
   TextColumn get establishmentId => text()();
 
@@ -179,6 +193,7 @@ class Reminders extends Table with _Syncable {
 }
 
 /// Шаблоны выгрузки инвентаризации в Excel.
+@DataClassName('ExportTemplateRow')
 class ExportTemplates extends Table with _Syncable {
   TextColumn get establishmentId => text()();
   TextColumn get name => text().withLength(min: 1, max: 200)();
