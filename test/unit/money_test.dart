@@ -22,9 +22,20 @@ void main() {
       expect(Money.parse('абв'), 0);
     });
 
-    test('округляет до сотых', () {
+    test('округляет до сотых по десятичным знакам строки', () {
+      // 1.005 в double хранится как 1.00499..., поэтому округление через
+      // (v * 100).round() дало бы 1.00. Разбор идёт по самой строке.
       expect(Money.parse('1.005'), 1.01);
       expect(Money.parse('1.004'), 1.0);
+      expect(Money.parse('0.125'), 0.13);
+      expect(Money.parse('-1.005'), -1.01);
+      expect(Money.parse('1,005'), 1.01);
+    });
+
+    test('целые числа и число без целой части', () {
+      expect(Money.parse('100'), 100);
+      expect(Money.parse('.5'), 0.5);
+      expect(Money.parse('-250'), -250);
     });
   });
 
