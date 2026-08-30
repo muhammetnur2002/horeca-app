@@ -1,50 +1,110 @@
-﻿# Пересоздаёт локальную базу и прогоняет миграции и проверки.
-# Требуется PostgreSQL с psql в PATH.
+﻿# Пересоздаёт локальную базу, применяет миграции и прогоняет проверки.
 #
 #   .\run_local.ps1              полный прогон с проверками
 #   .\run_local.ps1 -Seed        ещё и демо-данные
+#
+# Пароль можно задать заранее, иначе скрипт спросит его сам:
+#   $env:PGPASSWORD = "ваш_пароль"
+#
+# КОДИРОВКА: файл сохранён в UTF-8 с BOM. Windows PowerShell 5.1 без BOM
+# читает скрипт в кодировке системы, кириллица разваливается и ломает
+# разбор строк. При правке сохраняйте кодировку.
+#
+# СОВМЕСТИМОСТЬ: рассчитан на Windows PowerShell 5.1. Не используйте здесь
+# Join-Path с тремя аргументами, операторы ?: и ?? — это PowerShell 6+.
 
 param(
     [string]$Database = "akyl_dev",
     [string]$DbUser   = "postgres",
-    [string]$DbHost   = "localhost",
+    [string]$DbHost   = "127.0.0.1",
     [int]   $Port     = 5432,
     [switch]$Seed
 )
 
 $ErrorActionPreference = "Stop"
+
+# Консоль и psql должны говорить в UTF-8, иначе кириллица в выводе
+# превратится в мусор на кодовой странице cp866.
+try {
+    [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+    $OutputEncoding = [System.Text.Encoding]::UTF8
+} catch {
+    Write-Host "Не удалось переключить консоль в UTF-8, вывод может искажаться." -ForegroundColor Yellow
+}
+$env:PGCLIENTENCODING = "UTF8"
+
 $root = $PSScriptRoot
+$dirLocal      = Join-Path $root "local"
+$dirMigrations = Join-Path $root "migrations"
+$dirTests      = Join-Path $root "tests"
+
+if (-not (Get-Command psql -ErrorAction SilentlyContinue)) {
+    throw "psql не найден в PATH. Добавьте каталог bin вашей установки PostgreSQL, например C:\Program Files\PostgreSQL\16\bin"
+}
+
 $env:PGUSER = $DbUser
 $env:PGHOST = $DbHost
 $env:PGPORT = $Port
 
-function Run-Sql($file) {
-    Write-Host "  -> $(Split-Path $file -Leaf)"
-    & psql -q -d $Database -v ON_ERROR_STOP=1 -f $file
-    if ($LASTEXITCODE -ne 0) { throw "Ошибка в $file" }
+if (-not $env:PGPASSWORD) {
+    $secure = Read-Host "Пароль пользователя $DbUser" -AsSecureString
+    $bstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
+    try {
+        $env:PGPASSWORD = [Runtime.InteropServices.Marshal]::PtrToStringAuto($bstr)
+    } finally {
+        [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstr)
+    }
 }
 
-Write-Host "`nПересоздаю базу $Database" -ForegroundColor Cyan
-& psql -d postgres -c "drop database if exists $Database" | Out-Null
-& psql -d postgres -c "create database $Database"          | Out-Null
-
-Write-Host "`nЗаглушка Supabase Auth" -ForegroundColor Cyan
-Run-Sql (Join-Path $root "local" "00_auth_shim.sql")
-
-Write-Host "`nМиграции" -ForegroundColor Cyan
-Get-ChildItem (Join-Path $root "migrations") -Filter *.sql | Sort-Object Name | ForEach-Object {
-    Run-Sql $_.FullName
+function Invoke-Sql {
+    param([string]$Path)
+    Write-Host ("  -> " + (Split-Path $Path -Leaf))
+    & psql -q -d $Database -v ON_ERROR_STOP=1 -f $Path
+    if ($LASTEXITCODE -ne 0) { throw "Ошибка в файле $Path" }
 }
+
+function Invoke-SqlDir {
+    param([string]$Dir)
+    $files = Get-ChildItem -Path $Dir -Filter *.sql | Sort-Object Name
+    foreach ($f in $files) { Invoke-Sql $f.FullName }
+}
+
+Write-Host ""
+Write-Host "Проверяю подключение" -ForegroundColor Cyan
+& psql -d postgres -tAc "select 1" | Out-Null
+if ($LASTEXITCODE -ne 0) {
+    throw "Не удалось подключиться к PostgreSQL на $DbHost`:$Port под пользователем $DbUser. Проверьте, что служба запущена и пароль верный."
+}
+
+Write-Host ""
+Write-Host "Пересоздаю базу $Database" -ForegroundColor Cyan
+& psql -d postgres -q -c "drop database if exists $Database"
+if ($LASTEXITCODE -ne 0) { throw "Не удалось удалить базу $Database" }
+& psql -d postgres -q -c "create database $Database"
+if ($LASTEXITCODE -ne 0) { throw "Не удалось создать базу $Database" }
+
+Write-Host ""
+Write-Host "Заглушка Supabase Auth" -ForegroundColor Cyan
+Invoke-Sql (Join-Path $dirLocal "00_auth_shim.sql")
+
+Write-Host ""
+Write-Host "Миграции" -ForegroundColor Cyan
+Invoke-SqlDir $dirMigrations
 
 if ($Seed) {
-    Write-Host "`nДемо-данные" -ForegroundColor Cyan
-    Run-Sql (Join-Path $root "local" "99_seed.sql")
+    Write-Host ""
+    Write-Host "Демо-данные" -ForegroundColor Cyan
+    Invoke-Sql (Join-Path $dirLocal "99_seed.sql")
 }
 
-Write-Host "`nПроверки доступа" -ForegroundColor Cyan
-Get-ChildItem (Join-Path $root "tests") -Filter *.sql | Sort-Object Name | ForEach-Object {
-    & psql -d $Database -v ON_ERROR_STOP=1 -f $_.FullName
-    if ($LASTEXITCODE -ne 0) { throw "Проверки не пройдены: $($_.Name)" }
+Write-Host ""
+Write-Host "Проверки доступа" -ForegroundColor Cyan
+$testFiles = Get-ChildItem -Path $dirTests -Filter *.sql | Sort-Object Name
+foreach ($t in $testFiles) {
+    & psql -d $Database -v ON_ERROR_STOP=1 -f $t.FullName
+    if ($LASTEXITCODE -ne 0) { throw "Проверки не пройдены: $($t.Name)" }
 }
 
-Write-Host "`nГотово.`n" -ForegroundColor Green
+Write-Host ""
+Write-Host "Готово." -ForegroundColor Green
+Write-Host ""
