@@ -81,7 +81,12 @@ create index categories_sync_idx     on public.categories    (establishment_id, 
 create index products_sync_idx       on public.products      (establishment_id, updated_at);
 create index staff_sync_idx          on public.staff_members (establishment_id, updated_at);
 
-select app.attach_sync_triggers('public.departments');
-select app.attach_sync_triggers('public.categories');
-select app.attach_sync_triggers('public.products');
-select app.attach_sync_triggers('public.staff_members');
+-- Триггеры синхронизации
+do $$
+begin
+  perform app.attach_sync_triggers('public.departments');
+  perform app.attach_sync_triggers('public.categories');
+  perform app.attach_sync_triggers('public.products');
+  perform app.attach_sync_triggers('public.staff_members');
+end
+$$;

@@ -132,6 +132,11 @@ as $$
   );
 $$;
 
-select app.attach_sync_triggers('public.organizations');
-select app.attach_sync_triggers('public.establishments');
-select app.attach_sync_triggers('public.memberships');
+-- Триггеры синхронизации
+do $$
+begin
+  perform app.attach_sync_triggers('public.organizations');
+  perform app.attach_sync_triggers('public.establishments');
+  perform app.attach_sync_triggers('public.memberships');
+end
+$$;

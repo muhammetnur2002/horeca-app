@@ -76,6 +76,11 @@ create index reminders_sync_idx        on public.reminders        (establishment
 create index export_templates_est_idx  on public.export_templates (establishment_id) where deleted_at is null;
 create index export_templates_sync_idx on public.export_templates (establishment_id, updated_at);
 
-select app.attach_sync_triggers('public.reminders');
-select app.attach_sync_triggers('public.export_templates');
-select app.attach_sync_triggers('public.iiko_integrations');
+-- Триггеры синхронизации
+do $$
+begin
+  perform app.attach_sync_triggers('public.reminders');
+  perform app.attach_sync_triggers('public.export_templates');
+  perform app.attach_sync_triggers('public.iiko_integrations');
+end
+$$;

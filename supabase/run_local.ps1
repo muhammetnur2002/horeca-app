@@ -1,4 +1,4 @@
-# Пересоздаёт локальную базу и прогоняет миграции и проверки.
+﻿# Пересоздаёт локальную базу и прогоняет миграции и проверки.
 # Требуется PostgreSQL с psql в PATH.
 #
 #   .\run_local.ps1              полный прогон с проверками
@@ -29,7 +29,7 @@ Write-Host "`nПересоздаю базу $Database" -ForegroundColor Cyan
 & psql -d postgres -c "create database $Database"          | Out-Null
 
 Write-Host "`nЗаглушка Supabase Auth" -ForegroundColor Cyan
-Run-Sql (Join-Path $root "local\00_auth_shim.sql")
+Run-Sql (Join-Path $root "local" "00_auth_shim.sql")
 
 Write-Host "`nМиграции" -ForegroundColor Cyan
 Get-ChildItem (Join-Path $root "migrations") -Filter *.sql | Sort-Object Name | ForEach-Object {
@@ -38,7 +38,7 @@ Get-ChildItem (Join-Path $root "migrations") -Filter *.sql | Sort-Object Name | 
 
 if ($Seed) {
     Write-Host "`nДемо-данные" -ForegroundColor Cyan
-    Run-Sql (Join-Path $root "local\99_seed.sql")
+    Run-Sql (Join-Path $root "local" "99_seed.sql")
 }
 
 Write-Host "`nПроверки доступа" -ForegroundColor Cyan

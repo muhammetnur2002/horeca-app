@@ -122,7 +122,12 @@ create index inventory_items_inv_idx    on public.inventory_items (inventory_id)
 
 create index stock_levels_sync_idx      on public.stock_levels    (establishment_id, updated_at);
 
-select app.attach_sync_triggers('public.shifts');
-select app.attach_sync_triggers('public.requests');
-select app.attach_sync_triggers('public.inventories');
-select app.attach_sync_triggers('public.stock_levels');
+-- Триггеры синхронизации
+do $$
+begin
+  perform app.attach_sync_triggers('public.shifts');
+  perform app.attach_sync_triggers('public.requests');
+  perform app.attach_sync_triggers('public.inventories');
+  perform app.attach_sync_triggers('public.stock_levels');
+end
+$$;
