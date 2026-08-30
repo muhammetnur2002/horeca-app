@@ -66,8 +66,8 @@ $$;
 
 -- ── Данные для проверок ──────────────────────────────────────────────────────
 -- Готовим от суперпользователя, чтобы RLS не мешала расстановке сцены.
-\echo ''
-\echo 'Подготовка: две независимые организации'
+do $prf$ begin raise notice ''; end $prf$;
+do $prf$ begin raise notice 'Подготовка: две независимые организации'; end $prf$;
 
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'owner-a@test.local'),
@@ -96,8 +96,8 @@ insert into public.products (id, establishment_id, name, unit) values
   ('aaaaaaaa-0000-0000-0000-0000000000c1', 'aaaaaaaa-0000-0000-0000-0000000000e1', 'Кофе зерновой', 'кг'),
   ('bbbbbbbb-0000-0000-0000-0000000000c1', 'bbbbbbbb-0000-0000-0000-0000000000e1', 'Томаты', 'кг');
 
-\echo ''
-\echo '1. Изоляция арендаторов'
+do $prf$ begin raise notice ''; end $prf$;
+do $prf$ begin raise notice '1. Изоляция арендаторов'; end $prf$;
 
 set role authenticated;
 do $prf$ begin
@@ -130,8 +130,8 @@ do $prf$ begin
                       0, 'товар организации А невидим для Б');
 end $prf$;
 
-\echo ''
-\echo '2. Запрос без фильтра не обходит изоляцию'
+do $prf$ begin raise notice ''; end $prf$;
+do $prf$ begin raise notice '2. Запрос без фильтра не обходит изоляцию'; end $prf$;
 
 do $prf$ begin
   perform pg_temp.expect((select count(*) from public.products
@@ -139,8 +139,8 @@ do $prf$ begin
                       0, 'явный запрос к чужому заведению возвращает пусто');
 end $prf$;
 
-\echo ''
-\echo '3. Разделение ролей: сотрудник и управляющий'
+do $prf$ begin raise notice ''; end $prf$;
+do $prf$ begin raise notice '3. Разделение ролей: сотрудник и управляющий'; end $prf$;
 
 do $prf$ begin
   perform pg_temp.login('22222222-2222-2222-2222-222222222222');
@@ -189,8 +189,8 @@ do $prf$ begin
                       12345650, 'сумма смены не изменилась после попытки правки');
 end $prf$;
 
-\echo ''
-\echo '4. Управляющий правит смену'
+do $prf$ begin raise notice ''; end $prf$;
+do $prf$ begin raise notice '4. Управляющий правит смену'; end $prf$;
 
 do $prf$ begin
   perform pg_temp.login('11111111-1111-1111-1111-111111111111');
@@ -209,8 +209,8 @@ do $prf$ begin
                       0, 'смены чужого заведения не видны');
 end $prf$;
 
-\echo ''
-\echo '5. Идемпотентность повторной отправки'
+do $prf$ begin raise notice ''; end $prf$;
+do $prf$ begin raise notice '5. Идемпотентность повторной отправки'; end $prf$;
 
 -- Тот же id, что уже есть: повторная отправка из очереди синхронизации
 -- не должна создать вторую смену и удвоить выручку.
@@ -229,8 +229,8 @@ do $prf$ begin
                       12300000, 'повтор не перезаписал сумму');
 end $prf$;
 
-\echo ''
-\echo '6. Ключ iiko недоступен клиенту'
+do $prf$ begin raise notice ''; end $prf$;
+do $prf$ begin raise notice '6. Ключ iiko недоступен клиенту'; end $prf$;
 
 reset role;
 insert into public.iiko_integrations (establishment_id, api_login_enc, organization_name)
@@ -259,8 +259,8 @@ do $prf$ begin
                       1, 'состояние интеграции читается без ключа');
 end $prf$;
 
-\echo ''
-\echo '7. Метку времени ставит сервер'
+do $prf$ begin raise notice ''; end $prf$;
+do $prf$ begin raise notice '7. Метку времени ставит сервер'; end $prf$;
 
 reset role;
 update public.products set updated_at = '2000-01-01'
@@ -272,8 +272,8 @@ do $prf$ begin
   1, 'клиентское значение updated_at перезаписывается серверным');
 end $prf$;
 
-\echo ''
-\echo '8. Ограничения целостности'
+do $prf$ begin raise notice ''; end $prf$;
+do $prf$ begin raise notice '8. Ограничения целостности'; end $prf$;
 
 do $prf$ begin
   perform pg_temp.expect_denied(
@@ -296,6 +296,6 @@ do $prf$ begin
   'товар с пустым названием отклоняется');
 end $prf$;
 
-\echo ''
-\echo 'Все проверки пройдены.'
-\echo ''
+do $prf$ begin raise notice ''; end $prf$;
+do $prf$ begin raise notice 'Все проверки пройдены.'; end $prf$;
+do $prf$ begin raise notice ''; end $prf$;

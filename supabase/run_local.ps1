@@ -47,7 +47,9 @@ $dirLocal      = Join-Path $root "local"
 $dirMigrations = Join-Path $root "migrations"
 $dirTests      = Join-Path $root "tests"
 
-if (-not (Get-Command psql -ErrorAction SilentlyContinue)) {
+$psqlCommand = Get-Command psql -ErrorAction SilentlyContinue
+$script:PsqlExe = if ($psqlCommand) { $psqlCommand.Source } else { $null }
+if (-not $psqlCommand) {
     throw "psql не найден в PATH. Добавьте каталог bin вашей установки PostgreSQL, например C:\Program Files\PostgreSQL\16\bin"
 }
 
@@ -69,26 +71,75 @@ function Read-DbPassword {
 # -w обязателен: без него psql при пустом PGPASSWORD сам выводит запрос
 # пароля, перехватывает ввод и возвращает успех — а переменная остаётся
 # пустой, и следующий же вызов psql падает с fe_sendauth.
+function Format-PsqlArgument {
+    <#
+      Start-Process склеивает -ArgumentList пробелами и кавычек не ставит.
+      Без экранирования аргумент "select 1" распадался на два, и psql
+      принимал "1" за имя пользователя.
+    #>
+    param([string]$Value)
+    if ($Value -match '\s') { return '"' + $Value.Replace('"', '\"') + '"' }
+    return $Value
+}
+
+function Invoke-Psql {
+    <#
+      Запускает psql и печатает его вывод без искажений.
+
+      Конвейер PowerShell здесь не годится: оболочка декодирует поток
+      внешней программы кодовой страницей системы (для русской Windows —
+      cp1251), а psql пишет в UTF-8. Кириллица превращалась в "Р—РђРњР•Р§РђРќРР•".
+      Start-Process перенаправляет потоки средствами ОС, поэтому в файл
+      попадают исходные байты, а Get-Content читает их явно как UTF-8.
+    #>
+    param([string[]]$Arguments)
+
+    $outFile = [System.IO.Path]::GetTempFileName()
+    $errFile = [System.IO.Path]::GetTempFileName()
+    try {
+        $quoted = $Arguments | ForEach-Object { Format-PsqlArgument $_ }
+        $proc = Start-Process -FilePath $script:PsqlExe -ArgumentList $quoted `
+            -NoNewWindow -Wait -PassThru `
+            -RedirectStandardOutput $outFile -RedirectStandardError $errFile
+        # Служебный префикс psql вида "psql:путь:строка: NOTICE:" только
+        # мешает читать результаты проверок — снимаем его.
+        $noise = '^psql:[^:]*:[0-9]+: (NOTICE|ЗАМЕЧАНИЕ):\s{0,2}'
+        foreach ($file in @($outFile, $errFile)) {
+            if ((Get-Item -LiteralPath $file).Length -gt 0) {
+                Get-Content -LiteralPath $file -Encoding UTF8 |
+                    ForEach-Object { Write-Host ($_ -replace $noise, '') }
+            }
+        }
+        return $proc.ExitCode
+    } finally {
+        Remove-Item -LiteralPath $outFile, $errFile -ErrorAction SilentlyContinue
+    }
+}
+
 function Test-DbConnection {
     # $ErrorActionPreference временно снимается неспроста. При перенаправлении
     # потока ошибок нативной программы PowerShell превращает её вывод
     # в объекты-ошибки, а режим Stop делает такую ошибку фатальной —
     # скрипт падал вместо того, чтобы переспросить пароль.
-    $previous = $ErrorActionPreference
-    $ErrorActionPreference = "Continue"
+    # Start-Process требует разных файлов для потоков вывода и ошибок.
+    $outFile = [System.IO.Path]::GetTempFileName()
+    $errFile = [System.IO.Path]::GetTempFileName()
     try {
-        & psql -w -d postgres -tAc "select 1" 2>&1 | Out-Null
-        return ($LASTEXITCODE -eq 0)
+        $proc = Start-Process -FilePath $script:PsqlExe `
+            -ArgumentList @("-w", "-d", "postgres", "-tAc", '"select 1"') `
+            -NoNewWindow -Wait -PassThru `
+            -RedirectStandardOutput $outFile -RedirectStandardError $errFile
+        return ($proc.ExitCode -eq 0)
     } finally {
-        $ErrorActionPreference = $previous
+        Remove-Item -LiteralPath $outFile, $errFile -ErrorAction SilentlyContinue
     }
 }
 
 function Invoke-Sql {
     param([string]$Path)
     Write-Host ("  -> " + (Split-Path $Path -Leaf))
-    & psql -w -q -d $Database -v ON_ERROR_STOP=1 -f $Path
-    if ($LASTEXITCODE -ne 0) { throw "Ошибка в файле $Path" }
+    $code = Invoke-Psql @("-w", "-q", "-d", $Database, "-v", "ON_ERROR_STOP=1", "-f", $Path)
+    if ($code -ne 0) { throw "Ошибка в файле $Path" }
 }
 
 function Invoke-SqlDir {
@@ -134,10 +185,10 @@ Write-Host "  подключение установлено" -ForegroundColor Da
 
 Write-Host ""
 Write-Host "Пересоздаю базу $Database" -ForegroundColor Cyan
-& psql -w -d postgres -q -c "drop database if exists $Database"
-if ($LASTEXITCODE -ne 0) { throw "Не удалось удалить базу $Database" }
-& psql -w -d postgres -q -c "create database $Database"
-if ($LASTEXITCODE -ne 0) { throw "Не удалось создать базу $Database" }
+$code = Invoke-Psql @("-w", "-d", "postgres", "-q", "-c", "drop database if exists $Database")
+if ($code -ne 0) { throw "Не удалось удалить базу $Database" }
+$code = Invoke-Psql @("-w", "-d", "postgres", "-q", "-c", "create database $Database")
+if ($code -ne 0) { throw "Не удалось создать базу $Database" }
 
 Write-Host ""
 Write-Host "Заглушка Supabase Auth" -ForegroundColor Cyan
@@ -157,8 +208,8 @@ Write-Host ""
 Write-Host "Проверки доступа" -ForegroundColor Cyan
 $testFiles = Get-ChildItem -Path $dirTests -Filter *.sql | Sort-Object Name
 foreach ($t in $testFiles) {
-    & psql -w -q -d $Database -v ON_ERROR_STOP=1 -f $t.FullName
-    if ($LASTEXITCODE -ne 0) { throw "Проверки не пройдены: $($t.Name)" }
+    $code = Invoke-Psql @("-w", "-q", "-d", $Database, "-v", "ON_ERROR_STOP=1", "-f", $t.FullName)
+    if ($code -ne 0) { throw "Проверки не пройдены: $($t.Name)" }
 }
 
 Write-Host ""
