@@ -100,78 +100,114 @@ insert into public.products (id, establishment_id, name, unit) values
 \echo '1. Изоляция арендаторов'
 
 set role authenticated;
-select pg_temp.login('11111111-1111-1111-1111-111111111111');
+do $prf$ begin
+  perform pg_temp.login('11111111-1111-1111-1111-111111111111');
+end $prf$;
 
-select pg_temp.expect((select count(*) from public.products),
+do $prf$ begin
+  perform pg_temp.expect((select count(*) from public.products),
                       1, 'владелец А видит только свой товар');
-select pg_temp.expect((select count(*) from public.establishments),
+end $prf$;
+do $prf$ begin
+  perform pg_temp.expect((select count(*) from public.establishments),
                       1, 'владелец А видит только своё заведение');
-select pg_temp.expect((select count(*) from public.departments),
+end $prf$;
+do $prf$ begin
+  perform pg_temp.expect((select count(*) from public.departments),
                       1, 'владелец А видит только свои отделы');
+end $prf$;
 
-select pg_temp.login('33333333-3333-3333-3333-333333333333');
-select pg_temp.expect((select count(*) from public.products),
+do $prf$ begin
+  perform pg_temp.login('33333333-3333-3333-3333-333333333333');
+end $prf$;
+do $prf$ begin
+  perform pg_temp.expect((select count(*) from public.products),
                       1, 'владелец Б видит только свой товар');
-select pg_temp.expect((select count(*) from public.products
+end $prf$;
+do $prf$ begin
+  perform pg_temp.expect((select count(*) from public.products
                        where name = 'Кофе зерновой'),
                       0, 'товар организации А невидим для Б');
+end $prf$;
 
 \echo ''
 \echo '2. Запрос без фильтра не обходит изоляцию'
 
-select pg_temp.expect((select count(*) from public.products
+do $prf$ begin
+  perform pg_temp.expect((select count(*) from public.products
                        where establishment_id = 'aaaaaaaa-0000-0000-0000-0000000000e1'),
                       0, 'явный запрос к чужому заведению возвращает пусто');
+end $prf$;
 
 \echo ''
 \echo '3. Разделение ролей: сотрудник и управляющий'
 
-select pg_temp.login('22222222-2222-2222-2222-222222222222');
+do $prf$ begin
+  perform pg_temp.login('22222222-2222-2222-2222-222222222222');
+end $prf$;
 
-select pg_temp.expect((select count(*) from public.products),
+do $prf$ begin
+  perform pg_temp.expect((select count(*) from public.products),
                       1, 'сотрудник читает справочник своего заведения');
+end $prf$;
 
-select pg_temp.expect_denied(
+do $prf$ begin
+  perform pg_temp.expect_denied(
   $q$ insert into public.products (id, establishment_id, name)
       values (gen_random_uuid(), 'aaaaaaaa-0000-0000-0000-0000000000e1', 'Самовольный товар') $q$,
   'сотрудник не может завести товар');
+end $prf$;
 
-select pg_temp.expect_no_effect(
+do $prf$ begin
+  perform pg_temp.expect_no_effect(
   $q$ update public.products set name = 'Переименовано'
       where id = 'aaaaaaaa-0000-0000-0000-0000000000c1' $q$,
   'сотрудник не может переименовать товар');
+end $prf$;
 
 -- А вот закрыть смену он обязан уметь: это его работа.
 insert into public.shifts (id, establishment_id, closed_at, revenue_minor, cash_minor)
 values ('aaaaaaaa-0000-0000-0000-0000000000f1',
         'aaaaaaaa-0000-0000-0000-0000000000e1', now(), 12345650, 12345650);
 
-select pg_temp.expect((select count(*) from public.shifts),
+do $prf$ begin
+  perform pg_temp.expect((select count(*) from public.shifts),
                       1, 'сотрудник закрывает смену');
+end $prf$;
 
-select pg_temp.expect_no_effect(
+do $prf$ begin
+  perform pg_temp.expect_no_effect(
   $q$ update public.shifts set revenue_minor = 999
       where id = 'aaaaaaaa-0000-0000-0000-0000000000f1' $q$,
   'сотрудник не может править закрытую смену задним числом');
+end $prf$;
 
 -- И убеждаемся, что значение действительно осталось прежним.
-select pg_temp.expect((select revenue_minor from public.shifts
+do $prf$ begin
+  perform pg_temp.expect((select revenue_minor from public.shifts
                        where id = 'aaaaaaaa-0000-0000-0000-0000000000f1'),
                       12345650, 'сумма смены не изменилась после попытки правки');
+end $prf$;
 
 \echo ''
 \echo '4. Управляющий правит смену'
 
-select pg_temp.login('11111111-1111-1111-1111-111111111111');
+do $prf$ begin
+  perform pg_temp.login('11111111-1111-1111-1111-111111111111');
+end $prf$;
 update public.shifts set revenue_minor = 12300000
   where id = 'aaaaaaaa-0000-0000-0000-0000000000f1';
-select pg_temp.expect((select revenue_minor from public.shifts
+do $prf$ begin
+  perform pg_temp.expect((select revenue_minor from public.shifts
                        where id = 'aaaaaaaa-0000-0000-0000-0000000000f1'),
                       12300000, 'владелец исправляет закрытую смену');
+end $prf$;
 
-select pg_temp.expect((select count(*) from public.shifts
+do $prf$ begin
+  perform pg_temp.expect((select count(*) from public.shifts
                        where establishment_id = 'bbbbbbbb-0000-0000-0000-0000000000e1'),
                       0, 'смены чужого заведения не видны');
+end $prf$;
 
 \echo ''
 \echo '5. Идемпотентность повторной отправки'
@@ -183,11 +219,15 @@ values ('aaaaaaaa-0000-0000-0000-0000000000f1',
         'aaaaaaaa-0000-0000-0000-0000000000e1', now(), 99999)
 on conflict (id) do nothing;
 
-select pg_temp.expect((select count(*) from public.shifts),
+do $prf$ begin
+  perform pg_temp.expect((select count(*) from public.shifts),
                       1, 'повторная отправка смены не создаёт дубль');
-select pg_temp.expect((select revenue_minor from public.shifts
+end $prf$;
+do $prf$ begin
+  perform pg_temp.expect((select revenue_minor from public.shifts
                        where id = 'aaaaaaaa-0000-0000-0000-0000000000f1'),
                       12300000, 'повтор не перезаписал сумму');
+end $prf$;
 
 \echo ''
 \echo '6. Ключ iiko недоступен клиенту'
@@ -198,18 +238,26 @@ values ('aaaaaaaa-0000-0000-0000-0000000000e1',
         pgp_sym_encrypt('секретный-ключ-iiko', 'тестовый-пароль'), 'Кофейня А');
 
 set role authenticated;
-select pg_temp.login('11111111-1111-1111-1111-111111111111');
+do $prf$ begin
+  perform pg_temp.login('11111111-1111-1111-1111-111111111111');
+end $prf$;
 
-select pg_temp.expect_denied(
+do $prf$ begin
+  perform pg_temp.expect_denied(
   $q$ select api_login_enc from public.iiko_integrations $q$,
   'ключ iiko не читается даже владельцем');
+end $prf$;
 
-select pg_temp.expect_denied(
+do $prf$ begin
+  perform pg_temp.expect_denied(
   $q$ select * from public.iiko_integrations $q$,
   'select * по таблице интеграции отклоняется');
+end $prf$;
 
-select pg_temp.expect((select count(*) from public.iiko_status),
+do $prf$ begin
+  perform pg_temp.expect((select count(*) from public.iiko_status),
                       1, 'состояние интеграции читается без ключа');
+end $prf$;
 
 \echo ''
 \echo '7. Метку времени ставит сервер'
@@ -217,28 +265,36 @@ select pg_temp.expect((select count(*) from public.iiko_status),
 reset role;
 update public.products set updated_at = '2000-01-01'
   where id = 'bbbbbbbb-0000-0000-0000-0000000000c1';
-select pg_temp.expect(
+do $prf$ begin
+  perform pg_temp.expect(
   (select case when updated_at > now() - interval '1 minute' then 1 else 0 end
    from public.products where id = 'bbbbbbbb-0000-0000-0000-0000000000c1'),
   1, 'клиентское значение updated_at перезаписывается серверным');
+end $prf$;
 
 \echo ''
 \echo '8. Ограничения целостности'
 
-select pg_temp.expect_denied(
+do $prf$ begin
+  perform pg_temp.expect_denied(
   $q$ insert into public.shifts (id, establishment_id, closed_at, revenue_minor)
       values (gen_random_uuid(), 'aaaaaaaa-0000-0000-0000-0000000000e1', now(), -100) $q$,
   'отрицательная выручка отклоняется');
+end $prf$;
 
-select pg_temp.expect_denied(
+do $prf$ begin
+  perform pg_temp.expect_denied(
   $q$ insert into public.reminders (establishment_id, title, frequency, hour, minute)
       values ('aaaaaaaa-0000-0000-0000-0000000000e1', 'Без дня недели', 'weekly', 9, 0) $q$,
   'еженедельное напоминание без дня недели отклоняется');
+end $prf$;
 
-select pg_temp.expect_denied(
+do $prf$ begin
+  perform pg_temp.expect_denied(
   $q$ insert into public.products (id, establishment_id, name)
       values (gen_random_uuid(), 'aaaaaaaa-0000-0000-0000-0000000000e1', '   ') $q$,
   'товар с пустым названием отклоняется');
+end $prf$;
 
 \echo ''
 \echo 'Все проверки пройдены.'

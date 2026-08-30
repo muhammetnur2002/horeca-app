@@ -29,9 +29,14 @@ $ErrorActionPreference = "Stop"
 
 # Консоль и psql должны говорить в UTF-8, иначе кириллица в выводе
 # превратится в мусор на кодовой странице cp866.
+# chcp обязателен: одной установки OutputEncoding мало. psql пишет вывод
+# в UTF-8 (мы задали PGCLIENTENCODING), а консоль читает его в кодовой
+# странице системы — сообщения сервера превращаются в "Р—РђРњР•Р§РђРќРР•".
 try {
-    [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-    $OutputEncoding = [System.Text.Encoding]::UTF8
+    if ($env:OS -eq "Windows_NT") { & chcp 65001 | Out-Null }
+    $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+    [Console]::OutputEncoding = $utf8NoBom
+    $OutputEncoding = $utf8NoBom
 } catch {
     Write-Host "Не удалось переключить консоль в UTF-8, вывод может искажаться." -ForegroundColor Yellow
 }
@@ -138,7 +143,7 @@ Write-Host ""
 Write-Host "Проверки доступа" -ForegroundColor Cyan
 $testFiles = Get-ChildItem -Path $dirTests -Filter *.sql | Sort-Object Name
 foreach ($t in $testFiles) {
-    & psql -w -d $Database -v ON_ERROR_STOP=1 -f $t.FullName
+    & psql -w -q -d $Database -v ON_ERROR_STOP=1 -f $t.FullName
     if ($LASTEXITCODE -ne 0) { throw "Проверки не пройдены: $($t.Name)" }
 }
 
