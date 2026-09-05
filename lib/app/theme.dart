@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:horeca_app/app/design/tokens.dart';
+
+export 'package:horeca_app/app/design/tokens.dart';
 
 /// Цветовые константы приложения.
 class AppColors {
@@ -31,6 +34,7 @@ class AppTheme {
   const AppTheme._();
 
   static final ThemeData light = _base(
+    palette: AppPalette.light,
     brightness: Brightness.light,
     scaffoldBg: AppColors.lightBg,
     cardColor: AppColors.lightCard,
@@ -54,6 +58,7 @@ class AppTheme {
   );
 
   static final ThemeData dark = _base(
+    palette: AppPalette.dark,
     brightness: Brightness.dark,
     scaffoldBg: AppColors.darkBg,
     cardColor: AppColors.darkCard,
@@ -81,6 +86,7 @@ class AppTheme {
   );
 
   static ThemeData _base({
+    required AppPalette palette,
     required Brightness brightness,
     required Color scaffoldBg,
     required Color cardColor,
@@ -100,6 +106,7 @@ class AppTheme {
     return ThemeData(
       brightness: brightness,
       useMaterial3: true,
+      extensions: [palette],
       scaffoldBackgroundColor: scaffoldBg,
       cardColor: cardColor,
       colorScheme: colorScheme,
@@ -122,19 +129,23 @@ class AppTheme {
         ),
         bodyLarge: TextStyle(fontSize: 16, color: onSurface),
         bodyMedium: TextStyle(fontSize: 14, color: bodyMediumColor),
-        labelLarge: const TextStyle(
+        // Тёмный, а не белый: белая надпись на фирменном оранжевом
+        // давала контраст 2.52:1 при норме 4.5. Оранжевый остался
+        // прежним, читаемость выросла до 7.26:1.
+        labelLarge: TextStyle(
           fontSize: 16,
-          fontWeight: FontWeight.w500,
-          color: Colors.white,
+          fontWeight: FontWeight.w600,
+          color: palette.onAction,
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           minimumSize: const Size(double.infinity, 56),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          backgroundColor: AppColors.orange,
-          foregroundColor: Colors.white,
+          backgroundColor: palette.action,
+          foregroundColor: palette.onAction,
           elevation: 0,
+          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
       ),
       appBarTheme: AppBarTheme(
@@ -168,7 +179,8 @@ class AppTheme {
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: fabBg,
-        foregroundColor: Colors.white,
+        foregroundColor:
+            fabBg == palette.action ? palette.onAction : Colors.white,
         elevation: 4,
       ),
       inputDecorationTheme: InputDecorationTheme(

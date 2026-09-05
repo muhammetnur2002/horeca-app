@@ -11,7 +11,7 @@ on conflict do nothing;
 
 insert into public.establishments (id, org_id, name, currency, timezone)
 values ('00000000-0000-0000-0000-0000000000e0',
-        '00000000-0000-0000-0000-0000000000b0', 'Демо-кофейня', '₸', 'Asia/Almaty')
+        '00000000-0000-0000-0000-0000000000b0', 'Демо-кофейня', '₸', 'Asia/Ashgabat')
 on conflict do nothing;
 
 insert into public.memberships (user_id, org_id, establishment_id, role)

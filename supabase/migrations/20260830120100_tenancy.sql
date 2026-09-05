@@ -20,7 +20,7 @@ create table public.establishments (
   org_id      uuid        not null references public.organizations (id) on delete cascade,
   name        text        not null check (length(btrim(name)) between 1 and 200),
   currency    text        not null default '₸' check (length(currency) between 1 and 8),
-  timezone    text        not null default 'Asia/Almaty',
+  timezone    text        not null default 'Asia/Ashgabat',
   logo_path   text,
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now(),

@@ -36,7 +36,7 @@ mixin _Syncable on Table {
 class EstablishmentSettings extends Table with _Syncable {
   TextColumn get name => text().withDefault(const Constant('Моё заведение'))();
   TextColumn get currency => text().withLength(min: 1, max: 8)();
-  TextColumn get timezone => text().withDefault(const Constant('Asia/Almaty'))();
+  TextColumn get timezone => text().withDefault(const Constant('Asia/Ashgabat'))();
   TextColumn get logoPath => text().nullable()();
 
   @override
