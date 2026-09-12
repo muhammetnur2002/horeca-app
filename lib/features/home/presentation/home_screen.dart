@@ -1,5 +1,4 @@
 ﻿import 'dart:math';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -8,6 +7,7 @@ import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
 import 'package:horeca_app/features/auth/data/auth_repository.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
 import 'package:horeca_app/features/inventory/data/stock_levels_repository.dart';
+import 'package:horeca_app/shared/models/product_model.dart';
 
 
 class HomeScreen extends ConsumerWidget {
@@ -17,10 +17,10 @@ class HomeScreen extends ConsumerWidget {
 
   @override
 Widget build(BuildContext context, WidgetRef ref) {
-  final l10n = AppLocalizations.of(context)!;
+  final l10n = AppLocalizations.of(context);
   final isDark = Theme.of(context).brightness == Brightness.dark;
   final authState = ref.watch(authRepositoryProvider);
-  final isAdmin = authState.role != UserRole.staff;
+  final isAdmin = authState.isAdmin;
 
   final settings = ref.watch(settingsRepositoryProvider);
   final stockLevels = ref.watch(stockLevelsRepositoryProvider);
@@ -37,13 +37,29 @@ Widget build(BuildContext context, WidgetRef ref) {
         title: _AkylLogoTitle(isDark: isDark),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        actions: [
+          // Без этой кнопки выйти из сессии было невозможно: logout()
+          // не вызывался нигде в приложении.
+          if (authState.pinsEnabled)
+            IconButton(
+              tooltip: 'Заблокировать',
+              icon: Icon(Icons.lock_outline_rounded,
+                  color: isDark
+                      ? Colors.white.withOpacity(0.7)
+                      : const Color(0xFF1A1A2E)),
+              onPressed: () =>
+                  ref.read(authRepositoryProvider.notifier).logout(),
+            ),
+        ],
       ),
       body: Stack(
         children: [
           Positioned.fill(child: _Background(isDark: isDark)),
           SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+            // Список кнопок не помещался на невысоких экранах (особенно с
+            // баннером низких остатков) и обрезался с ошибкой overflow.
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -165,18 +181,18 @@ class _MiniLogoPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final W = size.width, H = size.height;
-    final CX = W / 2, CY = H / 2;
+    final w = size.width, h = size.height;
+    final cx = w / 2, cy = h / 2;
 
     // фон
     final rrect = RRect.fromRectAndRadius(
-        Rect.fromLTWH(0, 0, W, H), Radius.circular(W * 0.22));
+        Rect.fromLTWH(0, 0, w, h), Radius.circular(w * 0.22));
     canvas.clipRRect(rrect);
-    canvas.drawRect(Rect.fromLTWH(0, 0, W, H), Paint()
+    canvas.drawRect(Rect.fromLTWH(0, 0, w, h), Paint()
       ..shader = RadialGradient(colors: isDark
           ? [const Color(0xFF1A1E2E), const Color(0xFF060A18)]
           : [const Color(0xFFEEF2FF), const Color(0xFFC8D8FF)])
-          .createShader(Rect.fromLTWH(0, 0, W, H)));
+          .createShader(Rect.fromLTWH(0, 0, w, h)));
 
     // орбиты
     final orbitPaint = Paint()
@@ -185,10 +201,10 @@ class _MiniLogoPainter extends CustomPainter {
       ..strokeWidth = 1;
     for (final rot in [-0.52, 0.52]) {
       canvas.save();
-      canvas.translate(CX, CY);
+      canvas.translate(cx, cy);
       canvas.rotate(rot);
       canvas.drawOval(
-          Rect.fromCenter(center: Offset.zero, width: W * 0.88, height: H * 0.28),
+          Rect.fromCenter(center: Offset.zero, width: w * 0.88, height: h * 0.28),
           orbitPaint);
       canvas.restore();
     }
@@ -197,11 +213,11 @@ class _MiniLogoPainter extends CustomPainter {
     for (int i = 0; i < 2; i++) {
       final rot = i == 0 ? -0.52 : 0.52;
       final ang = i == 0 ? t * 0.75 - pi * 0.5 : -t * 0.6 + pi;
-      final r = i == 0 ? W * 0.11 : W * 0.09;
-      final px = cos(ang) * W * 0.44;
-      final py = sin(ang) * H * 0.14;
-      final wx = CX + px * cos(rot) - py * sin(rot);
-      final wy = CY + px * sin(rot) + py * cos(rot);
+      final r = i == 0 ? w * 0.11 : w * 0.09;
+      final px = cos(ang) * w * 0.44;
+      final py = sin(ang) * h * 0.14;
+      final wx = cx + px * cos(rot) - py * sin(rot);
+      final wy = cy + px * sin(rot) + py * cos(rot);
       canvas.drawCircle(Offset(wx, wy), r, Paint()
         ..shader = RadialGradient(
             colors: const [Color(0xFFFFB067), Color(0xFFF5862E)])
@@ -211,13 +227,13 @@ class _MiniLogoPainter extends CustomPainter {
     // буква A
     final tp = TextPainter(
       text: TextSpan(text: 'A', style: TextStyle(
-        fontSize: W * 0.5, fontWeight: FontWeight.w900,
+        fontSize: w * 0.5, fontWeight: FontWeight.w900,
         color: isDark ? Colors.white : const Color(0xFF1A1A2E),
       )),
       textDirection: TextDirection.ltr,
     );
     tp.layout();
-    tp.paint(canvas, Offset(CX - tp.width / 2, CY - tp.height / 2 + W * 0.02));
+    tp.paint(canvas, Offset(cx - tp.width / 2, cy - tp.height / 2 + w * 0.02));
   }
 
   @override
@@ -257,7 +273,7 @@ class _Background extends StatelessWidget {
 }
 
 class _LowStockBanner extends StatelessWidget {
-  final List<dynamic> items;
+  final List<ProductModel> items;
   final bool isDark;
   const _LowStockBanner({required this.items, required this.isDark});
 

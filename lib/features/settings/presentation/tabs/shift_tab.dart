@@ -16,6 +16,9 @@ class ShiftTab extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Colors.transparent,
       floatingActionButton: FloatingActionButton(
+        // Уникальный тег: вкладки настроек остаются в дереве после
+        // посещения, и одинаковые теги ломают Hero-анимацию.
+        heroTag: 'fab-staff',
         onPressed: () => _showAddDialog(context, repo, isDark),
         backgroundColor: AppColors.orange,
         foregroundColor: Colors.white,

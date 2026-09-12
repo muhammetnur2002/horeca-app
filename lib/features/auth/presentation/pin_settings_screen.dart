@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/features/auth/data/auth_repository.dart';
@@ -49,6 +50,9 @@ class _PinSettingsScreenState extends ConsumerState<PinSettingsScreen> {
     repo.setAdminPin(_adminCtrl.text);
     repo.setStaffPin(_staffCtrl.text);
     repo.setPinsEnabled(true);
+    // Тот, кто только что задал PIN-коды, уже администратор — иначе
+    // включение защиты мгновенно выбрасывало его на экран блокировки.
+    repo.login(UserRole.admin);
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
       content: Text('PIN-коды сохранены', style: TextStyle(color: Colors.white)),
       backgroundColor: AppColors.green,
@@ -72,7 +76,7 @@ class _PinSettingsScreenState extends ConsumerState<PinSettingsScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
-    final pinsEnabled = ref.watch(authRepositoryProvider.notifier).pinsEnabled;
+    final pinsEnabled = ref.watch(authRepositoryProvider).pinsEnabled;
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -109,6 +113,7 @@ class _PinSettingsScreenState extends ConsumerState<PinSettingsScreen> {
               TextField(
                 controller: _adminCtrl,
                 keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 maxLength: 6,
                 style: TextStyle(color: textColor, letterSpacing: 4),
                 decoration: const InputDecoration(
@@ -124,6 +129,7 @@ class _PinSettingsScreenState extends ConsumerState<PinSettingsScreen> {
               TextField(
                 controller: _staffCtrl,
                 keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 maxLength: 6,
                 style: TextStyle(color: textColor, letterSpacing: 4),
                 decoration: const InputDecoration(

@@ -15,8 +15,18 @@ import 'package:horeca_app/features/notifications/presentation/notifications_scr
 import 'package:horeca_app/features/custom_template/presentation/template_screen.dart';
 import 'package:horeca_app/features/auth/data/auth_repository.dart';
 
-final router = GoRouter(
+/// Разделы только для администратора. Раньше их защищало лишь скрытие
+/// кнопок — прямой переход по маршруту ничем не ограничивался.
+const _adminOnlyRoutes = {'/settings', '/analytics'};
+
+GoRouter buildRouter(Ref ref) => GoRouter(
   initialLocation: '/',
+  redirect: (context, state) {
+    final isAdmin = ref.read(authRepositoryProvider).isAdmin;
+    final path = state.uri.path;
+    if (!isAdmin && _adminOnlyRoutes.any(path.startsWith)) return '/';
+    return null;
+  },
   routes: [
     ShellRoute(
       builder: (context, state, child) => MainShell(child: child),
@@ -52,6 +62,14 @@ final router = GoRouter(
   ],
 );
 
+final routerProvider = Provider<GoRouter>((ref) {
+  final router = buildRouter(ref);
+  // Смена роли должна немедленно вытолкнуть сотрудника из админских
+  // разделов, а не ждать следующего перехода.
+  ref.listen<AuthState>(authRepositoryProvider, (_, __) => router.refresh());
+  return router;
+});
+
 class MainShell extends ConsumerWidget {
   final Widget child;
   const MainShell({required this.child, super.key});
@@ -60,8 +78,7 @@ class MainShell extends ConsumerWidget {
 Widget build(BuildContext context, WidgetRef ref) {
   final l10n = AppLocalizations.of(context);
   final isDark = Theme.of(context).brightness == Brightness.dark;
-  final authState = ref.watch(authRepositoryProvider);
-  final isAdmin = authState.role != UserRole.staff;
+  final isAdmin = ref.watch(authRepositoryProvider).isAdmin;
 
     return Scaffold(
       body: child,
@@ -87,7 +104,7 @@ Widget build(BuildContext context, WidgetRef ref) {
           ],
         ),
         child: BottomNavigationBar(
-          currentIndex: _calculateIndex(context),
+          currentIndex: _calculateIndex(context, isAdmin),
           onTap: (index) => _onTap(context, index),
           type: BottomNavigationBarType.fixed,
           backgroundColor: Colors.transparent,
@@ -122,18 +139,23 @@ Widget build(BuildContext context, WidgetRef ref) {
     );
   }
 
-  int _calculateIndex(BuildContext context) {
+  /// Индекс не должен выходить за число вкладок: у сотрудника «Настройки»
+  /// скрыты, и currentIndex == 2 роняет BottomNavigationBar.
+  int _calculateIndex(BuildContext context, bool isAdmin) {
     final location = GoRouterState.of(context).uri.toString();
     if (location.startsWith('/history')) return 1;
-    if (location.startsWith('/settings')) return 2;
+    if (isAdmin && location.startsWith('/settings')) return 2;
     return 0;
   }
 
   void _onTap(BuildContext context, int index) {
     switch (index) {
-      case 0: context.go('/'); break;
-      case 1: context.go('/history'); break;
-      case 2: context.go('/settings'); break;
+      case 0:
+        context.go('/');
+      case 1:
+        context.go('/history');
+      case 2:
+        context.go('/settings');
     }
   }
 }

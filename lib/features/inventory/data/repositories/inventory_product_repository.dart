@@ -24,18 +24,12 @@ final inventoryProductsProvider = Provider.family<List<InventoryProduct>, String
     if (departmentId == 'all') {
       // Возвращаем все товары, помечая их departmentId как 'all'
       return allProducts
-          .map((p) {
-            final cat = allCategories.firstWhere(
-              (c) => c.id == p.categoryId,
-              orElse: () => CategoryModel(id: '', name: '', departmentId: ''),
-            );
-            return InventoryProduct(
-              id: p.id,
-              name: p.name,
-              unit: p.unit,
-              departmentId: 'all', // или cat.departmentId, но для общего отчёта не важно
-            );
-          })
+          .map((p) => InventoryProduct(
+                id: p.id,
+                name: p.name,
+                unit: p.unit,
+                departmentId: 'all',
+              ))
           .toList();
     }
 

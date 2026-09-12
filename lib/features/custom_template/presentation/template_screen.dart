@@ -54,9 +54,11 @@ Future<void> _tryAiImprove() async {
   if (_parsed == null) return;
   setState(() => _aiLoading = true);
   final aiMappings = await FieldMatcher.tryAiMatch(_parsed!.headers);
+  if (!mounted) return;
   setState(() {
     _aiLoading = false;
-    _aiTried = true;
+    // Кнопку прячем только после успеха: после сбоя сети нужен повтор.
+    _aiTried = aiMappings != null;
     if (aiMappings != null) {
       _mappings = aiMappings;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -75,6 +77,23 @@ Future<void> _tryAiImprove() async {
 }
   void _saveTemplate() {
     if (_parsed == null) return;
+    // Без колонки с названием товара шаблон даёт пустую таблицу в PDF.
+    final used = _mappings
+        .where((m) => m.mappedField != TemplateField.notUsed)
+        .toList();
+    final hasName =
+        used.any((m) => m.mappedField == TemplateField.productName);
+    if (used.isEmpty || !hasName) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: const Text(
+            'Отметьте хотя бы колонку «Название товара»',
+            style: TextStyle(color: Colors.white)),
+        backgroundColor: Colors.redAccent,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ));
+      return;
+    }
     final template = CustomTemplate(
       name: _parsed!.sheetName,
       columns: _mappings,
@@ -110,9 +129,42 @@ Future<void> _tryAiImprove() async {
           if (currentTemplate != null)
             IconButton(
               icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
-              onPressed: () {
+              onPressed: () async {
+                final ok = await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    backgroundColor:
+                        isDark ? AppColors.darkCard : Colors.white,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20)),
+                    title: const Text('Удалить шаблон?',
+                        style: TextStyle(fontWeight: FontWeight.w600)),
+                    content: const Text(
+                        'Отчёты снова будут формироваться по стандартной '
+                        'форме.',
+                        style:
+                            TextStyle(color: AppColors.muted, fontSize: 14)),
+                    actions: [
+                      TextButton(
+                          onPressed: () => Navigator.pop(ctx, false),
+                          child: const Text('Отмена',
+                              style: TextStyle(color: AppColors.muted))),
+                      ElevatedButton(
+                          onPressed: () => Navigator.pop(ctx, true),
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.redAccent,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12))),
+                          child: const Text('Удалить')),
+                    ],
+                  ),
+                );
+                if (ok != true) return;
                 ref.read(templateRepositoryProvider.notifier).removeTemplate();
-                setState(() { _parsed = null; _mappings = []; });
+                if (mounted) {
+                  setState(() { _parsed = null; _mappings = []; });
+                }
               },
             ),
         ],

@@ -32,6 +32,10 @@ class ShiftDraft {
 class ShiftDraftNotifier extends StateNotifier<ShiftDraft> {
   ShiftDraftNotifier() : super(ShiftDraft());
 
+  void save(ShiftDraft draft) {
+    state = draft;
+  }
+
   void reset() {
     state = ShiftDraft();
   }

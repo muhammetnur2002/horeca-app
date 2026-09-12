@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -108,7 +109,9 @@ class NotificationRepository extends StateNotifier<NotificationData> {
 
   NotificationRepository(this._prefs) : super(const NotificationData()) {
     _load();
-    _service.init();
+    // init() сам гасит ошибки: без плагина напоминания недоступны,
+    // но остальное приложение должно работать.
+    unawaited(_service.init());
   }
 
   void _load() {
@@ -149,6 +152,7 @@ class NotificationRepository extends StateNotifier<NotificationData> {
     state = state.copyWith(productReminders: [...state.productReminders, reminder]);
     _save();
 
+    await _service.init();
     final title = 'Заказать товар';
     final body = 'Время заказать: $productName';
     if (frequency == ReminderFrequency.daily) {
@@ -170,6 +174,7 @@ class NotificationRepository extends StateNotifier<NotificationData> {
     state = state.copyWith(inventoryReminder: reminder);
     _save();
 
+    await _service.init();
     const invId = 999;
     const dayBeforeId = 998;
     await _service.cancel(invId);

@@ -39,16 +39,22 @@ class RequestState {
     this.items = const [],
   });
 
+  /// `clearDepartment` / `clearCategory` нужны потому, что через `??`
+  /// передать null невозможно — прежний код «сбрасывал» отдел и категорию,
+  /// а они молча оставались прежними.
   RequestState copyWith({
     int? step,
     String? departmentId,
     String? categoryId,
     List<RequestItem>? items,
+    bool clearDepartment = false,
+    bool clearCategory = false,
   }) {
     return RequestState(
       step: step ?? this.step,
-      departmentId: departmentId ?? this.departmentId,
-      categoryId: categoryId ?? this.categoryId,
+      departmentId:
+          clearDepartment ? null : (departmentId ?? this.departmentId),
+      categoryId: clearCategory ? null : (categoryId ?? this.categoryId),
       items: items ?? this.items,
     );
   }
@@ -59,7 +65,8 @@ class RequestStateNotifier extends StateNotifier<RequestState> {
 
   void selectDepartment(String deptId) {
     // Не очищаем items, чтобы сохранить товары из предыдущих отделов
-    state = state.copyWith(departmentId: deptId, step: 1, categoryId: null);
+    state = state.copyWith(
+        departmentId: deptId, step: 1, clearCategory: true);
   }
 
   void selectCategory(String catId) {
@@ -71,7 +78,13 @@ class RequestStateNotifier extends StateNotifier<RequestState> {
     final index = newItems.indexWhere((i) => i.productId == productId);
     if (index != -1) {
       if (newQuantity > 0) {
-        newItems[index] = newItems[index].copyWith(quantity: newQuantity);
+        newItems[index] = RequestItem(
+          productId: productId,
+          productName: productName ?? newItems[index].productName,
+          quantity: newQuantity,
+          unit: unit ?? newItems[index].unit,
+          comment: newItems[index].comment,
+        );
       } else {
         newItems.removeAt(index);
       }
@@ -92,12 +105,14 @@ class RequestStateNotifier extends StateNotifier<RequestState> {
   }
 
   void goBack() {
-    if (state.step == 1) {
-      state = state.copyWith(step: 0, departmentId: null, categoryId: null);
-    } else if (state.step == 2) {
-      state = state.copyWith(step: 1, categoryId: null);
-    } else if (state.step == 3) {
-      state = state.copyWith(step: 2);
+    switch (state.step) {
+      case 1:
+        state = state.copyWith(
+            step: 0, clearDepartment: true, clearCategory: true);
+      case 2:
+        state = state.copyWith(step: 1, clearCategory: true);
+      case 3:
+        state = state.copyWith(step: 2);
     }
   }
 

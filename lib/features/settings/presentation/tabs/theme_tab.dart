@@ -7,6 +7,8 @@ import 'package:horeca_app/app/di.dart';
 import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
 import 'package:horeca_app/features/history/data/history_repository.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
+import 'package:horeca_app/features/inventory/data/stock_levels_repository.dart';
+import 'package:horeca_app/features/analytics/data/analytics_repository.dart';
 import 'package:horeca_app/features/auth/presentation/pin_settings_screen.dart';
 
 class ThemeTab extends ConsumerWidget {
@@ -14,10 +16,10 @@ class ThemeTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final themeMode = ref.watch(themeModeProvider);
     final notifier = ref.read(themeModeProvider.notifier);
-    final isDark = themeMode == ThemeMode.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 130, 20, 20),
@@ -51,7 +53,7 @@ class ThemeTab extends ConsumerWidget {
                     ),
                     const SizedBox(height: 20),
                     Text(
-                      l10n.translate('theme') ?? 'Тема',
+                      l10n.theme,
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w700,
@@ -252,6 +254,15 @@ _AboutRow(
   color: Colors.redAccent,
   isDark: isDark,
   onTap: () => _confirmResetAll(context, ref, isDark),
+),
+const SizedBox(height: 10),
+_AboutRow(
+  icon: Icons.workspaces_outline,
+  title: 'Лицензии открытого ПО',
+  subtitle: 'Библиотеки, использованные в приложении',
+  color: AppColors.muted,
+  isDark: isDark,
+  onTap: () => _showThirdPartyLicenses(context, isDark),
 ),
 const SizedBox(height: 10),
 _AboutRow(
@@ -571,7 +582,9 @@ void _showThirdPartyLicenses(BuildContext context, bool isDark) async {
             onPressed: () {
               Navigator.pop(ctx);
               ref.read(settingsRepositoryProvider.notifier).resetAll();
-              ref.read(historyRepositoryProvider).clear();
+              ref.read(historyRepositoryProvider.notifier).clear();
+              ref.read(stockLevelsRepositoryProvider.notifier).clear();
+              ref.read(analyticsRepositoryProvider).clear();
               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                 content: Text('Все данные очищены'),
                 behavior: SnackBarBehavior.floating,
@@ -680,15 +693,15 @@ class _IconPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final W = size.width, H = size.height;
-    final CX = W / 2, CY = H / 2;
+    final w = size.width, h = size.height;
+    final cx = w / 2, cy = h / 2;
 
     // фон иконки
     final rrect = RRect.fromRectAndRadius(
-        Rect.fromLTWH(0, 0, W, H), const Radius.circular(22));
+        Rect.fromLTWH(0, 0, w, h), const Radius.circular(22));
     canvas.clipRRect(rrect);
     canvas.drawRect(
-      Rect.fromLTWH(0, 0, W, H),
+      Rect.fromLTWH(0, 0, w, h),
       Paint()
         ..shader = RadialGradient(
           center: const Alignment(0, -0.2),
@@ -696,7 +709,7 @@ class _IconPainter extends CustomPainter {
           colors: isDark
               ? [const Color(0xFF1A1E2E), const Color(0xFF0D1128), const Color(0xFF060A18)]
               : [const Color(0xFFEEF2FF), const Color(0xFFDDE8FF), const Color(0xFFC8D8FF)],
-        ).createShader(Rect.fromLTWH(0, 0, W, H)),
+        ).createShader(Rect.fromLTWH(0, 0, w, h)),
     );
 
     // орбиты
@@ -708,11 +721,11 @@ class _IconPainter extends CustomPainter {
 
     for (final rot in [-0.52, 0.52]) {
       canvas.save();
-      canvas.translate(CX, CY);
+      canvas.translate(cx, cy);
       canvas.rotate(rot);
       canvas.drawOval(
           Rect.fromCenter(
-              center: Offset.zero, width: W * 0.82, height: H * 0.25),
+              center: Offset.zero, width: w * 0.82, height: h * 0.25),
           orbitPaint);
       canvas.restore();
     }
@@ -722,10 +735,10 @@ class _IconPainter extends CustomPainter {
       final rot = i == 0 ? -0.52 : 0.52;
       final ang = i == 0 ? t * 0.75 - 1.57 : -t * 0.6 + 3.14;
       final r = i == 0 ? 5.5 : 4.5;
-      final px = cos(ang) * W * 0.41;
-      final py = sin(ang) * H * 0.125;
-      final wx = CX + px * cos(rot) - py * sin(rot);
-      final wy = CY + px * sin(rot) + py * cos(rot);
+      final px = cos(ang) * w * 0.41;
+      final py = sin(ang) * h * 0.125;
+      final wx = cx + px * cos(rot) - py * sin(rot);
+      final wy = cy + px * sin(rot) + py * cos(rot);
       canvas.drawCircle(
         Offset(wx, wy),
         r,
@@ -743,7 +756,7 @@ class _IconPainter extends CustomPainter {
       text: TextSpan(
         text: 'A',
         style: TextStyle(
-          fontSize: W * 0.48,
+          fontSize: w * 0.48,
           fontWeight: FontWeight.w900,
           color: isDark ? Colors.white : const Color(0xFF1A1A2E),
         ),
@@ -752,7 +765,7 @@ class _IconPainter extends CustomPainter {
     );
     tp.layout();
     tp.paint(canvas,
-        Offset(CX - tp.width / 2, CY - tp.height / 2 + W * 0.02));
+        Offset(cx - tp.width / 2, cy - tp.height / 2 + w * 0.02));
   }
 
   @override

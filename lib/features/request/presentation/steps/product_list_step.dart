@@ -31,9 +31,9 @@ class _ProductListStepState extends ConsumerState<ProductListStep> {
 
   void _showQuantityDialog(BuildContext context, String productId,
       String productName, double currentQuantity, String unit, WidgetRef ref) {
-    final controller =
-        TextEditingController(text: currentQuantity.toStringAsFixed(0));
-    final l10n = AppLocalizations.of(context)!;
+    final controller = TextEditingController(
+        text: currentQuantity == 0 ? '' : _formatQuantity(currentQuantity));
+    final l10n = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     showDialog(
@@ -50,7 +50,7 @@ class _ProductListStepState extends ConsumerState<ProductListStep> {
           controller: controller,
           autofocus: true,
           keyboardType:
-              const TextInputType.numberWithOptions(decimal: false),
+              const TextInputType.numberWithOptions(decimal: true),
           decoration: InputDecoration(
             hintText: '0',
             suffixText: unit,
@@ -66,10 +66,12 @@ class _ProductListStepState extends ConsumerState<ProductListStep> {
           ),
           ElevatedButton(
             onPressed: () {
-              final val = int.tryParse(controller.text) ?? 0;
+              // Заявка может быть дробной: 0.5 кг, 1.5 л.
+              final val =
+                  double.tryParse(controller.text.replaceAll(',', '.')) ?? 0;
               ref.read(requestStateProvider.notifier).updateItem(
                     productId,
-                    val.toDouble(),
+                    val < 0 ? 0 : val,
                     productName: productName,
                     unit: unit,
                   );
@@ -91,7 +93,7 @@ class _ProductListStepState extends ConsumerState<ProductListStep> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(requestStateProvider);
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (state.categoryId == null) {
@@ -230,11 +232,15 @@ onChanged: (v) => setState(() => _searchQuery = v),
                       );
                       final hasQty = currentItem.quantity > 0;
 
-                      return ClipRRect(
+                      // Отступ снаружи ClipRRect: иначе скругление
+                      // обрезало карточку вместе с внешним полем.
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: ClipRRect(
+                                borderRadius: BorderRadius.circular(14),
                                 child: BackdropFilter(
                                   filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                                   child: Container(
-                            margin: const EdgeInsets.only(bottom: 10),
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 14, vertical: 12),
                             decoration: BoxDecoration(
@@ -385,6 +391,7 @@ onChanged: (v) => setState(() => _searchQuery = v),
                             ),
                           ),
                         ),
+                      ),
                       );
                     },
                   ),
@@ -394,9 +401,20 @@ onChanged: (v) => setState(() => _searchQuery = v),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
             child: GestureDetector(
-              onTap: () => ref
-                  .read(requestStateProvider.notifier)
-                  .goToGenerate(),
+              onTap: () {
+                if (state.items.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: const Text(
+                        'Добавьте хотя бы один товар в заявку'),
+                    backgroundColor: Colors.orange.shade700,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ));
+                  return;
+                }
+                ref.read(requestStateProvider.notifier).goToGenerate();
+              },
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16),
                 child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
@@ -416,7 +434,9 @@ onChanged: (v) => setState(() => _searchQuery = v),
                       ],
                     ),
                     child: Text(
-                      l10n.preview,
+                      state.items.isEmpty
+                          ? l10n.preview
+                          : '${l10n.preview} (${state.items.length})',
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontSize: 16,

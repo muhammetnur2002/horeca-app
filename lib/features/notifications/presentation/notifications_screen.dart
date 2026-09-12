@@ -47,8 +47,17 @@ class NotificationsScreen extends ConsumerWidget {
 
               // Напоминания о товарах
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                Text('НАПОМИНАНИЯ О ЗАКАЗЕ', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
-                    color: AppColors.muted, letterSpacing: 0.6)),
+                const Expanded(
+                  child: Text('НАПОМИНАНИЯ О ЗАКАЗЕ',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.muted,
+                          letterSpacing: 0.6)),
+                ),
+                const SizedBox(width: 8),
                 GestureDetector(
                   onTap: () => _showAddReminderDialog(context, ref, isDark),
                   child: Container(
@@ -204,7 +213,14 @@ class _InventoryReminderCard extends StatelessWidget {
             border: Border.all(color: Colors.white.withOpacity(isDark ? 0.1 : 0.8))),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              Text('Напоминать об инвентаризации', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textColor)),
+              Expanded(
+                child: Text('Напоминать об инвентаризации',
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: textColor)),
+              ),
+              const SizedBox(width: 8),
               Switch(value: reminder.enabled, activeColor: AppColors.orange,
                   onChanged: (v) => onChanged(reminder.copyWith(enabled: v))),
             ]),

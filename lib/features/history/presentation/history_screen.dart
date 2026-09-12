@@ -35,9 +35,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final entries = ref.watch(historyEntriesProvider);
-    final repo = ref.read(historyRepositoryProvider);
+    final repo = ref.read(historyRepositoryProvider.notifier);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -189,7 +189,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
       padding: const EdgeInsets.fromLTRB(16, 140, 16, 16),
       itemCount: entries.length,
       itemBuilder: (_, i) {
-        final e = entries[entries.length - 1 - i]; // новые сверху
+        final e = entries[i]; // список уже отсортирован: новые сверху
         return _HistoryCard(
           entry: e,
           isDark: isDark,
@@ -290,23 +290,72 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
   }
 
   void _confirmClear(
-    BuildContext context, dynamic repo, AppLocalizations l10n) {
-  final type = _tabController.index == 0
-      ? HistoryType.request
-      : HistoryType.inventory;
-  repo.clearByType(type);
-  ref.invalidate(historyEntriesProvider);
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: const Text('История очищена', style: TextStyle(color: Colors.white)),
-      backgroundColor: const Color(0xFF2E3352),
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12)),
-    ),
-  );
-}
+      BuildContext context, HistoryRepository repo, AppLocalizations l10n) {
+    final type = _tabController.index == 0
+        ? HistoryType.request
+        : HistoryType.inventory;
+    final tabName =
+        type == HistoryType.request ? l10n.requestsTab : l10n.inventoryTab;
+    final count = ref
+        .read(historyEntriesProvider)
+        .where((e) => e.type == type)
+        .length;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    if (count == 0) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(l10n.noRecords),
+        backgroundColor: const Color(0xFF2E3352),
+        behavior: SnackBarBehavior.floating,
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ));
+      return;
+    }
+
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? AppColors.darkCard : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(l10n.clearHistory,
+            style: const TextStyle(fontWeight: FontWeight.w600)),
+        content: Text(
+          'Будут удалены все записи «$tabName» ($count). '
+          'Это действие нельзя отменить.',
+          style: const TextStyle(color: AppColors.muted, fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(l10n.cancel,
+                style: const TextStyle(color: AppColors.muted)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              repo.clearByType(type);
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text(l10n.historyCleared,
+                    style: const TextStyle(color: Colors.white)),
+                backgroundColor: const Color(0xFF2E3352),
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+              ));
+            },
+            style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12))),
+            child: Text(l10n.delete),
+          ),
+        ],
+      ),
+    );
   }
+}
 
 
 // ── Карточка истории ──────────────────────────────────────────────────────

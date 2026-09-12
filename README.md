@@ -1,17 +1,52 @@
-# frontend
+# Akyl — управляй с умом
 
-A new Flutter project.
+Мобильное приложение для управления заведением общественного питания
+(кафе, ресторан, бар). Работает офлайн: все данные хранятся локально на
+устройстве.
 
-## Getting Started
+## Возможности
 
-This project is a starting point for a Flutter application.
+| Раздел | Что делает |
+| --- | --- |
+| Заявка | Отдел → категория → товары с количеством → текст и PDF для поставщика |
+| Инвентаризация | Выбор отдела и категорий, подсчёт остатков, отчёт и PDF |
+| Закрытие смены | Сотрудники, десерты, списания, способы оплаты, касса, инкассация, PDF |
+| История | Все заявки и инвентаризации с поиском по вкладкам |
+| Аналитика | Выручка по дням, сравнение смен, топ списаний (только администратор) |
+| Настройки | Заведение, отделы, категории, товары, сотрудники, тема, PIN-коды |
+| iiko | Остатки со склада через API iiko + демо-режим |
+| Уведомления | Напоминания о заказе товаров и об инвентаризации |
+| Свой шаблон PDF | Импорт Excel и сопоставление колонок для отчёта инвентаризации |
 
-A few resources to get you started if this is your first Flutter project:
+## Разграничение доступа
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+PIN-коды необязательны. Пока они не заданы, доступны все разделы. После
+включения защиты администратор видит всё, сотрудник — только рабочие
+функции (заявка, инвентаризация, закрытие смены, история). Разделы
+«Настройки» и «Аналитика» закрыты и на уровне маршрутизации.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Разработка
+
+```bash
+flutter pub get
+flutter analyze     # должно быть «No issues found!»
+flutter test        # 73 теста: репозитории и сквозные сценарии экранов
+flutter run
+```
+
+### Структура
+
+```
+lib/
+  app/            точка входа, темы, маршруты, DI
+  core/           локализация, генерация PDF
+  features/<имя>/
+    data/         репозитории и сервисы
+    domain/       модели и состояние
+    presentation/ экраны и шаги
+  shared/         общие модели и виджеты
+test/             юнит-тесты репозиториев + виджет-тесты сценариев
+```
+
+Состояние — Riverpod (`StateNotifier`), навигация — go_router,
+хранение — `shared_preferences`.

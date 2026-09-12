@@ -2,30 +2,44 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_all.dart' as tz_data;
 
+/// Нижняя граница диапазона перехода для синтетической зоны.
+const int _minTime = -8640000000000000;
+
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
   NotificationService._internal();
 
-  final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
+  FlutterLocalNotificationsPlugin? _plugin;
   bool _initialized = false;
+
+  /// Доступны ли локальные уведомления на этой платформе. На вебе, в тестах
+  /// и на неподдерживаемых сборках плагина нет — приложение должно работать
+  /// без него, а не падать при создании репозитория.
+  bool get isAvailable => _plugin != null;
 
   Future<void> init() async {
     if (_initialized) return;
-    tz_data.initializeTimeZones();
-
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const initSettings = InitializationSettings(
-      android: androidSettings,
-    );
-    await _plugin.initialize(settings: initSettings);
-
-    final androidPlugin =
-        _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-    await androidPlugin?.requestNotificationsPermission();
-    await androidPlugin?.requestExactAlarmsPermission();
-
     _initialized = true;
+    try {
+      tz_data.initializeTimeZones();
+      _setLocalTimeZone();
+
+      final plugin = FlutterLocalNotificationsPlugin();
+      const androidSettings =
+          AndroidInitializationSettings('@mipmap/ic_launcher');
+      const initSettings = InitializationSettings(android: androidSettings);
+      await plugin.initialize(settings: initSettings);
+      _plugin = plugin;
+
+      final androidPlugin = plugin.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+      await androidPlugin?.requestNotificationsPermission();
+      await androidPlugin?.requestExactAlarmsPermission();
+    } catch (_) {
+      // Плагин недоступен — напоминания просто не планируются.
+      _plugin = null;
+    }
   }
 
   Future<void> scheduleDaily({
@@ -35,7 +49,9 @@ class NotificationService {
     required int hour,
     required int minute,
   }) async {
-    await _plugin.zonedSchedule(
+    final plugin = _plugin;
+    if (plugin == null) return;
+    await plugin.zonedSchedule(
       id: id,
       title: title,
       body: body,
@@ -60,7 +76,9 @@ class NotificationService {
     required int hour,
     required int minute,
   }) async {
-    await _plugin.zonedSchedule(
+    final plugin = _plugin;
+    if (plugin == null) return;
+    await plugin.zonedSchedule(
       id: id,
       title: title,
       body: body,
@@ -86,7 +104,9 @@ class NotificationService {
     required int hour,
     required int minute,
   }) async {
-    await _plugin.zonedSchedule(
+    final plugin = _plugin;
+    if (plugin == null) return;
+    await plugin.zonedSchedule(
       id: id,
       title: title,
       body: body,
@@ -105,11 +125,29 @@ class NotificationService {
   }
 
   Future<void> cancel(int id) async {
-    await _plugin.cancel(id: id);
+    await _plugin?.cancel(id: id);
   }
 
   Future<void> cancelAll() async {
-    await _plugin.cancelAll();
+    await _plugin?.cancelAll();
+  }
+
+  /// `initializeTimeZones()` только загружает базу — `tz.local` остаётся UTC,
+  /// из-за чего все напоминания срабатывали со сдвигом на часовой пояс
+  /// устройства. Регистрируем зону с фактическим смещением системы.
+  void _setLocalTimeZone() {
+    try {
+      final now = DateTime.now();
+      final offset = now.timeZoneOffset;
+      if (offset == Duration.zero) return; // UTC — уже верно
+      final name = now.timeZoneName.isEmpty ? 'Local' : now.timeZoneName;
+      final zone = tz.TimeZone(offset, isDst: false, abbreviation: name);
+      final location = tz.Location(name, const [_minTime], const [0], [zone]);
+      tz.timeZoneDatabase.add(location);
+      tz.setLocalLocation(location);
+    } catch (_) {
+      // Не смогли определить зону — остаёмся на значении по умолчанию.
+    }
   }
 
   tz.TZDateTime _nextInstanceOfTime(int hour, int minute) {

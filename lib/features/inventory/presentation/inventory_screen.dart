@@ -20,12 +20,15 @@ class InventoryScreen extends ConsumerWidget {
             ? IconButton(
                 icon: const Icon(Icons.arrow_back),
                 onPressed: () {
-                  if (state.step == 1) {
-                    ref.read(inventoryStateProvider.notifier).reset();
-                  } else if (state.step == 2) {
-                    ref.read(inventoryStateProvider.notifier).reset(); // вернуться к выбору категорий
-                  } else if (state.step == 3) {
-                    ref.read(inventoryStateProvider.notifier).backToInput();
+                  final notifier =
+                      ref.read(inventoryStateProvider.notifier);
+                  switch (state.step) {
+                    case 1:
+                      notifier.reset(); // назад к выбору отдела
+                    case 2:
+                      notifier.backToCategories();
+                    case 3:
+                      notifier.backToInput();
                   }
                 },
               )

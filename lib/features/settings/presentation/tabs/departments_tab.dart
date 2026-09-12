@@ -11,7 +11,7 @@ class DepartmentsTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final departments = ref.watch(settingsRepositoryProvider).departments;
     final repo = ref.read(settingsRepositoryProvider.notifier);
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -19,6 +19,9 @@ class DepartmentsTab extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Colors.transparent,
       floatingActionButton: FloatingActionButton(
+        // Уникальный тег: вкладки настроек остаются в дереве после
+        // посещения, и одинаковые теги ломают Hero-анимацию.
+        heroTag: 'fab-departments',
         onPressed: () => _showAddDialog(context, repo, l10n, isDark),
         backgroundColor: AppColors.orange,
         foregroundColor: Colors.white,

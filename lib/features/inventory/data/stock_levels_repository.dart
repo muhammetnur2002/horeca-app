@@ -26,6 +26,11 @@ class StockLevelsRepository extends StateNotifier<Map<String, double>> {
   }
 
   double? getLevel(String productId) => state[productId];
+
+  void clear() {
+    state = {};
+    _prefs.remove(_key);
+  }
 }
 
 final stockLevelsRepositoryProvider =

@@ -20,16 +20,20 @@ import 'package:horeca_app/features/inventory/data/stock_levels_repository.dart'
 class ReportStep extends ConsumerWidget {
   const ReportStep({super.key});
 
-  String _getDeptName(String? departmentId, AppLocalizations l10n) {
+  String _getDeptName(
+    String? departmentId,
+    AppLocalizations l10n,
+    List<DepartmentModel> allDepartments,
+  ) {
     if (departmentId == 'all') return l10n.allDepartments;
-    switch (departmentId) {
-      case '1': return 'Кухня';
-      case '2': return 'Бар';
-      case '3': return 'Зал';
-      case '4': return 'Склад';
-      case '5': return 'Клининг';
-      default: return departmentId ?? 'Неизвестный отдел';
-    }
+    if (departmentId == null) return 'Неизвестный отдел';
+    return allDepartments
+        .firstWhere(
+          (d) => d.id == departmentId,
+          orElse: () => DepartmentModel(
+              id: '', name: 'Неизвестный отдел', icon: Icons.help),
+        )
+        .name;
   }
 
   String _generateReport(
@@ -44,7 +48,7 @@ class ReportStep extends ConsumerWidget {
     buffer.writeln(l10n.reportTitle);
     buffer.writeln('${l10n.date}: ${DateTime.now().toLocal().toString().split('.')[0]}');
     buffer.writeln('${l10n.establishment}: "$establishmentName"');
-    buffer.writeln('${l10n.department}: ${_getDeptName(state.departmentId, l10n)}');
+    buffer.writeln('${l10n.department}: ${_getDeptName(state.departmentId, l10n, allDepartments)}');
     buffer.writeln();
 
     final Map<String, List<InventoryItem>> grouped = {};
@@ -80,7 +84,7 @@ class ReportStep extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final state = ref.watch(inventoryStateProvider);
     final settings = ref.watch(settingsRepositoryProvider);
     final establishmentName = settings.establishmentName;
@@ -88,7 +92,7 @@ class ReportStep extends ConsumerWidget {
     final allCategories = settings.categories;
     final allDepartments = settings.departments;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final deptName = _getDeptName(state.departmentId, l10n);
+    final deptName = _getDeptName(state.departmentId, l10n, allDepartments);
     final text = _generateReport(state, l10n, establishmentName,
         allProducts, allCategories, allDepartments);
 
@@ -175,16 +179,16 @@ class ReportStep extends ConsumerWidget {
                     label: l10n.copy,
                     color: AppColors.muted,
                     isDark: isDark,
-                    onTap: () {
-                      Clipboard.setData(ClipboardData(text: text)).then((_) {
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                          content: Text(l10n.copySuccess),
-                          backgroundColor: const Color(0xFF2E3352),
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                        ));
-                      });
+                    onTap: () async {
+                      final messenger = ScaffoldMessenger.of(context);
+                      await Clipboard.setData(ClipboardData(text: text));
+                      messenger.showSnackBar(SnackBar(
+                        content: Text(l10n.copySuccess),
+                        backgroundColor: const Color(0xFF2E3352),
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                      ));
                     },
                   ),
                 ),
@@ -211,8 +215,9 @@ class ReportStep extends ConsumerWidget {
               isDark: isDark,
               fullWidth: true,
               onTap: () async {
+  final messenger = ScaffoldMessenger.of(context);
   if (state.items.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+    messenger.showSnackBar(SnackBar(
       content: Text(l10n.noData),
       backgroundColor: const Color(0xFF2E3352),
       behavior: SnackBarBehavior.floating,
@@ -221,7 +226,7 @@ class ReportStep extends ConsumerWidget {
     ));
     return;
   }
-  final repo = ref.read(historyRepositoryProvider);
+  final repo = ref.read(historyRepositoryProvider.notifier);
 repo.add(HistoryEntry(
   id: DateTime.now().millisecondsSinceEpoch.toString(),
   type: HistoryType.inventory,
@@ -268,7 +273,7 @@ final pdfBytes = await PdfGenerator.generateInventoryPdf(
                   await PdfGenerator.downloadFile(pdfBytes,
                       'inventory_${DateTime.now().millisecondsSinceEpoch}.pdf');
                 } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  messenger.showSnackBar(SnackBar(
                     content: Text('Ошибка: $e'),
                     backgroundColor: Colors.redAccent,
                     behavior: SnackBarBehavior.floating,
@@ -384,12 +389,18 @@ class _ActionBtn extends StatelessWidget {
               children: [
                 Icon(icon, color: color, size: 18),
                 const SizedBox(width: 8),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: color,
+                // Flexible + ellipsis: на узких экранах пара кнопок в ряд
+                // не помещалась и рвала вёрстку.
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: color,
+                    ),
                   ),
                 ),
               ],

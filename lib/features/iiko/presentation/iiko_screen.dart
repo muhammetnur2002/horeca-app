@@ -46,7 +46,10 @@ void _loadDemo() {
 }
 
   Future<void> _connect() async {
-    if (_loginCtrl.text.trim().isEmpty) return;
+    if (_loginCtrl.text.trim().isEmpty) {
+      setState(() => _error = 'Введите API-логин iiko');
+      return;
+    }
     setState(() { _loading = true; _error = null; });
     try {
       final token = await _service.getAccessToken(_loginCtrl.text.trim());
@@ -83,7 +86,10 @@ void _loadDemo() {
   }
 
   Future<void> _saveAndLoadBalance() async {
-    if (_selectedStoreIds.isEmpty) return;
+    if (_selectedStoreIds.isEmpty) {
+      setState(() => _error = 'Выберите хотя бы один склад');
+      return;
+    }
     setState(() { _loading = true; _error = null; });
     try {
       ref.read(iikoRepositoryProvider.notifier).saveConnection(
@@ -211,6 +217,12 @@ void _loadDemo() {
                   title: o.name, isDark: isDark,
                   onTap: () => _selectOrg(o),
                 )),
+              ] else if (_selectedOrgId != null &&
+                  _stores.isEmpty &&
+                  _balances.isEmpty &&
+                  !_loading) ...[
+                Text('В этой организации нет складов',
+                    style: TextStyle(fontSize: 14, color: AppColors.muted)),
               ] else if (_stores.isNotEmpty && _balances.isEmpty) ...[
                 Text('Выберите склады', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: textColor)),
                 const SizedBox(height: 12),
@@ -218,8 +230,11 @@ void _loadDemo() {
                   title: s.name, isDark: isDark,
                   checked: _selectedStoreIds.contains(s.id),
                   onChanged: (v) => setState(() {
-                    if (v == true) _selectedStoreIds.add(s.id);
-                    else _selectedStoreIds.remove(s.id);
+                    if (v == true) {
+                      _selectedStoreIds.add(s.id);
+                    } else {
+                      _selectedStoreIds.remove(s.id);
+                    }
                   }),
                 )),
                 const SizedBox(height: 16),
@@ -243,9 +258,18 @@ void _loadDemo() {
               if (_balances.isNotEmpty) ...[
                 const SizedBox(height: 8),
                 Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                  Text('Остатки на складе', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: textColor)),
+                  Expanded(
+                    child: Text('Остатки на складе',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: textColor)),
+                  ),
                   IconButton(
-                    icon: Icon(Icons.refresh_rounded, color: AppColors.orange),
+                    icon: const Icon(Icons.refresh_rounded,
+                        color: AppColors.orange),
                     onPressed: _loading ? null : _refreshBalance,
                   ),
                 ]),

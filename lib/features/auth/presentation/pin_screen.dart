@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/features/auth/data/auth_repository.dart';
@@ -34,7 +35,15 @@ class _PinScreenState extends ConsumerState<PinScreen> {
     final role = repo.checkPin(_pin);
     if (role != null) {
       repo.login(role);
-    } else if (_pin.length >= 6) {
+      return;
+    }
+    // Раньше ошибка показывалась только на шестой цифре: при
+    // четырёхзначных PIN-кодах экран просто молчал.
+    final longestPin = [repo.adminPin, repo.staffPin]
+        .whereType<String>()
+        .fold<int>(0, (max, p) => p.length > max ? p.length : max);
+    final limit = longestPin == 0 ? 6 : longestPin;
+    if (_pin.length >= limit) {
       setState(() {
         _error = 'Неверный PIN-код';
         _pin = '';
@@ -89,6 +98,10 @@ class _PinScreenState extends ConsumerState<PinScreen> {
   }
 }
 
+/// Служебный маркер клавиши Backspace: сам символ на экран не выводится,
+/// вместо него рисуется иконка.
+const String _backspaceKey = 'backspace';
+
 class _NumPad extends StatelessWidget {
   final ValueChanged<String> onDigit;
   final VoidCallback onBackspace;
@@ -101,7 +114,7 @@ class _NumPad extends StatelessWidget {
       ['1', '2', '3'],
       ['4', '5', '6'],
       ['7', '8', '9'],
-      ['', '0', '⌫'],
+      ['', '0', _backspaceKey],
     ];
     return Column(
       children: rows.map((row) => Padding(
@@ -109,9 +122,12 @@ class _NumPad extends StatelessWidget {
         child: Row(mainAxisAlignment: MainAxisAlignment.center,
           children: row.map((key) {
             if (key.isEmpty) return const SizedBox(width: 72, height: 72);
-            final isBackspace = key == '⌫';
+            final isBackspace = key == _backspaceKey;
             return GestureDetector(
-              onTap: () => isBackspace ? onBackspace() : onDigit(key),
+              onTap: () {
+                HapticFeedback.selectionClick();
+                isBackspace ? onBackspace() : onDigit(key);
+              },
               child: Container(
                 width: 72, height: 72,
                 margin: const EdgeInsets.symmetric(horizontal: 8),

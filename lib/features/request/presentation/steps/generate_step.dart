@@ -24,6 +24,20 @@ class GenerateStep extends ConsumerWidget {
     return 'Добрый вечер!';
   }
 
+  /// Название отдела для заголовка истории и PDF.
+  /// Раньше сюда попадал сырой id («Заявка 3»).
+  String _departmentName(
+      String? departmentId, List<DepartmentModel> allDepartments) {
+    if (departmentId == null) return 'Без отдела';
+    return allDepartments
+        .firstWhere(
+          (d) => d.id == departmentId,
+          orElse: () =>
+              DepartmentModel(id: '', name: 'Без отдела', icon: Icons.help),
+        )
+        .name;
+  }
+
   String _formatDouble(double value) {
     return value == value.truncateToDouble()
         ? value.toInt().toString()
@@ -94,9 +108,22 @@ class GenerateStep extends ConsumerWidget {
     return buffer.toString();
   }
 
+  /// Возвращает true и показывает подсказку, если заявка пуста.
+  bool _warnIfEmpty(
+      BuildContext context, RequestState state, AppLocalizations l10n) {
+    if (state.items.isNotEmpty) return false;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(l10n.noData),
+      backgroundColor: const Color(0xFF2E3352),
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    ));
+    return true;
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final state = ref.watch(requestStateProvider);
     final settings = ref.watch(settingsRepositoryProvider);
     final establishmentName = settings.establishmentName;
@@ -193,18 +220,17 @@ class GenerateStep extends ConsumerWidget {
                     label: l10n.copy,
                     color: AppColors.muted,
                     isDark: isDark,
-                    onTap: () {
-                      Clipboard.setData(ClipboardData(text: text))
-                          .then((_) {
-                        ScaffoldMessenger.of(context)
-                            .showSnackBar(SnackBar(
-                          content: Text(l10n.copySuccess),
-                          backgroundColor: const Color(0xFF2E3352),
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                        ));
-                      });
+                    onTap: () async {
+                      if (_warnIfEmpty(context, state, l10n)) return;
+                      final messenger = ScaffoldMessenger.of(context);
+                      await Clipboard.setData(ClipboardData(text: text));
+                      messenger.showSnackBar(SnackBar(
+                        content: Text(l10n.copySuccess),
+                        backgroundColor: const Color(0xFF2E3352),
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                      ));
                     },
                   ),
                 ),
@@ -212,36 +238,15 @@ class GenerateStep extends ConsumerWidget {
                 Expanded(
                   child: _ActionBtn(
                     icon: Icons.share_rounded,
+                    // Одна кнопка вместо трёх: раньше «WhatsApp» и «Telegram»
+                    // открывали ту же системную шторку, что и «Поделиться».
                     label: l10n.share,
                     color: const Color(0xFF2AABEE),
                     isDark: isDark,
-                    onTap: () => Share.share(text),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 10),
-
-            Row(
-              children: [
-                Expanded(
-                  child: _ActionBtn(
-                    icon: Icons.chat_rounded,
-                    label: 'WhatsApp',
-                    color: const Color(0xFF25D366),
-                    isDark: isDark,
-                    onTap: () => Share.share(text),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _ActionBtn(
-                    icon: Icons.send_rounded,
-                    label: 'Telegram',
-                    color: const Color(0xFF2AABEE),
-                    isDark: isDark,
-                    onTap: () => Share.share(text),
+                    onTap: () {
+                      if (_warnIfEmpty(context, state, l10n)) return;
+                      Share.share(text);
+                    },
                   ),
                 ),
               ],
@@ -256,28 +261,21 @@ class GenerateStep extends ConsumerWidget {
               isDark: isDark,
               fullWidth: true,
               onTap: () async {
-  if (state.items.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(l10n.noData),
-      backgroundColor: const Color(0xFF2E3352),
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12)),
-    ));
-    return;
-  }
-  final repo = ref.read(historyRepositoryProvider);
+  if (_warnIfEmpty(context, state, l10n)) return;
+  final messenger = ScaffoldMessenger.of(context);
+  final repo = ref.read(historyRepositoryProvider.notifier);
+  final deptName = _departmentName(state.departmentId, allDepartments);
   repo.add(HistoryEntry(
     id: DateTime.now().millisecondsSinceEpoch.toString(),
     type: HistoryType.request,
-    title: '${l10n.requestTitle} ${state.departmentId}',
+    title: '${l10n.requestTitle} — $deptName',
     text: text,
     createdAt: DateTime.now(),
   ));
   final pdfBytes = await PdfGenerator.generateRequestPdf(
     title: l10n.requestTitle,
     establishmentName: establishmentName,
-                  department: state.departmentId ?? '',
+                  department: deptName,
                   items: state.items
                       .map((i) => {
                             'name': i.productName,
@@ -286,8 +284,18 @@ class GenerateStep extends ConsumerWidget {
                           })
                       .toList(),
                 );
-                PdfGenerator.downloadFile(pdfBytes,
-                    'zayavka_${DateTime.now().millisecondsSinceEpoch}.pdf');
+                try {
+                  await PdfGenerator.downloadFile(pdfBytes,
+                      'zayavka_${DateTime.now().millisecondsSinceEpoch}.pdf');
+                } catch (e) {
+                  messenger.showSnackBar(SnackBar(
+                    content: Text('Не удалось сохранить PDF: $e'),
+                    backgroundColor: Colors.redAccent,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ));
+                }
               },
             ),
 
@@ -392,12 +400,18 @@ class _ActionBtn extends StatelessWidget {
               children: [
                 Icon(icon, color: color, size: 18),
                 const SizedBox(width: 8),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: color,
+                // Flexible + ellipsis: на узких экранах пара кнопок в ряд
+                // не помещалась и рвала вёрстку.
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: color,
+                    ),
                   ),
                 ),
               ],

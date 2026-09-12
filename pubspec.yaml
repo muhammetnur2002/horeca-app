@@ -29,9 +29,10 @@ dependencies:
 
 dev_dependencies:
   flutter_launcher_icons: ^0.14.4
+  flutter_lints: ^5.0.0
   flutter_test:
     sdk: flutter
-  
+
 
 flutter:
   generate: true
@@ -40,6 +41,15 @@ flutter:
     - assets/fonts/NotoSans-Regular.ttf
     - assets/fonts/NotoSans-Bold.ttf
     - assets/licenses/third_party_licenses.txt
+  # Шрифт интерфейса. Системный шрифт не гарантирует символы валют
+  # (например, ₸ рисовался квадратом-заглушкой), а NotoSans уже
+  # поставляется с приложением ради PDF.
+  fonts:
+    - family: NotoSans
+      fonts:
+        - asset: assets/fonts/NotoSans-Regular.ttf
+        - asset: assets/fonts/NotoSans-Bold.ttf
+          weight: 700
 
 flutter_launcher_icons:
   android: true

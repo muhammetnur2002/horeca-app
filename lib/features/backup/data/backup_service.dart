@@ -5,11 +5,20 @@ import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class BackupService {
+  /// Ключи, попадающие в резервную копию. Раньше сюда не входили текущие
+  /// остатки, пользовательский шаблон PDF, подключение iiko и выбранная
+  /// тема — они молча терялись при восстановлении.
   static const _keysToBackup = [
     'settings_data',
     'history_data',
     'shift_records',
     'notification_data',
+    'current_stock_levels',
+    'custom_inventory_template',
+    'theme_mode',
+    'iiko_config_login',
+    'iiko_config_org_id',
+    'iiko_config_org_name',
   ];
 
   static Future<String> createBackup(SharedPreferences prefs) async {

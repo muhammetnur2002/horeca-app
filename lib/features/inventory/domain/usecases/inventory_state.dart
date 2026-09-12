@@ -59,10 +59,10 @@ class InventoryStateNotifier extends StateNotifier<InventoryState> {
   InventoryStateNotifier() : super(const InventoryState());
 
   void selectDepartment(String deptId, List<String> allCategoryIds) {
-    state = state.copyWith(
+    state = InventoryState(
       departmentId: deptId,
       step: 1,
-      items: [],
+      items: const [],
       isGenerated: false,
       selectedCategoryIds: allCategoryIds,
     );
@@ -72,32 +72,48 @@ class InventoryStateNotifier extends StateNotifier<InventoryState> {
     state = state.copyWith(step: 2);
   }
 
+  void backToCategories() {
+    state = state.copyWith(step: 1, isGenerated: false);
+  }
+
   void setSelectedCategories(List<String> ids) {
     state = state.copyWith(selectedCategoryIds: ids);
   }
 
-  void initItems(List<InventoryItem> items) {
+  /// Вставляет или обновляет позицию инвентаризации.
+  /// Значение 0 сохраняется — «пересчитано, остаток нулевой» это тоже
+  /// результат, поэтому позиция остаётся в отчёте.
+  void updateItem(
+    String productId,
+    String productName,
+    String unit,
+    double value,
+  ) {
+    final safeValue = value < 0 ? 0.0 : value;
+    final items = [...state.items];
+    final index = items.indexWhere((i) => i.productId == productId);
+    if (index != -1) {
+      items[index] = InventoryItem(
+        productId: productId,
+        productName: productName,
+        remaining: safeValue,
+        unit: unit,
+      );
+    } else {
+      items.add(InventoryItem(
+        productId: productId,
+        productName: productName,
+        remaining: safeValue,
+        unit: unit,
+      ));
+    }
     state = state.copyWith(items: items);
   }
 
-  void initItemsIfNeeded(List<InventoryItem> newItems) {
-    final oldIds = state.items.map((e) => e.productId).toList();
-    final newIds = newItems.map((e) => e.productId).toList();
-    if (oldIds.length == newIds.length &&
-        oldIds.every((id) => newIds.contains(id))) {
-      return;
-    }
-    state = state.copyWith(items: newItems);
-  }
-
-  void updateRemaining(String productId, double newValue) {
-    final newItems = state.items.map((item) {
-      if (item.productId == productId) {
-        return item.copyWith(remaining: newValue);
-      }
-      return item;
-    }).toList();
-    state = state.copyWith(items: newItems);
+  void removeItem(String productId) {
+    state = state.copyWith(
+      items: state.items.where((i) => i.productId != productId).toList(),
+    );
   }
 
   void generateReport() {
@@ -111,8 +127,6 @@ class InventoryStateNotifier extends StateNotifier<InventoryState> {
   void reset() {
     state = const InventoryState();
   }
-
-  void updateItem(String id, String name, String inventoryUnit, double value) {}
 }
 
 final inventoryStateProvider =

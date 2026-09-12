@@ -1,12 +1,19 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/app/di.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
+
+  /// Полная длительность заставки. Сценарий анимации написан в «условных
+  /// секундах» 0..10, поэтому реальное время задаётся здесь, а раскадровка
+  /// масштабируется через [_timelineLength].
+  static const Duration duration = Duration(milliseconds: 3200);
+
+  /// Длина раскадровки в условных единицах.
+  static const double timelineLength = 10.0;
   @override
   ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
@@ -15,7 +22,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _ctrl;
   final Random _rnd = Random(42);
-  bool _navigated = false;
 
   late List<_Star> _stars;
   final List<_Particle> _particles = [];
@@ -26,7 +32,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     super.initState();
     _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 10),
+      duration: SplashScreen.duration,
     );
 
     _stars = List.generate(160, (i) => _Star(
@@ -63,7 +69,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       body: AnimatedBuilder(
         animation: _ctrl,
         builder: (context, _) {
-          final t = _ctrl.value * 10;
+          final t = _ctrl.value * SplashScreen.timelineLength;
           _updateParticles();
           _maybeShoot();
           return CustomPaint(
@@ -150,47 +156,47 @@ class _GalaxyPainter extends CustomPainter {
   Color get _orbitCol => isDark
       ? const Color(0xFF8C5020).withOpacity(1)
       : const Color(0xFFB05A10).withOpacity(1);
-  Color get _Acol => isDark ? Colors.white : const Color(0xFF1A1A2E);
+  Color get _letterColor => isDark ? Colors.white : const Color(0xFF1A1A2E);
   Color get _textCol => isDark ? Colors.white : const Color(0xFF1A1A2E);
   Color get _tagCol => isDark ? AppColors.orange : const Color(0xFFC85000);
 
   @override
   void paint(Canvas canvas, Size size) {
-    final W = size.width, H = size.height;
-    final CX = W / 2, CY = H / 2;
+    final w = size.width, h = size.height;
+    final cx = w / 2, cy = h / 2;
 
-    _drawBg(canvas, size, CX, CY, W, H);
-    _drawOrbits(canvas, CX, CY, W, H);
-    _drawDotRing(canvas, CX, CY, W);
+    _drawBg(canvas, size, cx, cy, w, h);
+    _drawOrbits(canvas, cx, cy, w, h);
+    _drawDotRing(canvas, cx, cy, w);
     _drawShoots(canvas);
-    _drawPlanets(canvas, CX, CY, W, H);
+    _drawPlanets(canvas, cx, cy, w, h);
     _drawParticles(canvas);
-    _drawBurst(canvas, CX, CY, W, H);
-    _drawA(canvas, CX, CY, W);
-    _drawPulseRings(canvas, CX, CY, W);
-    _drawText(canvas, CX, CY, H);
+    _drawBurst(canvas, cx, cy, w, h);
+    _drawA(canvas, cx, cy, w);
+    _drawPulseRings(canvas, cx, cy, w);
+    _drawText(canvas, cx, cy, h);
   }
 
-  void _drawBg(Canvas canvas, Size size, double CX, double CY, double W, double H) {
+  void _drawBg(Canvas canvas, Size size, double cx, double cy, double w, double h) {
     final bg = RadialGradient(
       center: Alignment(0, -0.2),
       radius: 1.2,
       colors: isDark
           ? [const Color(0xFF1A1E2E), const Color(0xFF0D1128), const Color(0xFF060A18)]
           : [const Color(0xFFEEF2FF), const Color(0xFFDDE8FF), const Color(0xFFC8D8FF)],
-    ).createShader(Rect.fromLTWH(0, 0, W, H));
-    canvas.drawRect(Rect.fromLTWH(0, 0, W, H), Paint()..shader = bg);
+    ).createShader(Rect.fromLTWH(0, 0, w, h));
+    canvas.drawRect(Rect.fromLTWH(0, 0, w, h), Paint()..shader = bg);
 
     final nebColors = isDark
         ? [const Color(0xFF0F1629), const Color(0xFF140C32)]
         : [const Color(0xFFC8DAFF), const Color(0xFFDCE8FF)];
-    _drawNebula(canvas, CX * 0.5, CY * 0.5, W * 0.3, nebColors[0].withOpacity(isDark ? 0.3 : 0.6));
-    _drawNebula(canvas, CX * 1.5, CY * 1.4, W * 0.25, nebColors[1].withOpacity(isDark ? 0.25 : 0.5));
+    _drawNebula(canvas, cx * 0.5, cy * 0.5, w * 0.3, nebColors[0].withOpacity(isDark ? 0.3 : 0.6));
+    _drawNebula(canvas, cx * 1.5, cy * 1.4, w * 0.25, nebColors[1].withOpacity(isDark ? 0.25 : 0.5));
 
     for (final s in stars) {
       final opacity = (isDark ? 0.07 : 0.05) + 0.09 * sin(t * s.speed + s.phase);
       canvas.drawCircle(
-        Offset(s.x * W, s.y * H),
+        Offset(s.x * w, s.y * h),
         s.r * (isDark ? 1 : 0.45),
         Paint()..color = (isDark ? Colors.white : const Color(0xFF5060C8)).withOpacity(opacity.clamp(0, 1)),
       );
@@ -202,8 +208,8 @@ class _GalaxyPainter extends CustomPainter {
         Colors.transparent,
         isDark ? const Color(0xFF00000A).withOpacity(0.65) : const Color(0xFFB4C8F0).withOpacity(0.3),
       ],
-    ).createShader(Rect.fromLTWH(0, 0, W, H));
-    canvas.drawRect(Rect.fromLTWH(0, 0, W, H), Paint()..shader = vig);
+    ).createShader(Rect.fromLTWH(0, 0, w, h));
+    canvas.drawRect(Rect.fromLTWH(0, 0, w, h), Paint()..shader = vig);
   }
 
   void _drawNebula(Canvas canvas, double x, double y, double r, Color color) {
@@ -213,7 +219,7 @@ class _GalaxyPainter extends CustomPainter {
     canvas.drawCircle(Offset(x, y), r, paint);
   }
 
-  void _drawOrbits(Canvas canvas, double CX, double CY, double W, double H) {
+  void _drawOrbits(Canvas canvas, double cx, double cy, double w, double h) {
     final p = eo(ph(0.3, 1.8));
     if (p <= 0) return;
     final settle = eo(ph(4.5, 6.2));
@@ -226,44 +232,43 @@ class _GalaxyPainter extends CustomPainter {
 
     for (final rot in [-0.52, 0.52]) {
       canvas.save();
-      canvas.translate(CX, CY);
+      canvas.translate(cx, cy);
       canvas.rotate(rot);
       final rect = Rect.fromCenter(
         center: Offset.zero,
-        width: W * 0.64 * p,
-        height: H * 0.2 * p,
+        width: w * 0.64 * p,
+        height: h * 0.2 * p,
       );
       canvas.drawOval(rect, paint);
       canvas.restore();
     }
   }
 
-  void _drawDotRing(Canvas canvas, double CX, double CY, double W) {
+  void _drawDotRing(Canvas canvas, double cx, double cy, double w) {
     final p = eo(ph(0.3, 1.8));
     if (p <= 0) return;
     final settle = eo(ph(4.5, 6.2));
     const n = 14;
-    final R = W * 0.4 * p;
+    final R = w * 0.4 * p;
     for (int i = 0; i < n; i++) {
       final a = pi * 2 / n * i + t * 0.2;
       final pulse = 0.35 + 0.24 * sin(t * 2.2 + i * 0.45);
       final alpha = (pulse * lerpDouble(0.55, 0.12, settle)).clamp(0, 1);
       canvas.drawCircle(
-        Offset(CX + cos(a) * R, CY + sin(a) * R),
+        Offset(cx + cos(a) * R, cy + sin(a) * R),
         4.5,
         Paint()..color = _orbitCol.withOpacity(alpha.toDouble()),
       );
     }
   }
 
-  void _drawPlanets(Canvas canvas, double CX, double CY, double W, double H) {
+  void _drawPlanets(Canvas canvas, double cx, double cy, double w, double h) {
     final p = eo(ph(0.3, 1.8));
-    final settle = eo(ph(4.5, 6.2));
     final planets = [
-      _PlanetDef(rx: W * 0.32, ry: H * 0.1, rot: -0.52,
+      _PlanetDef(rx: w * 0.32, ry: h * 0.1, rot: -0.52,
           ang: t * 0.75 - pi * 0.5, r: 11,
           c0: const Color(0xFFFFB067), c1: const Color(0xFFF5862E)),
-      _PlanetDef(rx: W * 0.32, ry: H * 0.1, rot: 0.52,
+      _PlanetDef(rx: w * 0.32, ry: h * 0.1, rot: 0.52,
           ang: -t * 0.6 + pi, r: 9,
           c0: const Color(0xFFFFCC80), c1: const Color(0xFFCC7020)),
     ];
@@ -273,8 +278,8 @@ class _GalaxyPainter extends CustomPainter {
       final pl = planets[i];
       final px = cos(pl.ang) * pl.rx;
       final py = sin(pl.ang) * pl.ry;
-      final wx = CX + px * cos(pl.rot) - py * sin(pl.rot);
-      final wy = CY + px * sin(pl.rot) + py * cos(pl.rot);
+      final wx = cx + px * cos(pl.rot) - py * sin(pl.rot);
+      final wy = cy + px * sin(pl.rot) + py * cos(pl.rot);
       final r = pl.r * pp;
       final shader = RadialGradient(
         center: const Alignment(-0.4, -0.4),
@@ -284,39 +289,39 @@ class _GalaxyPainter extends CustomPainter {
     }
   }
 
-  void _drawA(Canvas canvas, double CX, double CY, double W) {
+  void _drawA(Canvas canvas, double cx, double cy, double w) {
     final p = eo(ph(0.05, 0.85), 4);
     if (p <= 0) return;
     final settle = eo(ph(4.5, 6.2));
     canvas.save();
-    canvas.translate(CX, CY);
+    canvas.translate(cx, cy);
     canvas.scale(p, p);
 
     final gr = RadialGradient(colors: [
       AppColors.orange.withOpacity(lerpDouble(0.12, 0.04, settle)),
       Colors.transparent,
-    ]).createShader(Rect.fromCircle(center: Offset.zero, radius: W * 0.14));
-    canvas.drawCircle(Offset.zero, W * 0.14, Paint()..shader = gr);
+    ]).createShader(Rect.fromCircle(center: Offset.zero, radius: w * 0.14));
+    canvas.drawCircle(Offset.zero, w * 0.14, Paint()..shader = gr);
 
     final tp = TextPainter(
       text: TextSpan(
         text: 'A',
         style: TextStyle(
-          fontSize: W * 0.44,
+          fontSize: w * 0.44,
           fontWeight: FontWeight.w900,
-          color: _Acol,
+          color: _letterColor,
           fontFamily: 'Arial',
         ),
       ),
       textDirection: TextDirection.ltr,
     );
     tp.layout();
-    tp.paint(canvas, Offset(-tp.width / 2, -tp.height / 2 + W * 0.02));
+    tp.paint(canvas, Offset(-tp.width / 2, -tp.height / 2 + w * 0.02));
 
     canvas.restore();
   }
 
-  void _drawBurst(Canvas canvas, double CX, double CY, double W, double H) {
+  void _drawBurst(Canvas canvas, double cx, double cy, double w, double h) {
     final p = ph(0, 0.35);
     if (p <= 0) return;
     final fade = p < 0.3 ? p / 0.3 : 1 - (p - 0.3) / 0.7;
@@ -325,19 +330,19 @@ class _GalaxyPainter extends CustomPainter {
       AppColors.orange.withOpacity(fade * 0.4),
       Colors.transparent,
     ], stops: const [0, 0.3, 1]).createShader(
-      Rect.fromCircle(center: Offset(CX, CY), radius: eo(p, 2) * W * 0.36));
+      Rect.fromCircle(center: Offset(cx, cy), radius: eo(p, 2) * w * 0.36));
     canvas.drawRect(
-        Rect.fromLTWH(0, 0, W, H), Paint()..shader = shader);
+        Rect.fromLTWH(0, 0, w, h), Paint()..shader = shader);
   }
 
-  void _drawPulseRings(Canvas canvas, double CX, double CY, double W) {
+  void _drawPulseRings(Canvas canvas, double cx, double cy, double w) {
     for (int i = 0; i < 3; i++) {
       final p = ph(5.0 + i * 0.65, 7.0 + i * 0.65);
       if (p <= 0) continue;
       final fade = 1 - p;
-      final r = lerpDouble(W * 0.08, W * 0.48, eo(p, 2));
+      final r = lerpDouble(w * 0.08, w * 0.48, eo(p, 2));
       canvas.drawCircle(
-        Offset(CX, CY), r,
+        Offset(cx, cy), r,
         Paint()
           ..color = AppColors.orange.withOpacity(fade * 0.28)
           ..style = PaintingStyle.stroke
@@ -346,7 +351,7 @@ class _GalaxyPainter extends CustomPainter {
     }
   }
 
-  void _drawText(Canvas canvas, double CX, double CY, double H) {
+  void _drawText(Canvas canvas, double cx, double cy, double h) {
     final p = eo(ph(4.8, 6.2));
     if (p <= 0) return;
 
@@ -358,7 +363,7 @@ class _GalaxyPainter extends CustomPainter {
       textDirection: TextDirection.ltr,
     );
     tp1.layout();
-    tp1.paint(canvas, Offset(CX - tp1.width / 2, H * 0.72));
+    tp1.paint(canvas, Offset(cx - tp1.width / 2, h * 0.72));
 
     final tp2 = TextPainter(
       text: TextSpan(text: 'управляй с умом', style: TextStyle(
@@ -368,14 +373,14 @@ class _GalaxyPainter extends CustomPainter {
       textDirection: TextDirection.ltr,
     );
     tp2.layout();
-    tp2.paint(canvas, Offset(CX - tp2.width / 2, H * 0.72 + 52));
+    tp2.paint(canvas, Offset(cx - tp2.width / 2, h * 0.72 + 52));
 
     for (int i = 0; i < 3; i++) {
       final dt = (t * 0.33 - i * 0.33) % 1.0;
       final dotAlpha = (0.25 + 0.75 * (1 - (dt * 2 - 1).abs())).clamp(0.2, 1.0) * p;
       final dotScale = (0.7 + 0.3 * (1 - (dt * 2 - 1).abs())).clamp(0.7, 1.0);
       canvas.drawCircle(
-        Offset(CX - 18 + i * 18.0, H * 0.88),
+        Offset(cx - 18 + i * 18.0, h * 0.88),
         5 * dotScale,
         Paint()..color = AppColors.orange.withOpacity(dotAlpha),
       );

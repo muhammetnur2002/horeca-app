@@ -109,32 +109,33 @@ class _ProductsTabState extends ConsumerState<ProductsTab> {
     List<CategoryModel> allCategories,
   ) async {
     if (_selectedIds.isEmpty) return;
+    final messenger = ScaffoldMessenger.of(context);
     final deptNames = departments.map((d) => d.name).toList();
     final deptName =
         await _showOptionsDialog(context, 'Выберите отдел', deptNames);
-    if (deptName == null) return;
+    if (deptName == null || !mounted) return;
     final dept = departments.firstWhere((d) => d.name == deptName);
     final catsInDept =
         allCategories.where((c) => c.departmentId == dept.id).toList();
     if (catsInDept.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content:
-              Text('В этом отделе нет категорий')));
+      messenger.showSnackBar(const SnackBar(
+          content: Text('В этом отделе нет категорий')));
       return;
     }
     final catNames = catsInDept.map((c) => c.name).toList();
+    if (!context.mounted) return;
     final catName =
         await _showOptionsDialog(context, 'Выберите категорию', catNames);
-    if (catName == null) return;
+    if (catName == null || !mounted) return;
     final cat = catsInDept.firstWhere((c) => c.name == catName);
+    final allProducts = ref.read(settingsRepositoryProvider).products;
     for (final id in _selectedIds.toList()) {
-      final product =
-          repo.state.products.firstWhere((p) => p.id == id);
+      final product = allProducts.firstWhere((p) => p.id == id);
       repo.updateProduct(id, product.name, product.unit,
           newCategoryId: cat.id,
           newInventoryUnit: product.inventoryUnit);
     }
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+    messenger.showSnackBar(SnackBar(
       content: Text(
           'Изменено у ${_selectedIds.length} товаров'),
       backgroundColor: const Color(0xFF2E3352),
@@ -157,13 +158,14 @@ class _ProductsTabState extends ConsumerState<ProductsTab> {
     required void Function(SettingsRepository, String id, String newValue)
         onApply,
   }) async {
+    final messenger = ScaffoldMessenger.of(context);
     final result =
         await _showOptionsDialog(context, title, options);
     if (result != null) {
       for (final id in ids) {
         onApply(repo, id, result);
       }
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      messenger.showSnackBar(SnackBar(
         content: Text('$title изменено у ${ids.length} товаров'),
         backgroundColor: const Color(0xFF2E3352),
         behavior: SnackBarBehavior.floating,
@@ -175,7 +177,7 @@ class _ProductsTabState extends ConsumerState<ProductsTab> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final products = ref.watch(settingsRepositoryProvider).products;
     final categories =
         ref.watch(settingsRepositoryProvider).categories;
@@ -224,7 +226,7 @@ class _ProductsTabState extends ConsumerState<ProductsTab> {
       floatingActionButton: _selectMode
     ? null
     : FloatingActionButton(
-        heroTag: 'bulk',
+        heroTag: 'fab-products-bulk',
         onPressed: () => _showBulk(
             context, repo, departments, categories, l10n, isDark),
         backgroundColor: AppColors.orange,
@@ -397,10 +399,11 @@ onChanged: (v) => setState(() => _searchQuery = v),
   onSetMinStock: () => _showMinStockDialog(context, repo, p, isDark),
   onSelect: (v) {
     setState(() {
-                            if (v == true)
+                            if (v == true) {
                               _selectedIds.add(p.id);
-                            else
+                            } else {
                               _selectedIds.remove(p.id);
+                            }
                           });
                         },
                         onDelete: () => _confirmDelete(
@@ -408,10 +411,11 @@ onChanged: (v) => setState(() => _searchQuery = v),
                         onTap: _selectMode
                             ? () {
                                 setState(() {
-                                  if (isSelected)
+                                  if (isSelected) {
                                     _selectedIds.remove(p.id);
-                                  else
+                                  } else {
                                     _selectedIds.add(p.id);
+                                  }
                                 });
                               }
                             : () => _showEdit(context, repo, p,
@@ -480,8 +484,7 @@ onChanged: (v) => setState(() => _searchQuery = v),
                                               (c) =>
                                                   c.name ==
                                                   newValue);
-                                      final product = repo
-                                          .state.products
+                                      final product = products
                                           .firstWhere(
                                               (p) => p.id == id);
                                       repo.updateProduct(
@@ -512,8 +515,7 @@ onChanged: (v) => setState(() => _searchQuery = v),
                                     options: units,
                                     onApply:
                                         (repo, id, newValue) {
-                                      final product = repo
-                                          .state.products
+                                      final product = products
                                           .firstWhere(
                                               (p) => p.id == id);
                                       repo.updateProduct(
@@ -545,8 +547,7 @@ onChanged: (v) => setState(() => _searchQuery = v),
                                     options: units,
                                     onApply:
                                         (repo, id, newValue) {
-                                      final product = repo
-                                          .state.products
+                                      final product = products
                                           .firstWhere(
                                               (p) => p.id == id);
                                       repo.updateProduct(
@@ -1184,7 +1185,7 @@ class _ProductItem extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Заявка: ${p.unit} | Инвент: ${p.inventoryUnit} | $deptName → $catName',
+                        'Заявка: ${p.unit} | Инвент: ${p.inventoryUnit} | $deptName / $catName',
                         style: TextStyle(
                             fontSize: 11,
                             color: AppColors.muted),

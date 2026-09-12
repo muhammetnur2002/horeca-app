@@ -7,7 +7,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
 import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:horeca_app/features/backup/data/backup_service.dart';
 import 'package:horeca_app/app/di.dart';
 import 'package:file_picker/file_picker.dart' as fp;
@@ -80,7 +79,7 @@ class EstablishmentTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final settings = ref.watch(settingsRepositoryProvider);
     final name = settings.establishmentName;
     final currency = settings.currency;
@@ -152,9 +151,12 @@ class EstablishmentTab extends ConsumerWidget {
                           color: AppColors.muted, fontWeight: FontWeight.w500,
                           letterSpacing: 0.5)),
                   const SizedBox(height: 8),
-                  Text(name, style: TextStyle(fontSize: 26,
-                      fontWeight: FontWeight.w700, color: textColor,
-                      letterSpacing: -0.5)),
+                  Text(name.isEmpty ? 'Не указано' : name,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 26,
+                          fontWeight: FontWeight.w700,
+                          color: name.isEmpty ? AppColors.muted : textColor,
+                          letterSpacing: -0.5)),
                   const SizedBox(height: 24),
                   GestureDetector(
                     onTap: () => _showEditDialog(context, name, repo, l10n, isDark),

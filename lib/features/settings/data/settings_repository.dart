@@ -87,6 +87,27 @@ class SettingsData {
   }
 }
 
+/// Иконки отделов, которые приложение умеет восстанавливать из настроек.
+/// Хранить произвольный codePoint нельзя: при tree-shaking иконок Flutter
+/// выбрасывает глифы, на которые нет константной ссылки.
+const Map<int, IconData> _knownDepartmentIcons = {
+  0xe35e: Icons.kitchen,
+  0xe38c: Icons.local_bar,
+  0xf0585: Icons.table_restaurant,
+  0xf05a0: Icons.warehouse,
+  0xe167: Icons.cleaning_services,
+  0xe148: Icons.category,
+  0xe60a: Icons.store,
+  0xe178: Icons.coffee,
+  0xe331: Icons.icecream,
+  0xe532: Icons.restaurant,
+};
+
+IconData _iconFromCodePoint(String raw) {
+  final code = int.tryParse(raw);
+  return _knownDepartmentIcons[code] ?? Icons.category;
+}
+
 class SettingsRepository extends StateNotifier<SettingsData> {
   final SharedPreferences _prefs;
   static const _settingsKey = 'settings_data';
@@ -129,7 +150,7 @@ class SettingsRepository extends StateNotifier<SettingsData> {
       final depts = (data['departments'] as List).map((d) => DepartmentModel(
             id: d['id'],
             name: d['name'],
-            icon: IconData(int.parse(d['icon']), fontFamily: 'MaterialIcons'),
+            icon: _iconFromCodePoint(d['icon'] as String),
           )).toList();
       final cats = (data['categories'] as List).map((c) => CategoryModel(
             id: c['id'],
@@ -168,14 +189,20 @@ minStock: (p['minStock'] as num?)?.toDouble(),
   }
 
   // ── Сброс всех данных ─────────────────────────────────────────────────────
+  /// Возвращает приложение к состоянию «чистой установки»: отделы, категории,
+  /// товары, сотрудники, название, валюта и лого. Раньше отделы, название,
+  /// валюта и лого переживали сброс, хотя диалог обещал удалить всё.
   void resetAll() {
-    state = state.copyWith(
+    state = const SettingsData(
+      departments: [],
       categories: [],
       products: [],
+      establishmentName: '',
       staff: [],
+      currency: '\u20B8',
     );
     _saveToPrefs();
-  } 
+  }
 
   // ── Лого заведения ───────────────────────────────────────────────────────
   void setLogoPath(String path) {
@@ -195,7 +222,8 @@ minStock: (p['minStock'] as num?)?.toDouble(),
   }
 
   // ── Сотрудники ────────────────────────────────────────────────────────────
-  void addStaff(String name) {
+  void addStaff(String rawName) {
+    final name = rawName.trim();
     if (name.isEmpty || state.staff.contains(name)) return;
     state = state.copyWith(staff: [...state.staff, name]);
     _saveToPrefs();
@@ -206,7 +234,8 @@ minStock: (p['minStock'] as num?)?.toDouble(),
     _saveToPrefs();
   }
 
-  void updateStaff(String oldName, String newName) {
+  void updateStaff(String oldName, String rawNewName) {
+    final newName = rawNewName.trim();
     if (newName.isEmpty) return;
     state = state.copyWith(
       staff: state.staff.map((s) => s == oldName ? newName : s).toList());
@@ -215,7 +244,7 @@ minStock: (p['minStock'] as num?)?.toDouble(),
 
   // ── Заведение ─────────────────────────────────────────────────────────────
   void setEstablishmentName(String name) {
-    state = state.copyWith(establishmentName: name);
+    state = state.copyWith(establishmentName: name.trim());
     _saveToPrefs();
   }
 
@@ -223,7 +252,7 @@ minStock: (p['minStock'] as num?)?.toDouble(),
   void addDepartment(String name, IconData icon) {
     final d = DepartmentModel(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
-        name: name, icon: icon);
+        name: name.trim(), icon: icon);
     state = state.copyWith(departments: [...state.departments, d]);
     _saveToPrefs();
   }
@@ -231,8 +260,10 @@ minStock: (p['minStock'] as num?)?.toDouble(),
   void updateDepartment(String id, String newName, IconData? newIcon) {
     state = state.copyWith(
       departments: state.departments.map((d) {
-        if (d.id == id)
-          return DepartmentModel(id: d.id, name: newName, icon: newIcon ?? d.icon);
+        if (d.id == id) {
+          return DepartmentModel(
+              id: d.id, name: newName.trim(), icon: newIcon ?? d.icon);
+        }
         return d;
       }).toList());
     _saveToPrefs();
@@ -255,7 +286,7 @@ minStock: (p['minStock'] as num?)?.toDouble(),
   void addCategory(String name, String departmentId) {
     final c = CategoryModel(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
-        name: name, departmentId: departmentId);
+        name: name.trim(), departmentId: departmentId);
     state = state.copyWith(categories: [...state.categories, c]);
     _saveToPrefs();
   }
@@ -263,10 +294,11 @@ minStock: (p['minStock'] as num?)?.toDouble(),
   void updateCategory(String id, String newName, {String? newDepartmentId}) {
     state = state.copyWith(
       categories: state.categories.map((c) {
-        if (c.id == id)
+        if (c.id == id) {
           return CategoryModel(
-              id: c.id, name: newName,
+              id: c.id, name: newName.trim(),
               departmentId: newDepartmentId ?? c.departmentId);
+        }
         return c;
       }).toList());
     _saveToPrefs();
@@ -290,7 +322,7 @@ void addProduct(String name, String unit, String categoryId,
     {String? inventoryUnit}) {
   final p = ProductModel(
     id: DateTime.now().millisecondsSinceEpoch.toString(),
-    name: name, unit: unit,
+    name: name.trim(), unit: unit,
     inventoryUnit: inventoryUnit ?? unit,
     categoryId: categoryId);
   state = state.copyWith(products: [...state.products, p]);
@@ -303,9 +335,12 @@ void addProduct(String name, String unit, String categoryId,
       products: state.products.map((p) {
         if (p.id == id) {
           return ProductModel(
-            id: p.id, name: newName, unit: newUnit,
+            id: p.id, name: newName.trim(), unit: newUnit,
             inventoryUnit: newInventoryUnit ?? p.inventoryUnit,
-            categoryId: newCategoryId ?? p.categoryId);
+            categoryId: newCategoryId ?? p.categoryId,
+            // minStock не входит в форму редактирования — сохраняем его,
+            // иначе настроенный порог молча терялся при любом изменении.
+            minStock: p.minStock);
         }
         return p;
       }).toList());
@@ -337,11 +372,16 @@ void setProductMinStock(String id, double? minStock) {
 
   void bulkAddProducts(List<String> names, String defaultUnit, String categoryId,
       {String? defaultInventoryUnit}) {
-    final newProds = names.map((name) => ProductModel(
-      id: DateTime.now().millisecondsSinceEpoch.toString() + name,
-      name: name, unit: defaultUnit,
-      inventoryUnit: defaultInventoryUnit ?? defaultUnit,
-      categoryId: categoryId)).toList();
+    final stamp = DateTime.now().millisecondsSinceEpoch;
+    final newProds = names
+        .asMap()
+        .entries
+        .map((e) => ProductModel(
+            id: '${stamp + e.key}',
+            name: e.value.trim(), unit: defaultUnit,
+            inventoryUnit: defaultInventoryUnit ?? defaultUnit,
+            categoryId: categoryId))
+        .toList();
     state = state.copyWith(products: [...state.products, ...newProds]);
     _saveToPrefs();
   }

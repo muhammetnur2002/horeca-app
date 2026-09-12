@@ -9,6 +9,10 @@ import 'package:horeca_app/features/splash/splash_screen.dart';
 import 'package:horeca_app/features/auth/data/auth_repository.dart';
 import 'package:horeca_app/features/auth/presentation/pin_screen.dart';
 
+/// Шрифт интерфейса: поставляется с приложением, поэтому символы
+/// валют выглядят одинаково на всех платформах.
+const String _appFont = 'NotoSans';
+
 // ─── Цветовые константы (меняй только здесь) ───────────────────────────────
 class AppColors {
   // Тёмная тема
@@ -48,7 +52,9 @@ class _HorecaAppState extends ConsumerState<HorecaApp> {
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.light,
     ));
-    Future.delayed(const Duration(seconds: 10), () {
+    // Заставка длилась 10 секунд — приложение выглядело зависшим.
+    // Анимация сжата до того же интервала (см. SplashScreen.duration).
+    Future.delayed(SplashScreen.duration, () {
       if (mounted) setState(() => _showSplash = false);
     });
   }
@@ -65,9 +71,8 @@ class _HorecaAppState extends ConsumerState<HorecaApp> {
 }
 
 final authState = ref.watch(authRepositoryProvider);
-final pinsEnabled = ref.read(authRepositoryProvider.notifier).pinsEnabled;
 
-if (pinsEnabled && !authState.isLoggedIn) {
+if (authState.pinsEnabled && !authState.isLoggedIn) {
   return MaterialApp(
     debugShowCheckedModeBanner: false,
     themeMode: themeMode,
@@ -79,8 +84,14 @@ if (pinsEnabled && !authState.isLoggedIn) {
       GlobalCupertinoLocalizations.delegate,
     ],
     supportedLocales: const [Locale('ru')],
-    theme: ThemeData(brightness: Brightness.light, useMaterial3: true),
-    darkTheme: ThemeData(brightness: Brightness.dark, useMaterial3: true),
+    theme: ThemeData(
+        brightness: Brightness.light,
+        useMaterial3: true,
+        fontFamily: _appFont),
+    darkTheme: ThemeData(
+        brightness: Brightness.dark,
+        useMaterial3: true,
+        fontFamily: _appFont),
     home: const PinScreen(),
   );
 }
@@ -100,7 +111,8 @@ return MaterialApp.router(
       // ── СВЕТЛАЯ ТЕМА ──────────────────────────────────────────────────────
       theme: ThemeData(
         brightness: Brightness.light,
-        useMaterial3: true, 
+        useMaterial3: true,
+        fontFamily: _appFont,
         dialogTheme: DialogThemeData(
   backgroundColor: Colors.white,
   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -196,6 +208,7 @@ return MaterialApp.router(
       darkTheme: ThemeData(
         brightness: Brightness.dark,
         useMaterial3: true,
+        fontFamily: _appFont,
         dialogTheme: DialogThemeData(
   backgroundColor: AppColors.darkCard,
   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -292,7 +305,7 @@ return MaterialApp.router(
         ),
       ),
 
-      routerConfig: router,
+      routerConfig: ref.watch(routerProvider),
     );
   }
 }

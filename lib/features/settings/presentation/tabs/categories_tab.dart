@@ -12,7 +12,7 @@ class CategoriesTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final categories = ref.watch(settingsRepositoryProvider).categories;
     final departments = ref.watch(settingsRepositoryProvider).departments;
     final repo = ref.read(settingsRepositoryProvider.notifier);
@@ -21,6 +21,9 @@ class CategoriesTab extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Colors.transparent,
       floatingActionButton: FloatingActionButton(
+        // Уникальный тег: вкладки настроек остаются в дереве после
+        // посещения, и одинаковые теги ломают Hero-анимацию.
+        heroTag: 'fab-categories',
         onPressed: () => _showAddDialog(context, repo, departments, l10n, isDark),
         backgroundColor: AppColors.orange,
         foregroundColor: Colors.white,

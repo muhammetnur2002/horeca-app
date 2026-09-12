@@ -14,8 +14,6 @@ class DessertItem {
   int stock;
   int writeOff;
   DessertItem({required this.name, this.showcase=0, this.stock=0, this.writeOff=0});
-
-  get writeOffType => null;
 }
 
 class ManualWriteOff {
@@ -36,6 +34,7 @@ class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
   int _step = 0;
   final int _totalSteps = 4;
   final Set<String> _selectedStaff = {};
+  bool _submitting = false;
   List<DessertItem> _desserts = [];
   bool _dessertsLoaded = false;
   final List<ManualWriteOff> _manualWriteOffs = [];
@@ -63,30 +62,37 @@ class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
   }
 
 
+ShiftDraftNotifier? _draftNotifier;
+
 @override
 void initState() {
   super.initState();
   _loadDraft();
 }
 
-void _saveDraft() {
-  final notifier = ref.read(shiftDraftProvider.notifier);
-  notifier.state = ShiftDraft(
-    step: _step,
-    selectedStaff: Set.from(_selectedStaff),
-    desserts: _desserts,
-    dessertsLoaded: _dessertsLoaded,
-    manualWriteOffs: List.from(_manualWriteOffs),
-    qr: _qrCtrl.text,
-    card: _cardCtrl.text,
-    cash: _cashCtrl.text,
-    manual: _manualCtrl.text,
-    morningCash: _morningCashCtrl.text,
-    eveningCash: _eveningCashCtrl.text,
-    inkass: _inkassCtrl.text,
-    hasInkass: _hasInkass,
-  );
+@override
+void didChangeDependencies() {
+  super.didChangeDependencies();
+  // Ссылку берём заранее: в deactivate() обращаться к дереву уже нельзя.
+  _draftNotifier = ref.read(shiftDraftProvider.notifier);
 }
+
+ShiftDraft _currentDraft() => ShiftDraft(
+      step: _step,
+      selectedStaff: Set.from(_selectedStaff),
+      desserts: _desserts,
+      dessertsLoaded: _dessertsLoaded,
+      manualWriteOffs: List.from(_manualWriteOffs),
+      qr: _qrCtrl.text,
+      card: _cardCtrl.text,
+      cash: _cashCtrl.text,
+      manual: _manualCtrl.text,
+      morningCash: _morningCashCtrl.text,
+      eveningCash: _eveningCashCtrl.text,
+      inkass: _inkassCtrl.text,
+      hasInkass: _hasInkass,
+    );
+
 void _loadDraft() {
   final draft = ref.read(shiftDraftProvider);
   _step = draft.step;
@@ -108,23 +114,13 @@ void _loadDraft() {
 
 @override
 void deactivate() {
-  final draft = ShiftDraft(
-    step: _step,
-    selectedStaff: Set.from(_selectedStaff),
-    desserts: _desserts,
-    dessertsLoaded: _dessertsLoaded,
-    manualWriteOffs: List.from(_manualWriteOffs),
-    qr: _qrCtrl.text,
-    card: _cardCtrl.text,
-    cash: _cashCtrl.text,
-    manual: _manualCtrl.text,
-    morningCash: _morningCashCtrl.text,
-    eveningCash: _eveningCashCtrl.text,
-    inkass: _inkassCtrl.text,
-    hasInkass: _hasInkass,
-  );
-  final notifier = ref.read(shiftDraftProvider.notifier);
-  Future.microtask(() => notifier.state = draft);
+  final notifier = _draftNotifier;
+  if (notifier != null && notifier.mounted) {
+    final draft = _currentDraft();
+    Future.microtask(() {
+      if (notifier.mounted) notifier.save(draft);
+    });
+  }
   super.deactivate();
 }
 
@@ -138,7 +134,7 @@ void deactivate() {
     super.dispose();
   }
 
-    void _next() {
+  Future<void> _next() async {
     if (_step == 0) {
       if (_selectedStaff.isEmpty) {
         _showWarning('Отметьте хотя бы одного сотрудника');
@@ -146,9 +142,11 @@ void deactivate() {
       }
       final hasShowcase = _desserts.any((d) => d.showcase > 0);
       final hasStock = _desserts.any((d) => d.stock > 0);
+      // Нулевые остатки — законный результат смены, поэтому это не запрет,
+      // а подтверждение: раньше пустую витрину было невозможно закрыть.
       if (_desserts.isNotEmpty && !hasShowcase && !hasStock) {
-        _showWarning('Заполните остатки десертов на витрине или складе');
-        return;
+        final proceed = await _confirmZeroDesserts();
+        if (!proceed || !mounted) return;
       }
     }
     if (_step == 1) {
@@ -180,8 +178,43 @@ void deactivate() {
         return;
       }
     }
-    if (_step < _totalSteps - 1) setState(() => _step++);
-    else _onSubmit();
+    if (_step < _totalSteps - 1) {
+      setState(() => _step++);
+    } else {
+      _onSubmit();
+    }
+  }
+
+  Future<bool> _confirmZeroDesserts() async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final answer = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? AppColors.darkCard : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Десертов не осталось?',
+            style: TextStyle(fontWeight: FontWeight.w600)),
+        content: const Text(
+            'Остатки на витрине и складе указаны нулевыми. '
+            'Продолжить закрытие смены?',
+            style: TextStyle(color: AppColors.muted, fontSize: 14)),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Вернуться',
+                  style: TextStyle(color: AppColors.muted))),
+          ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.orange,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12))),
+              child: const Text('Продолжить')),
+        ],
+      ),
+    );
+    return answer ?? false;
   }
 
   void _showWarning(String msg) {
@@ -202,9 +235,11 @@ void deactivate() {
   void _back() { if (_step > 0) setState(() => _step--); }
 
   void _onSubmit() async {
+  if (_submitting) return;
   final confirm = await showDialog<bool>(
-    context: context, builder: (_) => _ConfirmDialog());
+    context: context, builder: (_) => const _ConfirmDialog());
   if (confirm == true && mounted) {
+    setState(() => _submitting = true);
     // Сохраняем запись для аналитики
     final writeOffsMap = <String, int>{};
     for (final d in _desserts.where((d) => d.writeOff > 0)) {
@@ -241,7 +276,11 @@ void deactivate() {
       date: DateTime.now(),
     );
     ref.read(shiftDraftProvider.notifier).reset();
-    if (mounted) Navigator.of(context).pop();
+    if (mounted) {
+      Navigator.of(context).pop();
+    } else {
+      _submitting = false;
+    }
   }
 }
 
@@ -348,7 +387,11 @@ void deactivate() {
         final di = i ~/ 2;
         final isDone = di < _step; final isActive = di == _step;
         return GestureDetector(
-          onTap: () { if (di <= _step) setState(() => _step = di); },
+          onTap: () {
+            if (di <= _step) {
+              setState(() => _step = di);
+            }
+          },
           child: Column(children: [
             AnimatedContainer(duration: const Duration(milliseconds: 250),
               width: 32, height: 32,
@@ -393,7 +436,9 @@ void deactivate() {
         final query = _dessertSearch.toLowerCase().trim();
         final words = query.split(RegExp(r'\s+')).where((w) => w.isNotEmpty);
         final name = d.name.toLowerCase();
-        return words.any((w) => name.contains(w));
+        // every, а не any: «шоколадный торт» должен сужать выдачу,
+        // а не показывать всё, где есть хотя бы одно из слов.
+        return words.every((w) => name.contains(w));
       }).toList();
     final settings = ref.read(settingsRepositoryProvider);
     if (!_dessertsLoaded) {
@@ -403,7 +448,8 @@ void deactivate() {
       final prods = settings.products
           .where((p) => catIds.contains(p.categoryId)).toList();
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) setState(() {
+        if (!mounted) return;
+        setState(() {
           _desserts = prods.map((p) => DessertItem(name: p.name)).toList();
           _dessertsLoaded = true;
         });
@@ -420,7 +466,7 @@ const SizedBox(height: 16),
         _CardLabel(text: 'Кто работал в смену'),
         const SizedBox(height: 10),
         staffList.isEmpty
-            ? Text('Добавьте сотрудников в Настройки → Смена',
+            ? Text('Добавьте сотрудников: Настройки / Смена',
                 style: TextStyle(fontSize: 13, color: AppColors.muted))
             : Wrap(spacing: 8, runSpacing: 8,
                 children: staffList.map((name) {
@@ -650,8 +696,11 @@ const SizedBox(height: 10),
               color: Colors.white.withOpacity(isDark ? 0.05 : 0.6),
               borderRadius: BorderRadius.circular(10)),
           child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            const Text('Касса на следуюущую смену',
-                style: TextStyle(fontSize: 13, color: AppColors.muted)),
+            const Expanded(
+              child: Text('Касса на следующую смену',
+                  style: TextStyle(fontSize: 13, color: AppColors.muted)),
+            ),
+            const SizedBox(width: 8),
             Text('${_formatMoney(_tomorrowCash)} $currency', style: TextStyle(
                 fontSize: 15, fontWeight: FontWeight.w600,
                 color: isDark ? Colors.white : const Color(0xFF1A1A2E))),
@@ -718,14 +767,14 @@ const SizedBox(height: 10),
         if (writeOffs.isNotEmpty) ...[
           const _Divider(),
           ...writeOffs.map((d) => _SummaryRow(
-              label: '📦 Списание',
+              label: 'Списание',
               value: '${d.name}: ${d.writeOff} шт',
               isDark: isDark, isWarning: true)),
         ],
         if (_manualWriteOffs.isNotEmpty) ...[
           const _Divider(),
           ..._manualWriteOffs.map((m) => _SummaryRow(
-              label: '📦 Списание',
+              label: 'Списание',
               value: '${m.name}: ${m.quantity} ${m.unit}',
               isDark: isDark, isWarning: true)),
         ],
@@ -733,15 +782,11 @@ const SizedBox(height: 10),
       const SizedBox(height: 16),
       _CardLabel(text: 'Отправить отчёт'),
       const SizedBox(height: 10),
-      Row(children: [
-        Expanded(child: _ShareButton(icon: Icons.chat_rounded, label: 'WhatsApp',
-            color: const Color(0xFF25D366), isDark: isDark, onTap: _onSubmit)),
-        const SizedBox(width: 10),
-        Expanded(child: _ShareButton(icon: Icons.send_rounded, label: 'Telegram',
-            color: const Color(0xFF2AABEE), isDark: isDark, onTap: _onSubmit)),
-      ]),
-      const SizedBox(height: 10),
-      _ShareButton(icon: Icons.picture_as_pdf_rounded, label: 'Скачать PDF',
+      // Одна кнопка вместо трёх: «WhatsApp», «Telegram» и «Скачать PDF»
+      // делали ровно одно и то же — формировали PDF и открывали системную
+      // шторку. Два нажатия подряд записывали смену в аналитику дважды.
+      _ShareButton(icon: Icons.picture_as_pdf_rounded,
+          label: 'Сформировать PDF и отправить',
           color: AppColors.orange, isDark: isDark, onTap: _onSubmit, fullWidth: true),
       const SizedBox(height: 16),
     ]);
@@ -765,15 +810,31 @@ const SizedBox(height: 10),
               child: const Text('Назад'))),
           const SizedBox(width: 12),
         ],
-        Expanded(flex: 2, child: ElevatedButton(onPressed: _next,
+        Expanded(flex: 2, child: ElevatedButton(onPressed: () => _next(),
             style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 backgroundColor: isLast ? AppColors.green : AppColors.orange,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 elevation: 0),
-            child: Text(isLast ? '✓ Закрыть смену' : 'Далее →',
-                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)))),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (isLast)
+                  const Padding(
+                    padding: EdgeInsets.only(right: 6),
+                    child: Icon(Icons.check_rounded, size: 18),
+                  ),
+                Text(isLast ? 'Закрыть смену' : 'Далее',
+                    style: const TextStyle(
+                        fontSize: 15, fontWeight: FontWeight.w600)),
+                if (!isLast)
+                  const Padding(
+                    padding: EdgeInsets.only(left: 6),
+                    child: Icon(Icons.arrow_forward_rounded, size: 18),
+                  ),
+              ],
+            ))),
       ]),
     );
   }
@@ -1011,7 +1072,11 @@ class _SummaryRow extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 5),
     child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-      Text(label, style: const TextStyle(fontSize: 13, color: AppColors.muted)),
+      Flexible(
+        child: Text(label,
+            style: const TextStyle(fontSize: 13, color: AppColors.muted)),
+      ),
+      const SizedBox(width: 8),
       Flexible(child: Text(value, textAlign: TextAlign.right,
           style: TextStyle(fontSize: 13,
               fontWeight: highlight ? FontWeight.w600 : FontWeight.normal,
@@ -1036,7 +1101,13 @@ class _ShareButton extends StatelessWidget {
       child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
         Icon(icon, color: color, size: 20),
         const SizedBox(width: 8),
-        Text(label, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: color)),
+        Flexible(
+          child: Text(label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                  fontSize: 14, fontWeight: FontWeight.w600, color: color)),
+        ),
       ])));
 }
 
@@ -1049,6 +1120,8 @@ class _Divider extends StatelessWidget {
 }
 
 class _ConfirmDialog extends StatelessWidget {
+  const _ConfirmDialog();
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;

@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/features/inventory/domain/usecases/inventory_state.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
-import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
 
 class CategoryFilterStep extends ConsumerWidget {
   const CategoryFilterStep({super.key});
@@ -168,14 +167,23 @@ class CategoryFilterStep extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(16),
                       color: AppColors.orange,
                     ),
-                    child: const Text(
-                      'Далее →',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
+                    // Иконка вместо символа «→»: он есть не во всех
+                    // системных шрифтах и рисуется квадратом-заглушкой.
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Далее',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                        SizedBox(width: 6),
+                        Icon(Icons.arrow_forward_rounded,
+                            size: 18, color: Colors.white),
+                      ],
                     ),
                   ),
                 ),

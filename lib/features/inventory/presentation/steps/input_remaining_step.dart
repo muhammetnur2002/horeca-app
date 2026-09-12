@@ -39,7 +39,9 @@ class _InputRemainingStepState extends ConsumerState<InputRemainingStep> {
       if (!state.selectedCategoryIds.contains(cat.id)) return false;
       if (state.departmentId != 'all') {
         if (cat.departmentId.isNotEmpty &&
-            cat.departmentId != state.departmentId) return false;
+            cat.departmentId != state.departmentId) {
+          return false;
+        }
       }
       if (_searchQuery.isNotEmpty) {
         return p.name.toLowerCase().contains(_searchQuery.toLowerCase());
@@ -122,7 +124,7 @@ class _InputRemainingStepState extends ConsumerState<InputRemainingStep> {
                     ),
                   )
                 : ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                     children: grouped.entries.map((entry) {
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -163,6 +165,47 @@ class _InputRemainingStepState extends ConsumerState<InputRemainingStep> {
                       );
                     }).toList(),
                   ),
+          ),
+
+          // Переход к отчёту
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+            child: GestureDetector(
+              onTap: () {
+                if (state.items.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: const Text('Введите остаток хотя бы по одному товару'),
+                    backgroundColor: Colors.orange.shade700,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ));
+                  return;
+                }
+                ref.read(inventoryStateProvider.notifier).generateReport();
+              },
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  color: state.items.isEmpty
+                      ? AppColors.muted.withOpacity(0.35)
+                      : AppColors.orange,
+                ),
+                child: Text(
+                  state.items.isEmpty
+                      ? 'Сформировать отчёт'
+                      : 'Сформировать отчёт (${state.items.length})',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -263,8 +306,9 @@ class _ProductRow extends StatelessWidget {
                 icon: Icons.remove,
                 isDark: isDark,
                 onTap: () {
-                  if (item.remaining > 0)
+                  if (item.remaining > 0) {
                     onChanged(item.remaining - 1);
+                  }
                 }),
             GestureDetector(
               onTap: () => _showManualInput(context),
