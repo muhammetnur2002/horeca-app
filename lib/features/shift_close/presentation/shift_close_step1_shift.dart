@@ -300,10 +300,14 @@ Widget buildShiftStep1({
                     style:
                         const TextStyle(fontSize: 12, color: AppColors.muted)),
                 const SizedBox(width: 8),
+                // 44×44 — тап-таргет, а не размер самой иконки (18px).
                 GestureDetector(
                     onTap: () => setState(() => manualWriteOffs.removeAt(i)),
-                    child: const Icon(Icons.close_rounded,
-                        size: 18, color: Colors.redAccent)),
+                    child: const SizedBox(
+                        width: 44,
+                        height: 44,
+                        child: Icon(Icons.close_rounded,
+                            size: 18, color: Colors.redAccent))),
               ]),
             );
           }),

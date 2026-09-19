@@ -5,6 +5,7 @@ import 'package:horeca_app/features/inventory/presentation/steps/select_departme
 import 'package:horeca_app/features/inventory/presentation/steps/category_filter_step.dart';
 import 'package:horeca_app/features/inventory/presentation/steps/input_remaining_step.dart';
 import 'package:horeca_app/features/inventory/presentation/steps/report_step.dart';
+import 'package:horeca_app/shared/widgets/step_progress_bar.dart';
 
 class InventoryScreen extends ConsumerWidget {
   const InventoryScreen({super.key});
@@ -30,6 +31,7 @@ class InventoryScreen extends ConsumerWidget {
                 },
               )
             : null,
+        bottom: StepProgressBar(currentStep: state.step, totalSteps: 4),
       ),
       body: SafeArea(
         child: IndexedStack(

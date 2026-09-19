@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/features/iiko/data/iiko_repository.dart';
+import 'package:horeca_app/features/iiko/data/iiko_request_suggester.dart';
 import 'package:horeca_app/features/iiko/data/iiko_service.dart';
 import 'package:horeca_app/features/iiko/presentation/iiko_widgets.dart';
+import 'package:horeca_app/features/request/domain/usecases/request_state.dart';
+import 'package:horeca_app/features/settings/data/settings_repository.dart';
 
 /// Экран подключения и остатков iiko. Мелкие карточки/строки вынесены в
 /// iiko_widgets.dart, чтобы не раздувать build().
@@ -142,6 +146,47 @@ class _IikoScreenState extends ConsumerState<IikoScreen> {
     }
   }
 
+  /// Сопоставляет текущие остатки iiko с товарами каталога (по названию) и
+  /// предлагает готовую заявку на всё, что ниже minStock — раньше это было
+  /// в списке незавершённых задач проекта. Работает и в демо-режиме.
+  Future<void> _createRequestFromBalances() async {
+    final products = ref.read(settingsRepositoryProvider).products;
+    final suggestions =
+        buildLowStockSuggestions(balances: _balances, products: products);
+
+    if (suggestions.isEmpty) {
+      final anyMinStockConfigured = products.any((p) => p.minStock != null);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(anyMinStockConfigured
+            ? 'Все остатки в норме — дозаказ не требуется.'
+            : 'Сначала задайте минимальный остаток для товаров: Настройки → Товары.'),
+        backgroundColor: anyMinStockConfigured ? AppColors.green : AppColors.muted,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ));
+      return;
+    }
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final confirmed = await showLowStockRequestDialog(
+      context,
+      isDark: isDark,
+      suggestions: suggestions,
+    );
+    if (!confirmed || !mounted) return;
+
+    final items = suggestions
+        .map((s) => RequestItem(
+              productId: s.product.id,
+              productName: s.product.name,
+              quantity: s.suggestedQuantity,
+              unit: s.product.unit,
+            ))
+        .toList();
+    ref.read(requestStateProvider.notifier).prefillFromSuggestions(items);
+    if (mounted) context.push('/request');
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -266,6 +311,19 @@ class _IikoScreenState extends ConsumerState<IikoScreen> {
                 ]),
                 const SizedBox(height: 8),
                 ..._balances.map((b) => BalanceRow(item: b, isDark: isDark)),
+                const SizedBox(height: 12),
+                ElevatedButton.icon(
+                  onPressed: _createRequestFromBalances,
+                  icon: const Icon(Icons.assignment_outlined),
+                  label: const Text('Создать заявку по остаткам'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.orange,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(double.infinity, 50),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
+                  ),
+                ),
               ],
             ]),
           ),

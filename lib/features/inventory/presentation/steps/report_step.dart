@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -288,8 +289,14 @@ class ReportStep extends ConsumerWidget {
                   await PdfGenerator.downloadFile(pdfBytes,
                       'inventory_${DateTime.now().millisecondsSinceEpoch}.pdf');
                 } catch (e) {
+                  // Сырой текст исключения ("Exception: FileSystemException...")
+                  // ничего не скажет сотруднику — печатаем его в консоль для
+                  // диагностики, а на экран показываем понятное сообщение.
+                  debugPrint('Ошибка создания PDF инвентаризации: $e');
+                  if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text('Ошибка: $e'),
+                    content: const Text(
+                        'Не удалось создать PDF. Попробуйте ещё раз.'),
                     backgroundColor: Colors.redAccent,
                     behavior: SnackBarBehavior.floating,
                     shape: RoundedRectangleBorder(

@@ -5,6 +5,7 @@ import 'package:horeca_app/features/request/presentation/steps/category_step.dar
 import 'package:horeca_app/features/request/presentation/steps/product_list_step.dart';
 import 'package:horeca_app/features/request/presentation/steps/generate_step.dart';
 import 'package:horeca_app/features/request/domain/usecases/request_state.dart';
+import 'package:horeca_app/shared/widgets/step_progress_bar.dart';
 
 class RequestScreen extends ConsumerWidget {
   const RequestScreen({super.key});
@@ -21,6 +22,7 @@ class RequestScreen extends ConsumerWidget {
                 onPressed: () => ref.read(requestStateProvider.notifier).goBack(),
               )
             : null,
+        bottom: StepProgressBar(currentStep: state.step, totalSteps: 4),
       ),
       body: SafeArea(
         child: IndexedStack(

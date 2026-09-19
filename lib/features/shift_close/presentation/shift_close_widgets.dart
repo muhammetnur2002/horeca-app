@@ -127,15 +127,16 @@ class QtyBtn extends StatelessWidget {
   Widget build(BuildContext context) => GestureDetector(
       onTap: onTap,
       child: Container(
-          width: 30,
-          height: 30,
+          width: 44,
+          height: 44,
+          alignment: Alignment.center,
           decoration: BoxDecoration(
               color: Colors.white.withOpacity(isDark ? 0.08 : 0.6),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(10),
               border: Border.all(
                   color: Colors.white.withOpacity(isDark ? 0.1 : 0.3))),
           child: Icon(icon,
-              size: 16,
+              size: 18,
               color: isDark ? Colors.white : const Color(0xFF1A1A2E))));
 }
 

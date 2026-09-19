@@ -91,6 +91,14 @@ class RequestStateNotifier extends StateNotifier<RequestState> {
     state = state.copyWith(items: validItems, step: 3);
   }
 
+  /// Заполняет заявку готовым списком товаров и сразу переводит на экран
+  /// предпросмотра (шаг 3) — используется, когда заявка собирается не вручную
+  /// через отдел/категорию, а автоматически (например, по остаткам iiko,
+  /// где товары могут относиться к разным отделам сразу).
+  void prefillFromSuggestions(List<RequestItem> items) {
+    state = RequestState(step: 3, items: items);
+  }
+
   void goBack() {
     if (state.step == 1) {
       state = state.copyWith(step: 0, departmentId: null, categoryId: null);

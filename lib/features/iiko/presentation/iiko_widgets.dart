@@ -7,6 +7,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/features/iiko/data/iiko_service.dart';
+import 'package:horeca_app/features/iiko/data/iiko_request_suggester.dart';
 
 class LoginCard extends StatelessWidget {
   final TextEditingController controller;
@@ -168,6 +169,87 @@ class CheckRow extends StatelessWidget {
       ),
     );
   }
+}
+
+String _formatQty(double v) =>
+    v == v.truncateToDouble() ? v.toInt().toString() : v.toStringAsFixed(1);
+
+/// Диалог подтверждения перед созданием заявки из остатков iiko — сотрудник
+/// видит, какие товары попали в подборку и сколько предлагается заказать,
+/// прежде чем список уйдёт в обычный экран заявки на редактирование.
+Future<bool> showLowStockRequestDialog(
+  BuildContext context, {
+  required bool isDark,
+  required List<LowStockSuggestion> suggestions,
+}) async {
+  final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+  final result = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      backgroundColor: isDark ? AppColors.darkCard : Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: Text('Заявка по остаткам iiko',
+          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: textColor)),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '${suggestions.length} ${suggestions.length == 1 ? "товар" : "товара(ов)"} ниже минимального остатка:',
+              style: const TextStyle(fontSize: 13, color: AppColors.muted),
+            ),
+            const SizedBox(height: 12),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 280),
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: suggestions.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 10),
+                itemBuilder: (_, i) {
+                  final s = suggestions[i];
+                  return Row(children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(s.product.name,
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w600, fontSize: 14, color: textColor)),
+                          Text('Остаток: ${_formatQty(s.currentAmount)} ${s.iikoUnit}',
+                              style: const TextStyle(fontSize: 12, color: AppColors.muted)),
+                        ],
+                      ),
+                    ),
+                    Text('+${_formatQty(s.suggestedQuantity)} ${s.product.unit}',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.orange)),
+                  ]);
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: const Text('Отмена', style: TextStyle(color: AppColors.muted)),
+        ),
+        ElevatedButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.orange,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+          child: const Text('Создать заявку'),
+        ),
+      ],
+    ),
+  );
+  return result ?? false;
 }
 
 class BalanceRow extends StatelessWidget {

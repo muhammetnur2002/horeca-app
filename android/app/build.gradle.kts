@@ -35,7 +35,7 @@ android {
         // ВНИМАНИЕ: `flutter build`/`flutter upgrade` иногда переписывает эту
         // строку обратно на flutter.minSdkVersion при "Upgrading build.gradle.kts" —
         // проверяйте после апгрейдов Flutter, что тут снова стоит 23.
-        minSdk = flutter.minSdkVersion
+        minSdk = 23
         targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName

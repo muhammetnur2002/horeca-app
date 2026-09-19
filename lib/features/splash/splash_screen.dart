@@ -6,8 +6,13 @@ import 'package:horeca_app/features/splash/splash_painter.dart';
 
 /// Экран заставки (анимация галактики при запуске). CustomPainter и его
 /// данные вынесены в splash_painter.dart, чтобы не раздувать этот файл.
+///
+/// Сотрудники открывают приложение много раз за смену — фиксированная пауза
+/// на старте должна быть короткой (не декоративной 10-секундной анимацией,
+/// как было раньше), плюс тап сразу пропускает её для тех, кто торопится.
 class SplashScreen extends ConsumerStatefulWidget {
-  const SplashScreen({super.key});
+  final VoidCallback? onSkip;
+  const SplashScreen({super.key, this.onSkip});
   @override
   ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
@@ -26,7 +31,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     super.initState();
     _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 10),
+      duration: const Duration(milliseconds: 1600),
     );
 
     _stars = List.generate(160, (i) => Star(
@@ -60,23 +65,33 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     final isDark = _isDark;
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF060A18) : const Color(0xFFDDE8FF),
-      body: AnimatedBuilder(
-        animation: _ctrl,
-        builder: (context, _) {
-          final t = _ctrl.value * 10;
-          _updateParticles();
-          _maybeShoot();
-          return CustomPaint(
-            painter: GalaxyPainter(
-              t: t,
-              isDark: isDark,
-              stars: _stars,
-              particles: List.from(_particles),
-              shoots: List.from(_shoots),
-            ),
-            child: const SizedBox.expand(),
-          );
-        },
+      body: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: widget.onSkip,
+        child: AnimatedBuilder(
+          animation: _ctrl,
+          builder: (context, _) {
+            // t — это "прошедшие секунды" для скоростей звёзд/частиц, а не
+            // доля от 0 до 1: раньше анимация длилась 10 честных секунд,
+            // поэтому _ctrl.value*10 совпадал с реальным временем. Теперь
+            // контроллер короче — пересчитываем через его реальную
+            // длительность, чтобы скорость движения не менялась.
+            final totalSeconds = _ctrl.duration!.inMilliseconds / 1000;
+            final t = _ctrl.value * totalSeconds;
+            _updateParticles();
+            _maybeShoot();
+            return CustomPaint(
+              painter: GalaxyPainter(
+                t: t,
+                isDark: isDark,
+                stars: _stars,
+                particles: List.from(_particles),
+                shoots: List.from(_shoots),
+              ),
+              child: const SizedBox.expand(),
+            );
+          },
+        ),
       ),
     );
   }

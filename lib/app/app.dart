@@ -46,9 +46,11 @@ class _HorecaAppState extends ConsumerState<HorecaApp> with WidgetsBindingObserv
     ));
     _accountGateSkipped =
         ref.read(sharedPreferencesProvider).getBool(_accountGateSkippedKey) ?? false;
-    Future.delayed(const Duration(seconds: 10), () {
-      if (mounted) setState(() => _showSplash = false);
-    });
+    // Сотрудники открывают приложение много раз за смену — заставка не
+    // должна задерживать вход дольше, чем нужно для короткой анимации
+    // бренда (было 10 секунд, что для ежедневного рабочего инструмента
+    // слишком долго). Длительность синхронизирована с SplashScreen.
+    Future.delayed(const Duration(milliseconds: 1600), _dismissSplash);
     // Периодическая фоновая синхронизация, пока приложение открыто — не
     // только по выходу из экрана, чтобы данные не терялись при долгих
     // сессиях или если приложение убьют из "недавних" без штатного paused.
@@ -60,6 +62,10 @@ class _HorecaAppState extends ConsumerState<HorecaApp> with WidgetsBindingObserv
     _syncTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  void _dismissSplash() {
+    if (mounted && _showSplash) setState(() => _showSplash = false);
   }
 
   void _syncIfLoggedIn() {
@@ -95,9 +101,9 @@ class _HorecaAppState extends ConsumerState<HorecaApp> with WidgetsBindingObserv
     final themeMode = ref.watch(themeModeProvider);
 
     if (_showSplash) {
-      return const Directionality(
+      return Directionality(
         textDirection: TextDirection.ltr,
-        child: SplashScreen(),
+        child: SplashScreen(onSkip: _dismissSplash),
       );
     }
 

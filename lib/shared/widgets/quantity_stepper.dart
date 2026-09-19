@@ -98,16 +98,19 @@ class QuantityStepper extends StatelessWidget {
       GestureDetector(
         onTap: () => _showManualInput(context),
         child: SizedBox(
-          width: 40,
-          child: Text(
-            _formatted,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: hasQty ? AppColors.orange : textColor,
-              decoration: TextDecoration.underline,
-              decorationColor: hasQty ? AppColors.orange : AppColors.muted,
+          width: 44,
+          height: 44,
+          child: Center(
+            child: Text(
+              _formatted,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: hasQty ? AppColors.orange : textColor,
+                decoration: TextDecoration.underline,
+                decorationColor: hasQty ? AppColors.orange : AppColors.muted,
+              ),
             ),
           ),
         ),
@@ -126,15 +129,19 @@ class _QtyBtn extends StatelessWidget {
   @override
   Widget build(BuildContext context) => GestureDetector(
         onTap: onTap,
+        // 44×44 — минимальный комфортный тап-таргет для сотрудников, которые
+        // нажимают эту кнопку десятки раз подряд при инвентаризации, часто
+        // мокрыми/жирными руками или в перчатках.
         child: Container(
-          width: 32,
-          height: 32,
+          width: 44,
+          height: 44,
+          alignment: Alignment.center,
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(isDark ? 0.08 : 0.6),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(10),
             border: Border.all(color: Colors.white.withOpacity(isDark ? 0.1 : 0.3)),
           ),
-          child: Icon(icon, size: 16, color: isDark ? Colors.white : const Color(0xFF1A1A2E)),
+          child: Icon(icon, size: 18, color: isDark ? Colors.white : const Color(0xFF1A1A2E)),
         ),
       );
 }
