@@ -35,14 +35,20 @@ class CloudSyncService {
   /// Отправляет список заведений (код+название) в облако — чтобы при входе
   /// с другого устройства приложение знало, какие заведения вообще есть,
   /// прежде чем скачивать данные каждого из них.
-  static Future<void> pushVenueRegistry(String uid, List<Venue> venues) async {
+  /// Возвращает false при сбое (например, нет сети) — раньше ошибка просто
+  /// проглатывалась и вызывающий код не мог узнать, реально ли данные ушли
+  /// в облако (см. _syncNow в app_settings_account_section.dart, который
+  /// показывал "Данные отправлены" даже когда отправка не удалась).
+  static Future<bool> pushVenueRegistry(String uid, List<Venue> venues) async {
     try {
       await _rootDoc(uid).set({
         'venues': venues.map((v) => v.toJson()).toList(),
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
+      return true;
     } catch (_) {
       // Нет сети — реестр просто не обновится, приложение продолжает работать.
+      return false;
     }
   }
 
@@ -98,8 +104,9 @@ class CloudSyncService {
   }
 
   /// Отправляет текущие локальные данные заведения в облако (сливает с уже
-  /// сохранёнными).
-  static Future<void> pushToCloud(
+  /// сохранёнными). Возвращает false при сбое — см. комментарий у
+  /// pushVenueRegistry про то, зачем вызывающему коду знать об этом.
+  static Future<bool> pushToCloud(
       String uid, SharedPreferences prefs, String venueCode) async {
     try {
       final suffix = venueKeySuffix(venueCode);
@@ -116,8 +123,10 @@ class CloudSyncService {
       final snap = await _venueDoc(uid, venueCode).get();
       final data = snap.data();
       if (data != null) await _rememberCloudUpdatedAt(prefs, venueCode, data);
+      return true;
     } catch (_) {
       // Отсутствие сети не должно ронять приложение — просто не синхронизируем.
+      return false;
     }
   }
 

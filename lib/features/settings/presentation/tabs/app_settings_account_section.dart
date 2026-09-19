@@ -32,12 +32,20 @@ class _AccountSectionState extends ConsumerState<AccountSection> {
     setState(() => _isSyncing = true);
     final prefs = ref.read(sharedPreferencesProvider);
     final venueCode = ref.read(venueRepositoryProvider).activeVenueCode;
-    await CloudSyncService.pushVenueRegistry(uid, ref.read(venueRepositoryProvider).venues);
-    await CloudSyncService.pushToCloud(uid, prefs, venueCode);
+    final registryOk = await CloudSyncService.pushVenueRegistry(
+        uid, ref.read(venueRepositoryProvider).venues);
+    final dataOk = await CloudSyncService.pushToCloud(uid, prefs, venueCode);
+    // Раньше здесь всегда показывалось "Данные отправлены", даже если оба
+    // вызова выше молча падали (например, нет сети) — сотрудник считал
+    // данные синхронизированными, хотя они оставались только на устройстве.
+    final success = registryOk && dataOk;
     if (mounted) {
       setState(() => _isSyncing = false);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Данные отправлены в облако'),
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(success
+            ? 'Данные отправлены в облако'
+            : 'Не удалось синхронизировать — проверьте интернет'),
+        backgroundColor: success ? null : Colors.redAccent,
         behavior: SnackBarBehavior.floating,
       ));
     }

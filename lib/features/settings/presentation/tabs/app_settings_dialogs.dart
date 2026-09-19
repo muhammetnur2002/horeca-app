@@ -184,17 +184,27 @@ Future<void> restoreAppBackup(
   if (result == null || result.files.single.path == null) return;
 
   final prefs = ref.read(sharedPreferencesProvider);
-  final success =
+  final restoreResult =
       await BackupService.restoreFromFile(result.files.single.path!, prefs);
 
   if (context.mounted) {
+    final String message;
+    switch (restoreResult) {
+      case RestoreResult.success:
+        message = 'Данные восстановлены. Перезапустите приложение';
+        break;
+      case RestoreResult.invalidFile:
+        message = 'Это не файл резервной копии Akyl';
+        break;
+      case RestoreResult.error:
+        message = 'Не удалось прочитать файл. Попробуйте ещё раз';
+        break;
+    }
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(
-          success
-              ? 'Данные восстановлены. Перезапустите приложение'
-              : 'Ошибка: неверный файл резервной копии',
-          style: const TextStyle(color: Colors.white)),
-      backgroundColor: success ? AppColors.green : Colors.redAccent,
+      content: Text(message, style: const TextStyle(color: Colors.white)),
+      backgroundColor: restoreResult == RestoreResult.success
+          ? AppColors.green
+          : Colors.redAccent,
       behavior: SnackBarBehavior.floating,
     ));
   }

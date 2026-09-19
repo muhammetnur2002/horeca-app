@@ -5,6 +5,8 @@ import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:horeca_app/features/venue/data/venue_repository.dart';
 
+enum RestoreResult { success, invalidFile, error }
+
 class BackupService {
   // Ключи, которые ведутся отдельно на каждое заведение (см.
   // venueKeySuffix) — при бэкапе к каждому добавляется суффикс кода
@@ -71,7 +73,7 @@ class BackupService {
     );
   }
 
-  static Future<bool> restoreFromFile(
+  static Future<RestoreResult> restoreFromFile(
       String filePath, SharedPreferences prefs) async {
     try {
       final file = File(filePath);
@@ -79,7 +81,7 @@ class BackupService {
       final backup = jsonDecode(content) as Map<String, dynamic>;
 
       if (backup['app'] != 'Akyl') {
-        throw Exception('Это не файл резервной копии Akyl');
+        return RestoreResult.invalidFile;
       }
 
       final data = backup['data'] as Map<String, dynamic>;
@@ -90,9 +92,16 @@ class BackupService {
           await prefs.setString(entry.key, entry.value as String);
         }
       }
-      return true;
+      return RestoreResult.success;
+    } on FormatException {
+      // Файл не в формате JSON вообще — точно не наш бэкап.
+      return RestoreResult.invalidFile;
     } catch (e) {
-      return false;
+      // Любая другая ошибка (нет доступа к файлу, повреждённые данные
+      // внутри валидного JSON и т.п.) — это не обязательно "неверный
+      // файл", поэтому раньше вводящее в заблуждение сообщение теперь
+      // разделено на два разных случая (см. RestoreResult).
+      return RestoreResult.error;
     }
   }
 
