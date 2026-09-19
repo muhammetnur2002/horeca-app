@@ -48,3 +48,6 @@ app.*.map.json
 /android/key.properties
 *.jks
 *.keystore
+
+# Личные пароли/коды доступа — никогда не коммитить
+/passwords for horeca Akyl/
