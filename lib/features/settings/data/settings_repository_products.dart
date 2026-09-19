@@ -17,8 +17,19 @@ extension SettingsRepositoryProducts on SettingsRepository {
 
   void addProduct(String name, String unit, String categoryId,
       {String? inventoryUnit}) {
+    addProductWithId(DateTime.now().millisecondsSinceEpoch.toString(), name,
+        unit, categoryId,
+        inventoryUnit: inventoryUnit);
+  }
+
+  /// Вариант addProduct с явным id — см. комментарий у addCategoryWithId:
+  /// нужен для массового импорта, где id на основе времени может
+  /// коллизировать при добавлении многих товаров подряд в одном цикле.
+  void addProductWithId(
+      String id, String name, String unit, String categoryId,
+      {String? inventoryUnit}) {
     final p = ProductModel(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        id: id,
         name: name,
         unit: unit,
         inventoryUnit: inventoryUnit ?? unit,

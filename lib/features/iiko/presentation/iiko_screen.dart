@@ -5,6 +5,7 @@ import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/features/iiko/data/iiko_repository.dart';
 import 'package:horeca_app/features/iiko/data/iiko_request_suggester.dart';
 import 'package:horeca_app/features/iiko/data/iiko_service.dart';
+import 'package:horeca_app/features/iiko/presentation/iiko_import_screen.dart';
 import 'package:horeca_app/features/iiko/presentation/iiko_widgets.dart';
 import 'package:horeca_app/features/request/domain/usecases/request_state.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
@@ -141,6 +142,34 @@ class _IikoScreenState extends ConsumerState<IikoScreen> {
       if (!mounted) return;
       setState(() {
         _error = 'Не удалось обновить остатки.';
+        _loading = false;
+      });
+    }
+  }
+
+  /// Открывает импорт товаров из номенклатуры iiko — получает свежий токен
+  /// по сохранённому API-логину (тот, что был получен при подключении, мог
+  /// уже истечь) точно так же, как это делает обновление остатков.
+  Future<void> _openImport() async {
+    final config = ref.read(iikoRepositoryProvider);
+    if (!config.isConnected || config.organizationId == null) return;
+    setState(() { _loading = true; _error = null; });
+    try {
+      final apiLogin = await ref.read(iikoRepositoryProvider.notifier).getApiLogin();
+      if (apiLogin == null) throw Exception('Учётные данные iiko не найдены');
+      final token = await _service.getAccessToken(apiLogin);
+      if (!mounted) return;
+      setState(() => _loading = false);
+      Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => IikoImportScreen(
+          token: token,
+          organizationId: config.organizationId!,
+        ),
+      ));
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'Не удалось подключиться для импорта. Проверьте интернет.';
         _loading = false;
       });
     }
@@ -292,6 +321,22 @@ class _IikoScreenState extends ConsumerState<IikoScreen> {
                   child: _loading
                       ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                       : const Text('Загрузить остатки'),
+                ),
+              ],
+
+              if (config.isConnected) ...[
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: _loading ? null : _openImport,
+                  icon: const Icon(Icons.download_rounded, size: 18),
+                  label: const Text('Импортировать товары из iiko'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.orange,
+                    side: BorderSide(color: AppColors.orange.withOpacity(0.4)),
+                    minimumSize: const Size(double.infinity, 48),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
+                  ),
                 ),
               ],
 

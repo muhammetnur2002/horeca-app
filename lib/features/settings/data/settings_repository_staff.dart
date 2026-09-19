@@ -67,12 +67,24 @@ extension SettingsRepositoryStaff on SettingsRepository {
   // ── Категории ─────────────────────────────────────────────────────────────
   void addCategory(String name, String departmentId,
       {bool isDessertCategory = false}) {
+    addCategoryWithId(DateTime.now().millisecondsSinceEpoch.toString(), name,
+        departmentId, isDessertCategory: isDessertCategory);
+  }
+
+  /// Вариант addCategory с явным id — нужен массовому импорту (например, из
+  /// iiko), где несколько категорий создаются подряд в одном синхронном
+  /// цикле: id на основе DateTime.now() в таком цикле может совпасть у
+  /// соседних вызовов (одна и та же миллисекунда), а вызывающий код сам
+  /// гарантирует уникальность своих id.
+  String addCategoryWithId(String id, String name, String departmentId,
+      {bool isDessertCategory = false}) {
     final c = CategoryModel(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        id: id,
         name: name,
         departmentId: departmentId,
         isDessertCategory: isDessertCategory);
     applyUpdate((s) => s.copyWith(categories: [...s.categories, c]));
+    return id;
   }
 
   void updateCategory(String id, String newName,
