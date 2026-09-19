@@ -157,7 +157,7 @@ class _ProductsTabState extends ConsumerState<ProductsTab> {
               });
             },
             child: Text(
-              _selectMode ? 'Отмена' : 'Выбрать',
+              _selectMode ? l10n.cancel : 'Выбрать',
               style: const TextStyle(color: AppColors.orange),
             ),
           ),

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
 import 'package:horeca_app/features/settings/data/settings_repository_staff.dart';
+import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
 
 class ShiftTab extends ConsumerWidget {
   const ShiftTab({super.key});
@@ -85,6 +86,7 @@ class ShiftTab extends ConsumerWidget {
 
   void _showAddDialog(
       BuildContext context, SettingsRepository repo, bool isDark) {
+    final l10n = AppLocalizations.of(context);
     final ctrl = TextEditingController();
     showDialog(
       context: context,
@@ -106,7 +108,7 @@ class ShiftTab extends ConsumerWidget {
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child:
-                const Text('Отмена', style: TextStyle(color: AppColors.muted)),
+                Text(l10n.cancel, style: const TextStyle(color: AppColors.muted)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -121,7 +123,7 @@ class ShiftTab extends ConsumerWidget {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
             ),
-            child: const Text('Добавить'),
+            child: Text(l10n.add),
           ),
         ],
       ),
@@ -130,6 +132,7 @@ class ShiftTab extends ConsumerWidget {
 
   void _showEditDialog(
       BuildContext context, SettingsRepository repo, String name, bool isDark) {
+    final l10n = AppLocalizations.of(context);
     final ctrl = TextEditingController(text: name);
     showDialog(
       context: context,
@@ -151,7 +154,7 @@ class ShiftTab extends ConsumerWidget {
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child:
-                const Text('Отмена', style: TextStyle(color: AppColors.muted)),
+                Text(l10n.cancel, style: const TextStyle(color: AppColors.muted)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -166,7 +169,7 @@ class ShiftTab extends ConsumerWidget {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
             ),
-            child: const Text('Сохранить'),
+            child: Text(l10n.save),
           ),
         ],
       ),
@@ -175,6 +178,7 @@ class ShiftTab extends ConsumerWidget {
 
   void _confirmDelete(
       BuildContext context, SettingsRepository repo, String name, bool isDark) {
+    final l10n = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -188,7 +192,7 @@ class ShiftTab extends ConsumerWidget {
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child:
-                const Text('Отмена', style: TextStyle(color: AppColors.muted)),
+                Text(l10n.cancel, style: const TextStyle(color: AppColors.muted)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -208,7 +212,7 @@ class ShiftTab extends ConsumerWidget {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
             ),
-            child: const Text('Удалить'),
+            child: Text(l10n.delete),
           ),
         ],
       ),

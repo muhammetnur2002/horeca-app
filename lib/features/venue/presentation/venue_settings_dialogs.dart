@@ -10,8 +10,10 @@ import 'package:horeca_app/features/account/data/account_repository.dart';
 import 'package:horeca_app/features/account/data/cloud_sync_service.dart';
 import 'package:horeca_app/features/auth/data/auth_repository.dart';
 import 'package:horeca_app/features/venue/data/venue_repository.dart';
+import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
 
 void showAddVenueDialog(BuildContext context, WidgetRef ref, bool isDark) {
+  final l10n = AppLocalizations.of(context);
   final ctrl = TextEditingController();
   final repo = ref.read(venueRepositoryProvider.notifier);
   final nextCode = repo.nextFreeCode;
@@ -34,7 +36,7 @@ void showAddVenueDialog(BuildContext context, WidgetRef ref, bool isDark) {
       actions: [
         TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Отмена', style: TextStyle(color: AppColors.muted))),
+            child: Text(l10n.cancel, style: const TextStyle(color: AppColors.muted))),
         ElevatedButton(
           onPressed: () {
             if (ctrl.text.trim().isNotEmpty) {
@@ -54,6 +56,7 @@ void showAddVenueDialog(BuildContext context, WidgetRef ref, bool isDark) {
 }
 
 void showRenameVenueDialog(BuildContext context, WidgetRef ref, Venue venue, bool isDark) {
+  final l10n = AppLocalizations.of(context);
   final ctrl = TextEditingController(text: venue.name);
   final repo = ref.read(venueRepositoryProvider.notifier);
   showDialog(
@@ -75,7 +78,7 @@ void showRenameVenueDialog(BuildContext context, WidgetRef ref, Venue venue, boo
       actions: [
         TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Отмена', style: TextStyle(color: AppColors.muted))),
+            child: Text(l10n.cancel, style: const TextStyle(color: AppColors.muted))),
         ElevatedButton(
           onPressed: () {
             if (ctrl.text.trim().isNotEmpty) {
@@ -87,7 +90,7 @@ void showRenameVenueDialog(BuildContext context, WidgetRef ref, Venue venue, boo
               backgroundColor: AppColors.orange,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-          child: const Text('Сохранить'),
+          child: Text(l10n.save),
         ),
       ],
     ),
@@ -100,6 +103,7 @@ void showRenameVenueDialog(BuildContext context, WidgetRef ref, Venue venue, boo
 /// проверяем оба варианта, чтобы не заставлять человека выбирать способ
 /// вручную.
 void showDeleteVenueDialog(BuildContext context, WidgetRef ref, Venue venue, bool isDark) {
+  final l10n = AppLocalizations.of(context);
   final ctrl = TextEditingController();
   bool obscure = true;
   bool isChecking = false;
@@ -150,7 +154,7 @@ void showDeleteVenueDialog(BuildContext context, WidgetRef ref, Venue venue, boo
         actions: [
           TextButton(
             onPressed: isChecking ? null : () => Navigator.pop(ctx),
-            child: const Text('Отмена', style: TextStyle(color: AppColors.muted)),
+            child: Text(l10n.cancel, style: const TextStyle(color: AppColors.muted)),
           ),
           ElevatedButton(
             onPressed: isChecking
@@ -207,7 +211,7 @@ void showDeleteVenueDialog(BuildContext context, WidgetRef ref, Venue venue, boo
                     width: 18,
                     height: 18,
                     child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                : const Text('Удалить'),
+                : Text(l10n.delete),
           ),
         ],
       ),

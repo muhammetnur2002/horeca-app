@@ -4,6 +4,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
+import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
 import 'package:horeca_app/features/shift_close/presentation/shift_close_models.dart';
 import 'package:horeca_app/features/shift_close/presentation/shift_close_step1_dialogs.dart';
@@ -24,6 +25,7 @@ Widget buildShiftStep1({
   required ValueChanged<String> onDessertSearchChanged,
   required void Function(List<DessertItem> desserts) onDessertsLoaded,
 }) {
+  final l10n = AppLocalizations.of(context);
   final staffList = ref.watch(settingsRepositoryProvider).staff;
   final filteredDesserts = dessertSearch.trim().isEmpty
       ? desserts
@@ -240,11 +242,11 @@ Widget buildShiftStep1({
                         borderRadius: BorderRadius.circular(12),
                         border:
                             Border.all(color: AppColors.orange.withOpacity(0.3))),
-                    child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                      Icon(Icons.add_rounded, size: 16, color: AppColors.orange),
-                      SizedBox(width: 4),
-                      Text('Добавить',
-                          style: TextStyle(
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      const Icon(Icons.add_rounded, size: 16, color: AppColors.orange),
+                      const SizedBox(width: 4),
+                      Text(l10n.add,
+                          style: const TextStyle(
                               fontSize: 12,
                               color: AppColors.orange,
                               fontWeight: FontWeight.w600)),

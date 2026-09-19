@@ -12,6 +12,7 @@ import 'package:horeca_app/app/di.dart';
 import 'package:horeca_app/features/account/data/account_repository.dart';
 import 'package:horeca_app/features/auth/data/auth_repository.dart';
 import 'package:horeca_app/features/venue/data/venue_repository.dart';
+import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
 
 Future<void> showForgotPinDialog(BuildContext context, WidgetRef ref) async {
   final account = ref.read(accountRepositoryProvider);
@@ -43,6 +44,7 @@ Future<void> showForgotPinDialog(BuildContext context, WidgetRef ref) async {
     return;
   }
 
+  final l10n = AppLocalizations.of(context);
   final venueState = ref.read(venueRepositoryProvider);
   String? selectedCode = venueState.isMultiVenue ? null : '01';
   final pwCtrl = TextEditingController();
@@ -103,7 +105,7 @@ Future<void> showForgotPinDialog(BuildContext context, WidgetRef ref) async {
         actions: [
           TextButton(
             onPressed: isChecking ? null : () => Navigator.pop(ctx),
-            child: const Text('Отмена', style: TextStyle(color: AppColors.muted)),
+            child: Text(l10n.cancel, style: const TextStyle(color: AppColors.muted)),
           ),
           ElevatedButton(
             onPressed: isChecking || selectedCode == null

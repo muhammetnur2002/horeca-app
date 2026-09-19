@@ -8,6 +8,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:horeca_app/app/app.dart';
+import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
 
 class AmountField extends StatelessWidget {
   final String label;
@@ -202,6 +203,7 @@ class ConfirmCloseShiftDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
     return AlertDialog(
         backgroundColor: isDark ? AppColors.darkCard : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -213,8 +215,8 @@ class ConfirmCloseShiftDialog extends StatelessWidget {
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Отмена',
-                  style: TextStyle(color: AppColors.muted))),
+              child: Text(l10n.cancel,
+                  style: const TextStyle(color: AppColors.muted))),
           ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
               style: ElevatedButton.styleFrom(

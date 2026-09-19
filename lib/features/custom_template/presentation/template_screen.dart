@@ -7,6 +7,7 @@ import 'package:horeca_app/features/custom_template/data/excel_parser.dart';
 import 'package:horeca_app/features/custom_template/data/field_matcher.dart';
 import 'package:horeca_app/features/custom_template/data/template_models.dart';
 import 'package:horeca_app/features/custom_template/data/template_repository.dart';
+import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
 
 class TemplateScreen extends ConsumerStatefulWidget {
   const TemplateScreen({super.key});
@@ -98,6 +99,7 @@ class _TemplateScreenState extends ConsumerState<TemplateScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
     final currentTemplate = ref.watch(templateRepositoryProvider);
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -205,7 +207,7 @@ class _TemplateScreenState extends ConsumerState<TemplateScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         side: BorderSide(color: AppColors.muted.withOpacity(0.3)),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
-                    child: const Text('Отмена', style: TextStyle(color: AppColors.muted)),
+                    child: Text(l10n.cancel, style: const TextStyle(color: AppColors.muted)),
                   )),
                   const SizedBox(width: 12),
                   Expanded(flex: 2, child: ElevatedButton(

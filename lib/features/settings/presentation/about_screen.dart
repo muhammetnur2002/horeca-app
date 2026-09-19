@@ -7,6 +7,7 @@ import 'package:horeca_app/features/history/data/history_repository.dart';
 import 'package:horeca_app/features/settings/presentation/faq_screen.dart';
 import 'package:horeca_app/features/settings/presentation/legal_documents.dart';
 import 'package:horeca_app/features/onboarding/data/onboarding_repository.dart';
+import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
 
 /// Отдельный экран "О программе": сюда убрали чисто информационные пункты
 /// (поддержка, политика конфиденциальности, условия использования, сброс
@@ -160,6 +161,7 @@ class AboutScreen extends ConsumerWidget {
   }
 
   void _confirmResetAll(BuildContext context, WidgetRef ref, bool isDark) {
+    final l10n = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -174,8 +176,8 @@ class AboutScreen extends ConsumerWidget {
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Отмена',
-                  style: TextStyle(color: AppColors.muted))),
+              child: Text(l10n.cancel,
+                  style: const TextStyle(color: AppColors.muted))),
           ElevatedButton(
               onPressed: () {
                 Navigator.pop(ctx);

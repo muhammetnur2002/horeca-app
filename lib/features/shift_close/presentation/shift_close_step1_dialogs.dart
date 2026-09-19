@@ -4,6 +4,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:horeca_app/app/app.dart';
+import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
 import 'package:horeca_app/features/shift_close/presentation/shift_close_models.dart';
 
 void showAddManualWriteOffDialog({
@@ -12,6 +13,7 @@ void showAddManualWriteOffDialog({
   required StateSetter setState,
   required List<ManualWriteOff> manualWriteOffs,
 }) {
+  final l10n = AppLocalizations.of(context);
   final nameCtrl = TextEditingController();
   String selectedUnit = 'шт';
   final units = ['шт', 'кг', 'гр', 'л', 'мл'];
@@ -49,8 +51,8 @@ void showAddManualWriteOffDialog({
               actions: [
                 TextButton(
                     onPressed: () => Navigator.pop(ctx),
-                    child: const Text('Отмена',
-                        style: TextStyle(color: AppColors.muted))),
+                    child: Text(l10n.cancel,
+                        style: const TextStyle(color: AppColors.muted))),
                 ElevatedButton(
                     onPressed: () {
                       if (nameCtrl.text.isNotEmpty) {
@@ -64,7 +66,7 @@ void showAddManualWriteOffDialog({
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12))),
-                    child: const Text('Добавить')),
+                    child: Text(l10n.add)),
               ],
             )),
   );

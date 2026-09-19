@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/features/iiko/data/iiko_service.dart';
 import 'package:horeca_app/features/iiko/data/iiko_request_suggester.dart';
+import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
 
 class LoginCard extends StatelessWidget {
   final TextEditingController controller;
@@ -183,6 +184,7 @@ Future<bool> showLowStockRequestDialog(
   required List<LowStockSuggestion> suggestions,
 }) async {
   final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+  final l10n = AppLocalizations.of(context);
   final result = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
@@ -235,7 +237,7 @@ Future<bool> showLowStockRequestDialog(
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Отмена', style: TextStyle(color: AppColors.muted)),
+          child: Text(l10n.cancel, style: const TextStyle(color: AppColors.muted)),
         ),
         ElevatedButton(
           onPressed: () => Navigator.pop(ctx, true),

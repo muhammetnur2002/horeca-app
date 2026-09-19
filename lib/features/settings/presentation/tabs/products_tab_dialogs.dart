@@ -20,6 +20,7 @@ const _kUnits = ['кг', 'гр', 'л', 'мл', 'шт', 'коробка', 'упа
 /// Диалог "Минимальный остаток" для одного товара.
 void showMinStockDialog(
     BuildContext context, SettingsRepository repo, ProductModel p, bool isDark) {
+  final l10n = AppLocalizations.of(context);
   final ctrl = TextEditingController(text: p.minStock?.toString() ?? '');
   showDialog(
     context: context,
@@ -51,7 +52,7 @@ void showMinStockDialog(
           ),
         TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Отмена', style: TextStyle(color: AppColors.muted))),
+            child: Text(l10n.cancel, style: const TextStyle(color: AppColors.muted))),
         ElevatedButton(
             onPressed: () {
               final value = double.tryParse(ctrl.text.replaceAll(',', '.'));
@@ -63,7 +64,7 @@ void showMinStockDialog(
                 foregroundColor: Colors.white,
                 shape:
                     RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-            child: const Text('Сохранить')),
+            child: Text(l10n.save)),
       ],
     ),
   );

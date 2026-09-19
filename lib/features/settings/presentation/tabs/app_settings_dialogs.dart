@@ -149,6 +149,7 @@ Future<void> createAppBackup(BuildContext context, WidgetRef ref) async {
 
 Future<void> restoreAppBackup(
     BuildContext context, WidgetRef ref, bool isDark) async {
+  final l10n = AppLocalizations.of(context);
   final confirm = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
@@ -163,7 +164,7 @@ Future<void> restoreAppBackup(
         TextButton(
             onPressed: () => Navigator.pop(ctx, false),
             child:
-                const Text('Отмена', style: TextStyle(color: AppColors.muted))),
+                Text(l10n.cancel, style: const TextStyle(color: AppColors.muted))),
         ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(

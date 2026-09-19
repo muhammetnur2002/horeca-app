@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/app/di.dart';
+import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
 import 'package:horeca_app/features/account/data/account_repository.dart';
 import 'package:horeca_app/features/account/data/cloud_sync_service.dart';
 import 'package:horeca_app/features/account/presentation/account_gate_screen.dart';
@@ -52,6 +53,7 @@ class _AccountSectionState extends ConsumerState<AccountSection> {
   }
 
   void _logout(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -67,7 +69,7 @@ class _AccountSectionState extends ConsumerState<AccountSection> {
           TextButton(
               onPressed: () => Navigator.pop(ctx),
               child:
-                  const Text('Отмена', style: TextStyle(color: AppColors.muted))),
+                  Text(l10n.cancel, style: const TextStyle(color: AppColors.muted))),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx);
