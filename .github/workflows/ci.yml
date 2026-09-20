@@ -33,9 +33,14 @@ jobs:
           distribution: temurin
           java-version: '17'
       - run: flutter pub get
-      # Без android/key.properties сборка подписывается debug-ключом (см.
-      # комментарий в android/app/build.gradle.kts) — этого достаточно,
-      # чтобы поймать в CI поломки самой Android-сборки (Gradle/AGP/Kotlin,
-      # манифест, ресурсы, ProGuard-правила), не имея доступа к реальному
-      # release-keystore.
+      # Debug-сборка не гоняет R8/ProGuard вообще — этого достаточно, чтобы
+      # поймать поломки Gradle/AGP/Kotlin, манифеста и ресурсов, но не
+      # поломки от минификации (см. предупреждение в android/app/proguard-rules.pro
+      # про то, что R8 может вырезать нужные Firebase-классы именно в релизе).
       - run: flutter build apk --debug
+      # Без android/key.properties release-сборка подписывается debug-ключом
+      # (см. комментарий в android/app/build.gradle.kts) — в Play Store так
+      # публиковать нельзя, но для CI этого достаточно: isMinifyEnabled/R8
+      # реально включаются только в release, и именно тут ловится класс
+      # ошибок "работает в debug, падает в релизе" из-за вырезанных классов.
+      - run: flutter build apk --release
