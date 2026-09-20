@@ -118,6 +118,31 @@ class SettingsData {
   }
 }
 
+// Восстанавливает иконку отдела из сохранённого codePoint при загрузке из
+// SharedPreferences. Раньше это делалось через `IconData(int.parse(...))`
+// напрямую — не-константный вызов IconData, из-за чего release-сборка
+// (`flutter build apk --release`) падала на шаге tree-shaking иконок:
+// "cannot tree shake icon fonts" (см. проверку в CI). В приложении нет
+// экрана выбора произвольной иконки — новые отделы всегда получают
+// Icons.category (см. addDepartment в settings_repository_staff.dart),
+// а начальный набор — фиксированный список ниже, так что достаточно
+// таблицы соответствия на этих константах.
+IconData _iconForCodePoint(int codePoint) {
+  const known = [
+    Icons.kitchen,
+    Icons.local_bar,
+    Icons.table_restaurant,
+    Icons.warehouse,
+    Icons.cleaning_services,
+    Icons.category,
+    Icons.help,
+  ];
+  for (final icon in known) {
+    if (icon.codePoint == codePoint) return icon;
+  }
+  return Icons.category;
+}
+
 class SettingsRepository extends StateNotifier<SettingsData> {
   final SharedPreferences _prefs;
   final String _settingsKey;
@@ -187,8 +212,7 @@ class SettingsRepository extends StateNotifier<SettingsData> {
           .map((d) => DepartmentModel(
                 id: d['id'],
                 name: d['name'],
-                // ignore: non_const_argument_for_const_parameter
-                icon: IconData(int.parse(d['icon']), fontFamily: 'MaterialIcons'),
+                icon: _iconForCodePoint(int.parse(d['icon'])),
               ))
           .toList();
       final cats = (data['categories'] as List)
