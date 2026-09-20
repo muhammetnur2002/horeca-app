@@ -11,6 +11,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/features/iiko/data/iiko_service.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
+import 'package:horeca_app/features/settings/data/settings_repository_products.dart';
+import 'package:horeca_app/features/settings/data/settings_repository_staff.dart';
 import 'package:horeca_app/shared/models/department_model.dart';
 
 class IikoImportScreen extends ConsumerStatefulWidget {
