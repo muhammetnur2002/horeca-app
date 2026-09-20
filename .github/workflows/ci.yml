@@ -44,3 +44,47 @@ jobs:
       # реально включаются только в release, и именно тут ловится класс
       # ошибок "работает в debug, падает в релизе" из-за вырезанных классов.
       - run: flutter build apk --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
+
+  # Собрать APK — не то же самое, что убедиться, что приложение реально
+  # открывается: краш в первые секунды после запуска (например, необработанное
+  # исключение в конструкторе провайдера) сборку не остановит, его видно
+  # только при фактическом запуске. Раз в песочнице разработки нет доступа
+  # к Android SDK/эмулятору (см. коммиты выше), эту проверку переносим сюда —
+  # реальный эмулятор, реальная установка APK, реальный запуск.
+  launch-check:
+    runs-on: ubuntu-latest
+    needs: build-android
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: app-debug-apk
+      - name: Enable KVM for hardware-accelerated emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Boot emulator, install APK, verify it launches without crashing
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          script: |
+            adb install -r app-debug-apk/app-debug.apk
+            adb logcat -c
+            adb shell am start -n com.akyl.horeca/.MainActivity
+            sleep 15
+            RUNNING=$(adb shell "ps -A | grep com.akyl.horeca" || true)
+            echo "Process check: $RUNNING"
+            if [ -z "$RUNNING" ]; then
+              echo "App process not found 15s after launch — it crashed or closed."
+              echo "--- logcat (last 100 lines) ---"
+              adb logcat -d -t 100
+              exit 1
+            fi
+            echo "App is running 15s after launch — no crash detected."
