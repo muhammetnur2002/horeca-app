@@ -1,5 +1,4 @@
 import 'dart:ui';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -191,8 +190,9 @@ class ReportStep extends ConsumerWidget {
                     color: AppColors.muted,
                     isDark: isDark,
                     onTap: () {
+                      final messenger = ScaffoldMessenger.of(context);
                       Clipboard.setData(ClipboardData(text: text)).then((_) {
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        messenger.showSnackBar(SnackBar(
                           content: Text(l10n.copySuccess),
                           backgroundColor: const Color(0xFF2E3352),
                           behavior: SnackBarBehavior.floating,

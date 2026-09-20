@@ -188,8 +188,7 @@ class SettingsRepository extends StateNotifier<SettingsData> {
                 id: d['id'],
                 name: d['name'],
                 // ignore: non_const_argument_for_const_parameter
-                icon:
-                    IconData(int.parse(d['icon']), fontFamily: 'MaterialIcons'),
+                icon: IconData(int.parse(d['icon']), fontFamily: 'MaterialIcons'),
               ))
           .toList();
       final cats = (data['categories'] as List)

@@ -1,5 +1,7 @@
 /// Диалоги экрана "Категории": удаление, добавление, редактирование.
 /// Вынесены из catalog_categories_screen.dart.
+library;
+
 import 'package:flutter/material.dart';
 import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/core/localization/l10n/app_localizations.dart';

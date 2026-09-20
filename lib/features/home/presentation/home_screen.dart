@@ -178,7 +178,7 @@ class _MiniLogoPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final W = size.width, H = size.height;
-    final CX = W / 2, CY = H / 2;
+    final cx = W / 2, cy = H / 2;
 
     // фон
     final rrect = RRect.fromRectAndRadius(
@@ -201,7 +201,7 @@ class _MiniLogoPainter extends CustomPainter {
       ..strokeWidth = 1;
     for (final rot in [-0.52, 0.52]) {
       canvas.save();
-      canvas.translate(CX, CY);
+      canvas.translate(cx, cy);
       canvas.rotate(rot);
       canvas.drawOval(
           Rect.fromCenter(
@@ -217,8 +217,8 @@ class _MiniLogoPainter extends CustomPainter {
       final r = i == 0 ? W * 0.11 : W * 0.09;
       final px = cos(ang) * W * 0.44;
       final py = sin(ang) * H * 0.14;
-      final wx = CX + px * cos(rot) - py * sin(rot);
-      final wy = CY + px * sin(rot) + py * cos(rot);
+      final wx = cx + px * cos(rot) - py * sin(rot);
+      final wy = cy + px * sin(rot) + py * cos(rot);
       canvas.drawCircle(
           Offset(wx, wy),
           r,
@@ -241,7 +241,7 @@ class _MiniLogoPainter extends CustomPainter {
       textDirection: TextDirection.ltr,
     );
     tp.layout();
-    tp.paint(canvas, Offset(CX - tp.width / 2, CY - tp.height / 2 + W * 0.02));
+    tp.paint(canvas, Offset(cx - tp.width / 2, cy - tp.height / 2 + W * 0.02));
   }
 
   @override

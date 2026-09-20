@@ -6,7 +6,6 @@ library;
 import 'package:flutter/material.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
 import 'package:horeca_app/features/settings/data/settings_repository_products.dart';
-import 'package:horeca_app/features/settings/data/settings_repository_staff.dart';
 import 'package:horeca_app/features/settings/presentation/tabs/products_tab_batch_dialogs.dart';
 import 'package:horeca_app/features/settings/presentation/tabs/products_tab_widgets.dart';
 import 'package:horeca_app/shared/models/category_model.dart';
