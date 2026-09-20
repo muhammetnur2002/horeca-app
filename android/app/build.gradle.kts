@@ -74,7 +74,9 @@ android {
         }
     }
 
-    // Навсегда отключаем нативную C++ сборку
+    // Убираем устаревший kotlin-stdlib-jdk7 из транзитивных зависимостей
+    // плагинов — конфликтует с современным kotlin-stdlib и может ломать
+    // сборку дублирующимися классами.
     configurations.all {
         exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib-jdk7")
     }
