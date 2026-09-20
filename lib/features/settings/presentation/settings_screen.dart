@@ -1,25 +1,55 @@
-import 'dart:ui';
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart'
+    show
+        Alignment,
+        AppBar,
+        Border,
+        BorderRadius,
+        BoxDecoration,
+        Brightness,
+        BuildContext,
+        ClipRRect,
+        Color,
+        Colors,
+        Container,
+        DefaultTabController,
+        EdgeInsets,
+        FontWeight,
+        LinearGradient,
+        Padding,
+        PreferredSize,
+        Scaffold,
+        Size,
+        Tab,
+        TabAlignment,
+        TabBar,
+        TabBarIndicatorSize,
+        TabBarView,
+        Text,
+        TextStyle,
+        Theme,
+        Widget;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
-import 'package:horeca_app/features/settings/presentation/tabs/establishment_tab.dart';
-import 'package:horeca_app/features/settings/presentation/tabs/departments_tab.dart';
-import 'package:horeca_app/features/settings/presentation/tabs/categories_tab.dart';
-import 'package:horeca_app/features/settings/presentation/tabs/products_tab.dart';
-import 'package:horeca_app/features/settings/presentation/tabs/theme_tab.dart';
+import 'package:horeca_app/features/settings/presentation/tabs/app_settings_tab.dart';
+import 'package:horeca_app/features/settings/presentation/tabs/catalog_tab.dart';
 import 'package:horeca_app/features/settings/presentation/tabs/shift_tab.dart';
 import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
+
+/// Расстояние по бокам от текста каждой вкладки (Приложение/Сотрудники/
+/// Товары) до соседней — меняй только это число, чтобы раздвинуть или
+/// сблизить вкладки.
+const double kSettingsTabSpacing = 25;
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return DefaultTabController(
-      length: 6,
+      length: 3,
       child: Scaffold(
         extendBodyBehindAppBar: true,
         backgroundColor: Colors.transparent,
@@ -37,18 +67,16 @@ class SettingsScreen extends ConsumerWidget {
           bottom: PreferredSize(
             preferredSize: const Size.fromHeight(44),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(20),
                 child: Container(
                   height: 36,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    color: Colors.white
-                        .withOpacity(isDark ? 0.06 : 0.5),
+                    color: Colors.white.withOpacity(isDark ? 0.06 : 0.5),
                     border: Border.all(
-                      color: Colors.white
-                          .withOpacity(isDark ? 0.1 : 0.6),
+                      color: Colors.white.withOpacity(isDark ? 0.1 : 0.6),
                     ),
                   ),
                   child: TabBar(
@@ -63,18 +91,16 @@ class SettingsScreen extends ConsumerWidget {
                     unselectedLabelColor: AppColors.muted,
                     labelStyle: const TextStyle(
                       fontSize: 12,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w800,
                     ),
                     dividerColor: Colors.transparent,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 2),
-                    tabs: [
-                      Tab(text: l10n.establishmentTab),
-                      Tab(text: l10n.departmentsTab),
-                      Tab(text: l10n.categoriesTab),
-                      Tab(text: l10n.productsTab),
-                      const Tab(text: 'Смена'),
-                      Tab(text: l10n.themeTab),
+                    labelPadding: const EdgeInsets.symmetric(
+                        horizontal: kSettingsTabSpacing),
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    tabs: const [
+                      Tab(text: 'Приложение'),
+                      Tab(text: 'Сотрудники'),
+                      Tab(text: 'Товары'),
                     ],
                   ),
                 ),
@@ -102,12 +128,9 @@ class SettingsScreen extends ConsumerWidget {
           ),
           child: const TabBarView(
             children: [
-              EstablishmentTab(),
-              DepartmentsTab(),
-              CategoriesTab(),
-              ProductsTab(),
+              AppSettingsTab(),
               ShiftTab(),
-              ThemeTab(),
+              CatalogTab(),
             ],
           ),
         ),
@@ -115,7 +138,3 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 }
-
-
-
-

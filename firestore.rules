@@ -1,0 +1,37 @@
+rules_version = '2';
+
+// Правила доступа к Firestore для Akyl.
+// Структура данных:
+//   businesses/{uid}                — реестр заведений аккаунта (код+название)
+//   businesses/{uid}/venues/{code}  — данные конкретного заведения (до 5 на аккаунт)
+// {uid} строго совпадает с Firebase Auth UID владельца аккаунта
+// (см. lib/features/account/data/cloud_sync_service.dart).
+//
+// Как применить:
+// 1. Firebase Console → Firestore Database → Rules → вставить это содержимое → Publish.
+//    (или через Firebase CLI: firebase deploy --only firestore:rules, если проект туда добавлен)
+// 2. Без этого шага база остаётся либо полностью открытой ("test mode"),
+//    либо полностью закрытой ("locked mode") — оба варианта не то, что нужно.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Каждый пользователь имеет доступ только к своим собственным данным —
+    // id верхнего документа обязан совпадать с его UID. Подколлекция
+    // заведений наследует то же правило: она вложена внутрь businesses/{uid},
+    // так что businessId здесь — тот же самый uid владельца.
+    match /businesses/{businessId} {
+      allow read, write: if request.auth != null
+                          && request.auth.uid == businessId;
+
+      match /venues/{venueCode} {
+        allow read, write: if request.auth != null
+                            && request.auth.uid == businessId;
+      }
+    }
+
+    // Всё остальное — запрещено по умолчанию.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -3,13 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
+import 'package:horeca_app/features/settings/data/settings_repository_staff.dart';
+import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
 
 class ShiftTab extends ConsumerWidget {
   const ShiftTab({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final staff = ref.watch(settingsRepositoryProvider).staff;
+    final settings = ref.watch(settingsRepositoryProvider);
+    final staff = settings.staff;
     final repo = ref.read(settingsRepositoryProvider.notifier);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -22,66 +25,74 @@ class ShiftTab extends ConsumerWidget {
         elevation: 4,
         child: const Icon(Icons.person_add_rounded),
       ),
-      body: staff.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: AppColors.muted.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(24),
+      body: Column(
+        children: [
+          const SizedBox(height: 130),
+          Expanded(
+            child: staff.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            color: AppColors.muted.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          child: Icon(Icons.people_outline,
+                              size: 36,
+                              color: AppColors.muted.withOpacity(0.5)),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Нет сотрудников',
+                          style: TextStyle(
+                              color: AppColors.muted,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Добавьте сотрудников для закрытия смены',
+                          style: TextStyle(
+                              color: AppColors.muted.withOpacity(0.6),
+                              fontSize: 13),
+                        ),
+                      ],
                     ),
-                    child: Icon(Icons.people_outline,
-                        size: 36,
-                        color: AppColors.muted.withOpacity(0.5)),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                    itemCount: staff.length,
+                    itemBuilder: (_, index) {
+                      final name = staff[index];
+                      return _StaffItem(
+                        name: name,
+                        isDark: isDark,
+                        onDelete: () =>
+                            _confirmDelete(context, repo, name, isDark),
+                        onEdit: () =>
+                            _showEditDialog(context, repo, name, isDark),
+                      );
+                    },
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Нет сотрудников',
-                    style: TextStyle(
-                        color: AppColors.muted,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Добавьте сотрудников для закрытия смены',
-                    style: TextStyle(
-                        color: AppColors.muted.withOpacity(0.6),
-                        fontSize: 13),
-                  ),
-                ],
-              ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 130, 16, 100),
-              itemCount: staff.length,
-              itemBuilder: (_, index) {
-                final name = staff[index];
-                return _StaffItem(
-                  name: name,
-                  isDark: isDark,
-                  onDelete: () => _confirmDelete(context, repo, name, isDark),
-                  onEdit: () =>
-                      _showEditDialog(context, repo, name, isDark),
-                );
-              },
-            ),
+          ),
+        ],
+      ),
     );
   }
 
   void _showAddDialog(
       BuildContext context, SettingsRepository repo, bool isDark) {
+    final l10n = AppLocalizations.of(context);
     final ctrl = TextEditingController();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: isDark ? AppColors.darkCard : Colors.white,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Добавить сотрудника',
             style: TextStyle(fontWeight: FontWeight.w600)),
         content: TextField(
@@ -90,15 +101,14 @@ class ShiftTab extends ConsumerWidget {
           textCapitalization: TextCapitalization.words,
           decoration: const InputDecoration(
             hintText: 'Имя сотрудника',
-            prefixIcon:
-                Icon(Icons.person_outline, color: AppColors.orange),
+            prefixIcon: Icon(Icons.person_outline, color: AppColors.orange),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Отмена',
-                style: TextStyle(color: AppColors.muted)),
+            child:
+                Text(l10n.cancel, style: const TextStyle(color: AppColors.muted)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -113,22 +123,22 @@ class ShiftTab extends ConsumerWidget {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
             ),
-            child: const Text('Добавить'),
+            child: Text(l10n.add),
           ),
         ],
       ),
     );
   }
 
-  void _showEditDialog(BuildContext context, SettingsRepository repo,
-      String name, bool isDark) {
+  void _showEditDialog(
+      BuildContext context, SettingsRepository repo, String name, bool isDark) {
+    final l10n = AppLocalizations.of(context);
     final ctrl = TextEditingController(text: name);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: isDark ? AppColors.darkCard : Colors.white,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Редактировать',
             style: TextStyle(fontWeight: FontWeight.w600)),
         content: TextField(
@@ -137,15 +147,14 @@ class ShiftTab extends ConsumerWidget {
           textCapitalization: TextCapitalization.words,
           decoration: const InputDecoration(
             hintText: 'Имя сотрудника',
-            prefixIcon:
-                Icon(Icons.person_outline, color: AppColors.orange),
+            prefixIcon: Icon(Icons.person_outline, color: AppColors.orange),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Отмена',
-                style: TextStyle(color: AppColors.muted)),
+            child:
+                Text(l10n.cancel, style: const TextStyle(color: AppColors.muted)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -160,21 +169,21 @@ class ShiftTab extends ConsumerWidget {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
             ),
-            child: const Text('Сохранить'),
+            child: Text(l10n.save),
           ),
         ],
       ),
     );
   }
 
-  void _confirmDelete(BuildContext context, SettingsRepository repo,
-      String name, bool isDark) {
+  void _confirmDelete(
+      BuildContext context, SettingsRepository repo, String name, bool isDark) {
+    final l10n = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: isDark ? AppColors.darkCard : Colors.white,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Удалить сотрудника?',
             style: TextStyle(fontWeight: FontWeight.w600)),
         content: Text('«$name» будет удалён из списка.',
@@ -182,8 +191,8 @@ class ShiftTab extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Отмена',
-                style: TextStyle(color: AppColors.muted)),
+            child:
+                Text(l10n.cancel, style: const TextStyle(color: AppColors.muted)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -203,7 +212,7 @@ class ShiftTab extends ConsumerWidget {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
             ),
-            child: const Text('Удалить'),
+            child: Text(l10n.delete),
           ),
         ],
       ),
@@ -230,12 +239,11 @@ class _StaffItem extends StatelessWidget {
       onTap: onEdit,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(14),
-        child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Container(
             margin: const EdgeInsets.only(bottom: 10),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(14),
               color: Colors.white.withOpacity(isDark ? 0.06 : 0.55),
@@ -270,9 +278,7 @@ class _StaffItem extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
-                      color: isDark
-                          ? Colors.white
-                          : const Color(0xFF1A1A2E),
+                      color: isDark ? Colors.white : const Color(0xFF1A1A2E),
                     ),
                   ),
                 ),
@@ -289,7 +295,3 @@ class _StaffItem extends StatelessWidget {
     );
   }
 }
-
-
-
-

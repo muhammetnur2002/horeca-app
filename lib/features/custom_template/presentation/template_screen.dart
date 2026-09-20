@@ -7,6 +7,7 @@ import 'package:horeca_app/features/custom_template/data/excel_parser.dart';
 import 'package:horeca_app/features/custom_template/data/field_matcher.dart';
 import 'package:horeca_app/features/custom_template/data/template_models.dart';
 import 'package:horeca_app/features/custom_template/data/template_repository.dart';
+import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
 
 class TemplateScreen extends ConsumerStatefulWidget {
   const TemplateScreen({super.key});
@@ -28,12 +29,14 @@ class _TemplateScreenState extends ConsumerState<TemplateScreen> {
       type: fp.FileType.custom,
       allowedExtensions: ['xlsx', 'xls'],
     );
+    if (!mounted) return;
     if (result == null || result.files.single.path == null) {
       setState(() => _loading = false);
       return;
     }
 
     final parsed = await ExcelParser.parseFile(result.files.single.path!);
+    if (!mounted) return;
     if (parsed == null) {
       setState(() {
         _error = 'Не удалось прочитать файл. Убедитесь, что это Excel-файл с заголовками в первой строке.';
@@ -50,29 +53,31 @@ class _TemplateScreenState extends ConsumerState<TemplateScreen> {
     });
   }
 
-Future<void> _tryAiImprove() async {
-  if (_parsed == null) return;
-  setState(() => _aiLoading = true);
-  final aiMappings = await FieldMatcher.tryAiMatch(_parsed!.headers);
-  setState(() {
-    _aiLoading = false;
-    _aiTried = true;
-    if (aiMappings != null) {
-      _mappings = aiMappings;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Сопоставление улучшено через AI', style: TextStyle(color: Colors.white)),
-        backgroundColor: Color(0xFF378ADD),
-        behavior: SnackBarBehavior.floating,
-      ));
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Не удалось подключиться к AI. Используется офлайн-словарь', style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.orange,
-        behavior: SnackBarBehavior.floating,
-      ));
-    }
-  });
-}
+  Future<void> _tryAiImprove() async {
+    if (_parsed == null) return;
+    setState(() => _aiLoading = true);
+    final aiMappings = await FieldMatcher.tryAiMatch(_parsed!.headers);
+    if (!mounted) return;
+    setState(() {
+      _aiLoading = false;
+      _aiTried = true;
+      if (aiMappings != null) {
+        _mappings = aiMappings;
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Сопоставление улучшено через AI', style: TextStyle(color: Colors.white)),
+          backgroundColor: Color(0xFF378ADD),
+          behavior: SnackBarBehavior.floating,
+        ));
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Не удалось подключиться к AI. Используется офлайн-словарь', style: TextStyle(color: Colors.white)),
+          backgroundColor: Colors.orange,
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
+    });
+  }
+
   void _saveTemplate() {
     if (_parsed == null) return;
     final template = CustomTemplate(
@@ -94,6 +99,7 @@ Future<void> _tryAiImprove() async {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
     final currentTemplate = ref.watch(templateRepositoryProvider);
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -201,7 +207,7 @@ Future<void> _tryAiImprove() async {
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         side: BorderSide(color: AppColors.muted.withOpacity(0.3)),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
-                    child: const Text('Отмена', style: TextStyle(color: AppColors.muted)),
+                    child: Text(l10n.cancel, style: const TextStyle(color: AppColors.muted)),
                   )),
                   const SizedBox(width: 12),
                   Expanded(flex: 2, child: ElevatedButton(

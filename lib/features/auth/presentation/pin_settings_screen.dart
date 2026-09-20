@@ -1,10 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
+import 'package:horeca_app/app/di.dart';
 import 'package:horeca_app/features/auth/data/auth_repository.dart';
+import 'package:horeca_app/features/venue/data/venue_repository.dart';
 
+/// Настройка PIN-кодов конкретного заведения [venue] — не обязательно
+/// активного. Работает напрямую с secure storage через статические методы
+/// AuthRepository, а не через authRepositoryProvider — тот привязан к
+/// АКТИВНОМУ заведению и его слушает app.dart на самом верхнем уровне, так
+/// что смена активного заведения прямо здесь моментально меняла бы сессию
+/// входа всего приложения (баг, из-за которого экран "тупил" при настройке
+/// второго/третьего заведения).
 class PinSettingsScreen extends ConsumerStatefulWidget {
-  const PinSettingsScreen({super.key});
+  final Venue venue;
+  const PinSettingsScreen({super.key, required this.venue});
   @override
   ConsumerState<PinSettingsScreen> createState() => _PinSettingsScreenState();
 }
@@ -12,13 +22,26 @@ class PinSettingsScreen extends ConsumerStatefulWidget {
 class _PinSettingsScreenState extends ConsumerState<PinSettingsScreen> {
   final _adminCtrl = TextEditingController();
   final _staffCtrl = TextEditingController();
+  bool _pinsReady = false;
+  bool _pinsEnabled = false;
 
   @override
   void initState() {
     super.initState();
-    final repo = ref.read(authRepositoryProvider.notifier);
-    _adminCtrl.text = repo.adminPin ?? '';
-    _staffCtrl.text = repo.staffPin ?? '';
+    _loadCurrentPins();
+  }
+
+  Future<void> _loadCurrentPins() async {
+    final prefs = ref.read(sharedPreferencesProvider);
+    final adminPin = await AuthRepository.readAdminPinForVenue(widget.venue.code);
+    final staffPin = await AuthRepository.readStaffPinForVenue(widget.venue.code);
+    if (!mounted) return;
+    setState(() {
+      _adminCtrl.text = adminPin ?? '';
+      _staffCtrl.text = staffPin ?? '';
+      _pinsEnabled = AuthRepository.pinsEnabledForVenue(prefs, widget.venue.code);
+      _pinsReady = true;
+    });
   }
 
   @override
@@ -28,10 +51,11 @@ class _PinSettingsScreenState extends ConsumerState<PinSettingsScreen> {
     super.dispose();
   }
 
-  void _save() {
-    if (_adminCtrl.text.length < 4 || _staffCtrl.text.length < 4) {
+  Future<void> _save() async {
+    if (_adminCtrl.text.length != 4 || _staffCtrl.text.length != 4) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('PIN-код должен быть минимум 4 цифры', style: TextStyle(color: Colors.white)),
+        content: Text('PIN-код должен быть ровно 4 цифры',
+            style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.redAccent,
         behavior: SnackBarBehavior.floating,
       ));
@@ -39,40 +63,65 @@ class _PinSettingsScreenState extends ConsumerState<PinSettingsScreen> {
     }
     if (_adminCtrl.text == _staffCtrl.text) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('PIN-коды должны отличаться', style: TextStyle(color: Colors.white)),
+        content: Text('PIN-коды должны отличаться',
+            style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.redAccent,
         behavior: SnackBarBehavior.floating,
       ));
       return;
     }
-    final repo = ref.read(authRepositoryProvider.notifier);
-    repo.setAdminPin(_adminCtrl.text);
-    repo.setStaffPin(_staffCtrl.text);
-    repo.setPinsEnabled(true);
+    final prefs = ref.read(sharedPreferencesProvider);
+    await AuthRepository.writeAdminPinForVenue(
+        widget.venue.code, _adminCtrl.text);
+    await AuthRepository.writeStaffPinForVenue(
+        widget.venue.code, _staffCtrl.text);
+    await AuthRepository.setPinsEnabledForVenue(prefs, widget.venue.code, true);
+
+    // Живой экземпляр AuthRepository (если он уже создан для этого или
+    // любого другого заведения) кэширует admin/staff PIN в памяти при
+    // создании и не знает, что мы только что переписали PIN на диске в
+    // обход него. Без инвалидации следующий вход будет сверяться со
+    // старым (пустым) значением из кэша и всегда провалится.
+    ref.invalidate(authRepositoryProvider);
+
+    if (!mounted) return;
+    setState(() => _pinsEnabled = true);
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-      content: Text('PIN-коды сохранены', style: TextStyle(color: Colors.white)),
+      content:
+          Text('PIN-коды сохранены', style: TextStyle(color: Colors.white)),
       backgroundColor: AppColors.green,
       behavior: SnackBarBehavior.floating,
     ));
     Navigator.of(context).pop();
   }
 
-  void _disable() {
-    final repo = ref.read(authRepositoryProvider.notifier);
-    repo.clearPins();
+  Future<void> _disable() async {
+    final prefs = ref.read(sharedPreferencesProvider);
+    await AuthRepository.clearPinsForVenue(prefs, widget.venue.code);
+
+    // По той же причине: сбрасываем кэш живого AuthRepository после того,
+    // как PIN стёрт на диске в обход него.
+    ref.invalidate(authRepositoryProvider);
+
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-      content: Text('Защита PIN-кодом отключена', style: TextStyle(color: Colors.white)),
+      content: Text('Защита PIN-кодом отключена',
+          style: TextStyle(color: Colors.white)),
       backgroundColor: AppColors.muted,
       behavior: SnackBarBehavior.floating,
     ));
-    setState(() { _adminCtrl.clear(); _staffCtrl.clear(); });
+    setState(() {
+      _adminCtrl.clear();
+      _staffCtrl.clear();
+      _pinsEnabled = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
-    final pinsEnabled = ref.watch(authRepositoryProvider.notifier).pinsEnabled;
+    final isMultiVenue = ref.watch(venueRepositoryProvider).isMultiVenue;
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -102,6 +151,21 @@ class _PinSettingsScreenState extends ConsumerState<PinSettingsScreen> {
                 'Сотрудники видят только рабочие функции.',
                 style: TextStyle(fontSize: 13, color: AppColors.muted, height: 1.5),
               ),
+              if (isMultiVenue) ...[
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.orange.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    'Настраивается для заведения «${widget.venue.name}» (код ${widget.venue.code}). '
+                    'Полный вход: код + этот пароль, например ${widget.venue.code}1234.',
+                    style: const TextStyle(fontSize: 12, color: AppColors.orange),
+                  ),
+                ),
+              ],
               const SizedBox(height: 24),
 
               Text('PIN-код администратора', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: textColor)),
@@ -109,7 +173,7 @@ class _PinSettingsScreenState extends ConsumerState<PinSettingsScreen> {
               TextField(
                 controller: _adminCtrl,
                 keyboardType: TextInputType.number,
-                maxLength: 6,
+                maxLength: 4,
                 style: TextStyle(color: textColor, letterSpacing: 4),
                 decoration: const InputDecoration(
                   hintText: '1234',
@@ -124,7 +188,7 @@ class _PinSettingsScreenState extends ConsumerState<PinSettingsScreen> {
               TextField(
                 controller: _staffCtrl,
                 keyboardType: TextInputType.number,
-                maxLength: 6,
+                maxLength: 4,
                 style: TextStyle(color: textColor, letterSpacing: 4),
                 decoration: const InputDecoration(
                   hintText: '5678',
@@ -135,15 +199,20 @@ class _PinSettingsScreenState extends ConsumerState<PinSettingsScreen> {
               const SizedBox(height: 28),
 
               ElevatedButton(
-                onPressed: _save,
+                onPressed: _pinsReady ? _save : null,
                 style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.orange, foregroundColor: Colors.white,
+                    disabledBackgroundColor: AppColors.orange.withOpacity(0.4),
                     minimumSize: const Size(double.infinity, 50),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
-                child: const Text('Сохранить и включить', style: TextStyle(fontWeight: FontWeight.w600)),
+                child: _pinsReady
+                    ? const Text('Сохранить и включить', style: TextStyle(fontWeight: FontWeight.w600))
+                    : const SizedBox(
+                        width: 20, height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
               ),
 
-              if (pinsEnabled) ...[
+              if (_pinsEnabled) ...[
                 const SizedBox(height: 12),
                 OutlinedButton(
                   onPressed: _disable,

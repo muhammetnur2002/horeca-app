@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:horeca_app/features/shift_close/presentation/shift_close_screen.dart';
+import 'package:horeca_app/features/shift_close/presentation/shift_close_models.dart';
 
 class ShiftDraft {
   int step;
@@ -34,6 +34,10 @@ class ShiftDraftNotifier extends StateNotifier<ShiftDraft> {
 
   void reset() {
     state = ShiftDraft();
+  }
+
+  void save(ShiftDraft draft) {
+    state = draft;
   }
 }
 

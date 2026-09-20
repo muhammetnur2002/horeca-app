@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p /tmp/sc)",
+      "Bash(git show *)",
+      "Read(//tmp/sc/**)",
+      "Read(//c/flutter/packages/flutter/lib/src/widgets/**)",
+      "Read(//c/src/**)"
+    ]
+  }
+}

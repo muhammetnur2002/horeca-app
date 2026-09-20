@@ -30,6 +30,40 @@ class GenerateStep extends ConsumerWidget {
         : value.toString();
   }
 
+  /// state.departmentId — это внутренний id (например "dept_17..."), а не
+  /// человекочитаемое название, поэтому раньше оно печаталось в истории и в
+  /// PDF как есть. Вдобавок автособранные заявки (из остатков iiko) вообще
+  /// не привязаны к одному отделу — items могут быть из разных отделов сразу.
+  /// Поэтому определяем название(я) отдела по самим товарам в заявке.
+  String _resolveDepartmentLabel(
+    RequestState state,
+    List<ProductModel> allProducts,
+    List<CategoryModel> allCategories,
+    List<DepartmentModel> allDepartments,
+  ) {
+    final names = <String>{};
+    for (final item in state.items) {
+      final product = allProducts.firstWhere(
+        (p) => p.id == item.productId,
+        orElse: () => ProductModel(
+            id: '', name: item.productName, unit: item.unit, categoryId: ''),
+      );
+      final category = allCategories.firstWhere(
+        (c) => c.id == product.categoryId,
+        orElse: () =>
+            CategoryModel(id: '', name: '', departmentId: ''),
+      );
+      final department = allDepartments.firstWhere(
+        (d) => d.id == category.departmentId,
+        orElse: () => DepartmentModel(id: '', name: '', icon: Icons.help),
+      );
+      if (department.name.isNotEmpty) names.add(department.name);
+    }
+    if (names.isEmpty) return '—';
+    if (names.length == 1) return names.first;
+    return 'Несколько отделов';
+  }
+
   String _generateText(
     RequestState state,
     String establishmentName,
@@ -96,7 +130,7 @@ class GenerateStep extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final state = ref.watch(requestStateProvider);
     final settings = ref.watch(settingsRepositoryProvider);
     final establishmentName = settings.establishmentName;
@@ -107,7 +141,8 @@ class GenerateStep extends ConsumerWidget {
 
     final text = _generateText(
         state, establishmentName, allProducts, allCategories, allDepartments);
-
+    final departmentLabel = _resolveDepartmentLabel(
+        state, allProducts, allCategories, allDepartments);
 
     return Container(
       decoration: BoxDecoration(
@@ -151,18 +186,16 @@ class GenerateStep extends ConsumerWidget {
             Expanded(
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16),
-                child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                  
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                   child: Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
-                      color:
-                          Colors.white.withOpacity(isDark ? 0.06 : 0.55),
+                      color: Colors.white.withOpacity(isDark ? 0.06 : 0.55),
                       border: Border.all(
-                        color: Colors.white
-                            .withOpacity(isDark ? 0.1 : 0.8),
+                        color: Colors.white.withOpacity(isDark ? 0.1 : 0.8),
                       ),
                     ),
                     child: SingleChildScrollView(
@@ -194,10 +227,8 @@ class GenerateStep extends ConsumerWidget {
                     color: AppColors.muted,
                     isDark: isDark,
                     onTap: () {
-                      Clipboard.setData(ClipboardData(text: text))
-                          .then((_) {
-                        ScaffoldMessenger.of(context)
-                            .showSnackBar(SnackBar(
+                      Clipboard.setData(ClipboardData(text: text)).then((_) {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                           content: Text(l10n.copySuccess),
                           backgroundColor: const Color(0xFF2E3352),
                           behavior: SnackBarBehavior.floating,
@@ -256,28 +287,28 @@ class GenerateStep extends ConsumerWidget {
               isDark: isDark,
               fullWidth: true,
               onTap: () async {
-  if (state.items.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(l10n.noData),
-      backgroundColor: const Color(0xFF2E3352),
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12)),
-    ));
-    return;
-  }
-  final repo = ref.read(historyRepositoryProvider);
-  repo.add(HistoryEntry(
-    id: DateTime.now().millisecondsSinceEpoch.toString(),
-    type: HistoryType.request,
-    title: '${l10n.requestTitle} ${state.departmentId}',
-    text: text,
-    createdAt: DateTime.now(),
-  ));
-  final pdfBytes = await PdfGenerator.generateRequestPdf(
-    title: l10n.requestTitle,
-    establishmentName: establishmentName,
-                  department: state.departmentId ?? '',
+                if (state.items.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text(l10n.noData),
+                    backgroundColor: const Color(0xFF2E3352),
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ));
+                  return;
+                }
+                final repo = ref.read(historyRepositoryProvider);
+                repo.add(HistoryEntry(
+                  id: DateTime.now().millisecondsSinceEpoch.toString(),
+                  type: HistoryType.request,
+                  title: '${l10n.requestTitle}: $departmentLabel',
+                  text: text,
+                  createdAt: DateTime.now(),
+                ));
+                final pdfBytes = await PdfGenerator.generateRequestPdf(
+                  title: l10n.requestTitle,
+                  establishmentName: establishmentName,
+                  department: departmentLabel,
                   items: state.items
                       .map((i) => {
                             'name': i.productName,
@@ -295,44 +326,47 @@ class GenerateStep extends ConsumerWidget {
 
             Row(
               children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () =>
-                        ref.read(requestStateProvider.notifier).goBack(),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        color: Colors.white
-                            .withOpacity(isDark ? 0.06 : 0.5),
-                        border: Border.all(
-                            color: Colors.white
-                                .withOpacity(isDark ? 0.1 : 0.4)),
-                      ),
-                      child: Text(
-                        l10n.edit,
-                        textAlign: TextAlign.center,
-                        style:
-                            TextStyle(fontSize: 14, color: AppColors.muted),
+                // Заявку, собранную автоматически (по остаткам iiko), нельзя
+                // "отредактировать" через goBack() — у неё нет своего отдела/
+                // категории (items могут быть из разных отделов), а goBack()
+                // ведёт на шаг выбора категории, который в этом случае пуст.
+                if (state.departmentId != null) ...[
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () =>
+                          ref.read(requestStateProvider.notifier).goBack(),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          color: Colors.white.withOpacity(isDark ? 0.06 : 0.5),
+                          border: Border.all(
+                              color:
+                                  Colors.white.withOpacity(isDark ? 0.1 : 0.4)),
+                        ),
+                        child: Text(
+                          l10n.edit,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 14, color: AppColors.muted),
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 10),
+                  const SizedBox(width: 10),
+                ],
                 Expanded(
                   child: GestureDetector(
                     onTap: () {
                       ref.read(requestStateProvider.notifier).reset();
-                      Navigator.of(context)
-                          .popUntil((route) => route.isFirst);
+                      Navigator.of(context).popUntil((route) => route.isFirst);
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
                         color: AppColors.green.withOpacity(0.1),
-                        border: Border.all(
-                            color: AppColors.green.withOpacity(0.3)),
+                        border:
+                            Border.all(color: AppColors.green.withOpacity(0.3)),
                       ),
                       child: Text(
                         l10n.newRequest,
@@ -376,12 +410,11 @@ class _ActionBtn extends StatelessWidget {
       onTap: onTap,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
-        child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Container(
             width: fullWidth ? double.infinity : null,
-            padding: const EdgeInsets.symmetric(
-                vertical: 13, horizontal: 16),
+            padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 16),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               color: color.withOpacity(isDark ? 0.15 : 0.1),
@@ -408,7 +441,3 @@ class _ActionBtn extends StatelessWidget {
     );
   }
 }
-
-
-
-

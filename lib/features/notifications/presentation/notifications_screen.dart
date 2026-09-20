@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/features/notifications/data/notification_repository.dart';
+import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
 
 class NotificationsScreen extends ConsumerWidget {
   const NotificationsScreen({super.key});
@@ -13,6 +14,7 @@ class NotificationsScreen extends ConsumerWidget {
     final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
     final data = ref.watch(notificationRepositoryProvider);
     final repo = ref.read(notificationRepositoryProvider.notifier);
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -56,10 +58,10 @@ class NotificationsScreen extends ConsumerWidget {
                     decoration: BoxDecoration(color: AppColors.orange.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: AppColors.orange.withOpacity(0.3))),
-                    child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                      Icon(Icons.add_rounded, size: 14, color: AppColors.orange),
-                      SizedBox(width: 4),
-                      Text('Добавить', style: TextStyle(fontSize: 11, color: AppColors.orange, fontWeight: FontWeight.w600)),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      const Icon(Icons.add_rounded, size: 14, color: AppColors.orange),
+                      const SizedBox(width: 4),
+                      Text(l10n.add, style: const TextStyle(fontSize: 11, color: AppColors.orange, fontWeight: FontWeight.w600)),
                     ]),
                   ),
                 ),
@@ -80,6 +82,7 @@ class NotificationsScreen extends ConsumerWidget {
   }
 
   void _showAddReminderDialog(BuildContext context, WidgetRef ref, bool isDark) {
+    final l10n = AppLocalizations.of(context);
     final nameCtrl = TextEditingController();
     ReminderFrequency frequency = ReminderFrequency.daily;
     int weekday = 1;
@@ -160,7 +163,7 @@ class NotificationsScreen extends ConsumerWidget {
           ),
           actions: [
             TextButton(onPressed: () => Navigator.pop(ctx),
-                child: const Text('Отмена', style: TextStyle(color: AppColors.muted))),
+                child: Text(l10n.cancel, style: const TextStyle(color: AppColors.muted))),
             ElevatedButton(
               onPressed: () async {
                 if (nameCtrl.text.isNotEmpty) {
@@ -176,7 +179,7 @@ class NotificationsScreen extends ConsumerWidget {
               },
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.orange, foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-              child: const Text('Добавить')),
+              child: Text(l10n.add)),
           ],
         ),
       ),

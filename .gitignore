@@ -43,3 +43,11 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Ключ подписи релиза — никогда не коммитить
+/android/key.properties
+*.jks
+*.keystore
+
+# Личные пароли/коды доступа — никогда не коммитить
+/passwords for horeca Akyl/

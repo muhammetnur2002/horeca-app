@@ -1,4 +1,4 @@
-import 'dart:ui';
+﻿import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
@@ -13,7 +13,7 @@ class SelectDepartmentStep extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final departments = ref.watch(departmentsProvider);
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final allCategories = ref.watch(settingsRepositoryProvider).categories;
 
@@ -44,8 +44,7 @@ class SelectDepartmentStep extends ConsumerWidget {
               isDark: isDark,
               accentColor: AppColors.green,
               onTap: () {
-                final allCategoryIds =
-                    allCategories.map((c) => c.id).toList();
+                final allCategoryIds = allCategories.map((c) => c.id).toList();
                 ref
                     .read(inventoryStateProvider.notifier)
                     .selectDepartment('all', allCategoryIds);
@@ -129,8 +128,8 @@ class _DeptCardState extends State<_DeptCard>
         scale: _scale,
         child: ClipRRect(
           borderRadius: BorderRadius.circular(20),
-          child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
             child: Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
@@ -138,10 +137,8 @@ class _DeptCardState extends State<_DeptCard>
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    widget.accentColor
-                        .withOpacity(widget.isDark ? 0.15 : 0.1),
-                    widget.accentColor
-                        .withOpacity(widget.isDark ? 0.05 : 0.04),
+                    widget.accentColor.withOpacity(widget.isDark ? 0.15 : 0.1),
+                    widget.accentColor.withOpacity(widget.isDark ? 0.05 : 0.04),
                   ],
                 ),
                 border: Border.all(
@@ -150,8 +147,7 @@ class _DeptCardState extends State<_DeptCard>
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color:
-                        widget.accentColor.withOpacity(0.08),
+                    color: widget.accentColor.withOpacity(0.08),
                     blurRadius: 20,
                     offset: const Offset(0, 4),
                   ),
@@ -201,7 +197,3 @@ class _DeptCardState extends State<_DeptCard>
     );
   }
 }
-
-
-
-

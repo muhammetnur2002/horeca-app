@@ -166,7 +166,7 @@ class _CatCardState extends State<_CatCard>
         child: ClipRRect(
           borderRadius: BorderRadius.circular(20),
           child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            
+
             child: Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
@@ -235,7 +235,3 @@ class _CatCardState extends State<_CatCard>
     );
   }
 }
-
-
-
-

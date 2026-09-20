@@ -1,7 +1,7 @@
 name: horeca_app
 description: A fast SaaS app for HoReCa
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.1.0+2
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -17,7 +17,7 @@ dependencies:
   pdf: 3.10.7
   printing: ^5.12.0
   share_plus: ^10.0.0
-  dio: 4.0.6
+  dio: ^5.11.0
   path_provider: ^2.1.1
   universal_html: ^2.3.0
   image_picker: ^1.2.2
@@ -26,12 +26,18 @@ dependencies:
   timezone: ^0.11.0
   file_picker: 8.1.4
   excel: ^4.0.6
+  firebase_core: ^3.0.0
+  firebase_auth: ^5.0.0
+  cloud_firestore: ^5.0.0
+  flutter_secure_storage: ^9.0.0
+  firebase_app_check: ^0.3.0
+  firebase_crashlytics: ^4.0.0
 
 dev_dependencies:
   flutter_launcher_icons: ^0.14.4
   flutter_test:
     sdk: flutter
-  
+  flutter_lints: ^5.0.0
 
 flutter:
   generate: true

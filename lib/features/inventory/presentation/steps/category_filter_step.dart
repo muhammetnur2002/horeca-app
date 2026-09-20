@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/features/inventory/domain/usecases/inventory_state.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
-import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
 
 class CategoryFilterStep extends ConsumerWidget {
   const CategoryFilterStep({super.key});
@@ -67,8 +66,7 @@ class CategoryFilterStep extends ConsumerWidget {
               itemCount: departmentCategories.length,
               itemBuilder: (_, index) {
                 final cat = departmentCategories[index];
-                final isSelected =
-                    state.selectedCategoryIds.contains(cat.id);
+                final isSelected = state.selectedCategoryIds.contains(cat.id);
                 return GestureDetector(
                   onTap: () {
                     final updated =
@@ -84,8 +82,8 @@ class CategoryFilterStep extends ConsumerWidget {
                   },
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(14),
-                    child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                      
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
                         margin: const EdgeInsets.only(bottom: 10),
@@ -95,13 +93,11 @@ class CategoryFilterStep extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(14),
                           color: isSelected
                               ? AppColors.orange.withOpacity(0.12)
-                              : Colors.white
-                                  .withOpacity(isDark ? 0.06 : 0.55),
+                              : Colors.white.withOpacity(isDark ? 0.06 : 0.55),
                           border: Border.all(
                             color: isSelected
                                 ? AppColors.orange.withOpacity(0.4)
-                                : Colors.white
-                                    .withOpacity(isDark ? 0.1 : 0.8),
+                                : Colors.white.withOpacity(isDark ? 0.1 : 0.8),
                           ),
                         ),
                         child: Row(
@@ -154,13 +150,12 @@ class CategoryFilterStep extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
             child: GestureDetector(
-              onTap: () => ref
-                  .read(inventoryStateProvider.notifier)
-                  .confirmCategories(),
+              onTap: () =>
+                  ref.read(inventoryStateProvider.notifier).confirmCategories(),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16),
-                child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                  
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                   child: Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 16),
@@ -187,7 +182,3 @@ class CategoryFilterStep extends ConsumerWidget {
     );
   }
 }
-
-
-
-

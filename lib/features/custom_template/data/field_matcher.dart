@@ -26,9 +26,15 @@ class FieldMatcher {
 
   /// Возвращает наиболее вероятное поле и уверенность (0.0 - 1.0)
   static (TemplateField, double) matchField(String header) {
+    // .trim() в конце обязателен: заголовки вида "Ед. изм." заканчиваются
+    // точкой, которая после замены на пробел остаётся висеть в конце строки
+    // (первый .trim() выше применяется ДО замены точек/дефисов) — без этого
+    // финального trim() точное совпадение с "ед изм" превращалось в неполное
+    // ("ед изм " ⊂ "ед изм"), и уверенность совпадения занижалась до 0.85.
     final normalized = header.toLowerCase().trim()
         .replaceAll(RegExp(r'[.\-_]'), ' ')
-        .replaceAll(RegExp(r'\s+'), ' ');
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
 
     TemplateField bestField = TemplateField.notUsed;
     double bestScore = 0.0;
@@ -95,9 +101,9 @@ class FieldMatcher {
         data: {'headers': headers},
         options: Options(
           headers: {'Content-Type': 'application/json'},
-          // Dio in your setup expects timeouts as int? (milliseconds), not Duration
-          sendTimeout: const Duration(seconds: 10).inMilliseconds,
-          receiveTimeout: const Duration(seconds: 10).inMilliseconds,
+          // Dio 5.x: таймауты — Duration напрямую (было int/мс в 4.x).
+          sendTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 10),
         ),
       );
 

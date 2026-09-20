@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart' show BuildContext;
 import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
@@ -6,7 +5,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
-import 'package:horeca_app/features/shift_close/presentation/shift_close_screen.dart';
+import 'package:horeca_app/features/shift_close/presentation/shift_close_models.dart';
 
 class ShiftClosePdf {
   static Future<void> generateAndShare({
@@ -33,7 +32,6 @@ class ShiftClosePdf {
     final pdf = pw.Document(theme: theme);
 
     final orange  = PdfColor.fromHex('F5862E');
-    final green   = PdfColor.fromHex('639922');
     final dark    = PdfColor.fromHex('1A1E2E');
     final muted   = PdfColor.fromHex('8B8FA8');
     final bgLight = PdfColor.fromHex('F8F9FF');
@@ -102,9 +100,25 @@ class ShiftClosePdf {
         pw.Padding(
           padding: const pw.EdgeInsets.fromLTRB(32, 20, 32, 8),
           child: pw.Row(children: [
-            pw.Expanded(child: _pdfBox(label: 'ИТОГОВАЯ ВЫРУЧКА', value: '${fmt(totalRevenue)} $currency', sub: dateStr, valueColor: orange, bg: bgLight)),
+            pw.Expanded(
+              child: _pdfBox(
+                label: 'ИТОГОВАЯ ВЫРУЧКА',
+                value: '${fmt(totalRevenue)} $currency',
+                sub: dateStr,
+                valueColor: orange,
+                bg: bgLight,
+              ),
+            ),
             pw.SizedBox(width: 12),
-            pw.Expanded(child: _pdfBox(label: 'КАССА НА СЛЕДУЮЩУЮ СМЕНУ', value: '${fmt(tomorrowCash)} $currency', sub: 'наличных в кассе', valueColor: dark, bg: bgLight)),
+            pw.Expanded(
+              child: _pdfBox(
+                label: 'КАССА НА СЛЕДУЮЩУЮ СМЕНУ',
+                value: '${fmt(tomorrowCash)} $currency',
+                sub: 'наличных в кассе',
+                valueColor: dark,
+                bg: bgLight,
+              ),
+            ),
           ]),
         ),
         pw.Padding(
@@ -140,20 +154,20 @@ class ShiftClosePdf {
             accentColor: orange, dark: dark, muted: muted),
         ),
         if (desserts.any((d) => d.showcase > 0 || d.stock > 0)) ...[
-  pw.Padding(
-    padding: const pw.EdgeInsets.fromLTRB(32, 16, 32, 4),
-    child: _pdfSectionTitle('Остатки десертов', orange),
-  ),
-  pw.Padding(
-    padding: const pw.EdgeInsets.fromLTRB(32, 0, 32, 0),
-    child: _pdfTable(
-      headers: ['Наименование', 'Витрина', 'Склад'],
-      rows: desserts.where((d) => d.showcase > 0 || d.stock > 0)
-          .map((d) => [d.name, '${d.showcase} шт', '${d.stock} шт']).toList(),
-      accentColor: orange, dark: dark, muted: muted),
-  ),
-],
-        
+          pw.Padding(
+            padding: const pw.EdgeInsets.fromLTRB(32, 16, 32, 4),
+            child: _pdfSectionTitle('Остатки десертов', orange),
+          ),
+          pw.Padding(
+            padding: const pw.EdgeInsets.fromLTRB(32, 0, 32, 0),
+            child: _pdfTable(
+              headers: ['Наименование', 'Витрина', 'Склад'],
+              rows: desserts.where((d) => d.showcase > 0 || d.stock > 0)
+                  .map((d) => [d.name, '${d.showcase} шт', '${d.stock} шт']).toList(),
+              accentColor: orange, dark: dark, muted: muted),
+          ),
+        ],
+
         if (writeOffs.isNotEmpty) ...[
           pw.Padding(
             padding: const pw.EdgeInsets.fromLTRB(32, 16, 32, 4),
@@ -265,7 +279,3 @@ class ShiftClosePdf {
     );
   }
 }
-
-
-
-

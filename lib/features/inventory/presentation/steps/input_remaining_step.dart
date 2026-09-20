@@ -6,6 +6,7 @@ import 'package:horeca_app/features/inventory/domain/usecases/inventory_state.da
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
 import 'package:horeca_app/shared/models/product_model.dart';
 import 'package:horeca_app/shared/models/category_model.dart';
+import 'package:horeca_app/shared/widgets/quantity_stepper.dart';
 
 class InputRemainingStep extends ConsumerStatefulWidget {
   const InputRemainingStep({super.key});
@@ -39,7 +40,9 @@ class _InputRemainingStepState extends ConsumerState<InputRemainingStep> {
       if (!state.selectedCategoryIds.contains(cat.id)) return false;
       if (state.departmentId != 'all') {
         if (cat.departmentId.isNotEmpty &&
-            cat.departmentId != state.departmentId) return false;
+            cat.departmentId != state.departmentId) {
+          return false;
+        }
       }
       if (_searchQuery.isNotEmpty) {
         return p.name.toLowerCase().contains(_searchQuery.toLowerCase());
@@ -51,7 +54,8 @@ class _InputRemainingStepState extends ConsumerState<InputRemainingStep> {
     for (final p in filteredProducts) {
       final cat = allCategories.firstWhere(
         (c) => c.id == p.categoryId,
-        orElse: () => CategoryModel(id: '', name: 'Без категории', departmentId: ''),
+        orElse: () =>
+            CategoryModel(id: '', name: 'Без категории', departmentId: ''),
       );
       grouped.putIfAbsent(cat.name, () => []).add(p);
     }
@@ -77,15 +81,18 @@ class _InputRemainingStepState extends ConsumerState<InputRemainingStep> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(14),
                   color: Colors.white.withOpacity(isDark ? 0.06 : 0.55),
-                  border: Border.all(color: Colors.white.withOpacity(isDark ? 0.1 : 0.8)),
+                  border: Border.all(
+                      color: Colors.white.withOpacity(isDark ? 0.1 : 0.8)),
                 ),
                 child: TextField(
                   controller: _searchCtrl,
-                  style: TextStyle(fontSize: 14,
+                  style: TextStyle(
+                      fontSize: 14,
                       color: isDark ? Colors.white : const Color(0xFF1A1A2E)),
                   decoration: InputDecoration(
                     hintText: 'Поиск товара...',
-                    hintStyle: const TextStyle(color: AppColors.muted, fontSize: 13),
+                    hintStyle:
+                        const TextStyle(color: AppColors.muted, fontSize: 13),
                     prefixIcon: const Icon(Icons.search_rounded,
                         color: AppColors.muted, size: 20),
                     suffixIcon: _searchQuery.isNotEmpty
@@ -93,9 +100,9 @@ class _InputRemainingStepState extends ConsumerState<InputRemainingStep> {
                             icon: const Icon(Icons.close_rounded,
                                 color: AppColors.muted, size: 18),
                             onPressed: () => setState(() {
-                              _searchCtrl.clear();
-                              _searchQuery = '';
-                            }))
+                                  _searchCtrl.clear();
+                                  _searchQuery = '';
+                                }))
                         : null,
                     border: InputBorder.none,
                     enabledBorder: InputBorder.none,
@@ -118,7 +125,8 @@ class _InputRemainingStepState extends ConsumerState<InputRemainingStep> {
                       _searchQuery.isNotEmpty
                           ? 'Ничего не найдено'
                           : 'Нет товаров',
-                      style: const TextStyle(color: AppColors.muted, fontSize: 14),
+                      style:
+                          const TextStyle(color: AppColors.muted, fontSize: 14),
                     ),
                   )
                 : ListView(
@@ -154,8 +162,8 @@ class _InputRemainingStepState extends ConsumerState<InputRemainingStep> {
                               onChanged: (value) {
                                 ref
                                     .read(inventoryStateProvider.notifier)
-                                    .updateItem(p.id, p.name,
-                                        p.inventoryUnit, value);
+                                    .updateItem(
+                                        p.id, p.name, p.inventoryUnit, value);
                               },
                             );
                           }),
@@ -163,6 +171,44 @@ class _InputRemainingStepState extends ConsumerState<InputRemainingStep> {
                       );
                     }).toList(),
                   ),
+          ),
+          // Кнопка предпросмотр
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+            child: GestureDetector(
+              onTap: () =>
+                  ref.read(inventoryStateProvider.notifier).generateReport(),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      color: AppColors.orange,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.orange.withOpacity(0.3),
+                          blurRadius: 20,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: const Text(
+                      'Предпросмотр',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -183,52 +229,9 @@ class _ProductRow extends StatelessWidget {
     required this.onChanged,
   });
 
-  void _showManualInput(BuildContext context) {
-    final ctrl = TextEditingController(
-        text: item.remaining == 0 ? '' : '${item.remaining}');
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: isDark ? AppColors.darkCard : Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(product.name,
-            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
-        content: TextField(
-          controller: ctrl,
-          autofocus: true,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
-          decoration: InputDecoration(
-              hintText: '0', suffixText: product.inventoryUnit),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Отмена',
-                  style: TextStyle(color: AppColors.muted))),
-          ElevatedButton(
-            onPressed: () {
-              final v = double.tryParse(
-                      ctrl.text.replaceAll(',', '.')) ??
-                  item.remaining;
-              onChanged(v < 0 ? 0 : v);
-              Navigator.pop(ctx);
-            },
-            style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.orange,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12))),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    final hasQty = item.remaining > 0;
     return ClipRRect(
       borderRadius: BorderRadius.circular(14),
       child: BackdropFilter(
@@ -238,87 +241,43 @@ class _ProductRow extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
-            color: Colors.white.withOpacity(isDark ? 0.06 : 0.55),
+            color: hasQty
+                ? AppColors.orange.withOpacity(0.08)
+                : Colors.white.withOpacity(isDark ? 0.06 : 0.55),
             border: Border.all(
-                color: Colors.white.withOpacity(isDark ? 0.1 : 0.8)),
+              color: hasQty
+                  ? AppColors.orange.withOpacity(0.3)
+                  : Colors.white.withOpacity(isDark ? 0.1 : 0.8),
+            ),
           ),
           child: Row(children: [
             Expanded(
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                Text(product.name,
-                    style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: isDark
-                            ? Colors.white
-                            : const Color(0xFF1A1A2E))),
-                Text(product.inventoryUnit,
-                    style: const TextStyle(
-                        fontSize: 11, color: AppColors.muted)),
-              ]),
+                    Text(product.name,
+                        style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF1A1A2E))),
+                    Text(product.inventoryUnit,
+                        style: const TextStyle(
+                            fontSize: 11, color: AppColors.muted)),
+                  ]),
             ),
-            _QtyBtn(
-                icon: Icons.remove,
-                isDark: isDark,
-                onTap: () {
-                  if (item.remaining > 0)
-                    onChanged(item.remaining - 1);
-                }),
-            GestureDetector(
-              onTap: () => _showManualInput(context),
-              child: SizedBox(
-                width: 40,
-                child: Text(
-                  item.remaining == item.remaining.truncateToDouble()
-                      ? item.remaining.toInt().toString()
-                      : item.remaining.toString(),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: isDark
-                          ? Colors.white
-                          : const Color(0xFF1A1A2E)),
-                ),
-              ),
+            QuantityStepper(
+              value: item.remaining,
+              unit: product.inventoryUnit,
+              isDark: isDark,
+              productName: product.name,
+              allowDecimal: true,
+              onChanged: onChanged,
             ),
-            _QtyBtn(
-                icon: Icons.add,
-                isDark: isDark,
-                onTap: () => onChanged(item.remaining + 1)),
           ]),
         ),
       ),
     );
   }
-}
-
-class _QtyBtn extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  final bool isDark;
-  const _QtyBtn(
-      {required this.icon, required this.onTap, required this.isDark});
-  @override
-  Widget build(BuildContext context) => GestureDetector(
-        onTap: onTap,
-        child: Container(
-          width: 30,
-          height: 30,
-          decoration: BoxDecoration(
-              color:
-                  Colors.white.withOpacity(isDark ? 0.08 : 0.6),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                  color: Colors.white
-                      .withOpacity(isDark ? 0.1 : 0.3))),
-          child: Icon(icon,
-              size: 16,
-              color: isDark
-                  ? Colors.white
-                  : const Color(0xFF1A1A2E)),
-        ),
-      );
 }

@@ -129,13 +129,28 @@ class NotificationService {
     return scheduled;
   }
 
+  // Кол-во дней в месяце — нужно, чтобы день вроде 31 не "переехал"
+  // молча в начало следующего месяца в феврале/апреле и т.п.
+  // (DateTime(year, month, 31) в Dart не бросает ошибку, а просто
+  // прибавляет лишние дни к следующему месяцу).
+  int _daysInMonth(int year, int month) {
+    final firstOfNextMonth =
+        month == 12 ? DateTime(year + 1, 1, 1) : DateTime(year, month + 1, 1);
+    return firstOfNextMonth.subtract(const Duration(days: 1)).day;
+  }
+
   tz.TZDateTime _nextInstanceOfMonthDay(int day, int hour, int minute) {
     final now = tz.TZDateTime.now(tz.local);
-    var scheduled = tz.TZDateTime(tz.local, now.year, now.month, day, hour, minute);
+    final clampedDay =
+        day.clamp(1, _daysInMonth(now.year, now.month));
+    var scheduled =
+        tz.TZDateTime(tz.local, now.year, now.month, clampedDay, hour, minute);
     if (scheduled.isBefore(now)) {
       final nextMonth = now.month == 12 ? 1 : now.month + 1;
       final nextYear = now.month == 12 ? now.year + 1 : now.year;
-      scheduled = tz.TZDateTime(tz.local, nextYear, nextMonth, day, hour, minute);
+      final clampedNextDay = day.clamp(1, _daysInMonth(nextYear, nextMonth));
+      scheduled = tz.TZDateTime(
+          tz.local, nextYear, nextMonth, clampedNextDay, hour, minute);
     }
     return scheduled;
   }
