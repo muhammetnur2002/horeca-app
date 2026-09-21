@@ -74,17 +74,14 @@ jobs:
           target: google_apis
           arch: x86_64
           profile: pixel_6
+          # reactivecircus/android-emulator-runner запускает КАЖДУЮ строку
+          # script как отдельный `sh -c` — переменные между строками не
+          # сохраняются, многострочный if/fi ломается ("unexpected EOF").
+          # Поэтому вся проверка "жив ли процесс" — одна строка на shell-группе.
           script: |
             adb install -r app-debug.apk
             adb logcat -c
             adb shell am start -n com.akyl.horeca/.MainActivity
             sleep 15
-            RUNNING=$(adb shell "ps -A | grep com.akyl.horeca" || true)
-            echo "Process check: $RUNNING"
-            if [ -z "$RUNNING" ]; then
-              echo "App process not found 15s after launch — it crashed or closed."
-              echo "--- logcat (last 100 lines) ---"
-              adb logcat -d -t 100
-              exit 1
-            fi
+            adb shell pidof com.akyl.horeca || { echo "App process not found 15s after launch — crashed or closed."; adb logcat -d -t 150; exit 1; }
             echo "App is running 15s after launch — no crash detected."
