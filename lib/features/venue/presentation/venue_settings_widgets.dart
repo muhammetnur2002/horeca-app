@@ -14,6 +14,7 @@ class VenueRow extends StatelessWidget {
   final VoidCallback onRename;
   final VoidCallback onSetupPin;
   final VoidCallback onDelete;
+  final VoidCallback? onOpen;
 
   const VenueRow({
     super.key,
@@ -24,6 +25,7 @@ class VenueRow extends StatelessWidget {
     required this.onRename,
     required this.onSetupPin,
     required this.onDelete,
+    this.onOpen,
   });
 
   @override
@@ -79,6 +81,12 @@ class VenueRow extends StatelessWidget {
             ),
           ),
         ),
+        if (onOpen != null)
+          IconButton(
+            icon: const Icon(Icons.login_rounded, color: AppColors.green, size: 20),
+            tooltip: 'Открыть это заведение',
+            onPressed: onOpen,
+          ),
         IconButton(
           icon: const Icon(Icons.pin_outlined, color: AppColors.orange, size: 20),
           tooltip: 'Задать PIN-коды',

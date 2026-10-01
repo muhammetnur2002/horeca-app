@@ -47,7 +47,8 @@ extension SettingsRepositoryProducts on SettingsRepository {
                 name: newName,
                 unit: newUnit,
                 inventoryUnit: newInventoryUnit ?? p.inventoryUnit,
-                categoryId: newCategoryId ?? p.categoryId);
+                categoryId: newCategoryId ?? p.categoryId,
+                minStock: p.minStock);
           }
           return p;
         }).toList()));

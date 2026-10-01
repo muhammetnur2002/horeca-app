@@ -21,11 +21,9 @@ String? validateShiftStep({
     if (selectedStaff.isEmpty) {
       return 'Отметьте хотя бы одного сотрудника';
     }
-    final hasShowcase = desserts.any((d) => d.showcase > 0);
-    final hasStock = desserts.any((d) => d.stock > 0);
-    if (desserts.isNotEmpty && !hasShowcase && !hasStock) {
-      return 'Заполните остатки десертов на витрине или складе';
-    }
+    // Проверки "остаток десертов > 0" здесь сознательно нет: если все
+    // десерты распроданы, нули — правильные данные, а раньше из-за этой
+    // проверки смену было невозможно закрыть.
   }
   if (step == 1) {
     if (qrController.text.trim().isEmpty) {

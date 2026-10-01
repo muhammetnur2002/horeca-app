@@ -45,6 +45,11 @@ class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
   final _eveningCashCtrl = TextEditingController();
   final _inkassCtrl = TextEditingController();
   bool _hasInkass = false;
+  // Защита от дублей в аналитике: кнопки WhatsApp/Telegram/PDF и "Закрыть
+  // смену" вызывают одно и то же действие, а при сбое отправки PDF человек
+  // жмёт ещё раз — запись о смене должна сохраниться только один раз.
+  bool _submitting = false;
+  bool _shiftSaved = false;
 
   double get _autoTotal =>
       (double.tryParse(_qrCtrl.text) ?? 0) +
@@ -173,9 +178,17 @@ class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
       context: context,
       builder: (_) => const ConfirmCloseShiftDialog(),
     );
-    if (confirm != true || !mounted) return;
+    if (confirm != true || !mounted || _submitting) return;
+    _submitting = true;
+    try {
+      await _saveAndShare();
+    } finally {
+      _submitting = false;
+    }
+  }
 
-    // Сохраняем запись для аналитики.
+  Future<void> _saveAndShare() async {
+    // Сохраняем запись для аналитики (один раз за этот экран).
     final writeOffsMap = <String, int>{};
     for (final d in _desserts.where((d) => d.writeOff > 0)) {
       writeOffsMap[d.name] = d.writeOff;
@@ -183,16 +196,19 @@ class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
     for (final m in _manualWriteOffs) {
       writeOffsMap[m.name] = (writeOffsMap[m.name] ?? 0) + m.quantity;
     }
-    ref.read(analyticsRepositoryProvider).addShift(ShiftRecord(
-          date: DateTime.now(),
-          revenue: _finalTotal,
-          qr: double.tryParse(_qrCtrl.text) ?? 0,
-          card: double.tryParse(_cardCtrl.text) ?? 0,
-          cash: double.tryParse(_cashCtrl.text) ?? 0,
-          morningCash: double.tryParse(_morningCashCtrl.text) ?? 0,
-          eveningCash: double.tryParse(_eveningCashCtrl.text) ?? 0,
-          writeOffs: writeOffsMap,
-        ));
+    if (!_shiftSaved) {
+      _shiftSaved = true;
+      ref.read(analyticsRepositoryProvider).addShift(ShiftRecord(
+            date: DateTime.now(),
+            revenue: _finalTotal,
+            qr: double.tryParse(_qrCtrl.text) ?? 0,
+            card: double.tryParse(_cardCtrl.text) ?? 0,
+            cash: double.tryParse(_cashCtrl.text) ?? 0,
+            morningCash: double.tryParse(_morningCashCtrl.text) ?? 0,
+            eveningCash: double.tryParse(_eveningCashCtrl.text) ?? 0,
+            writeOffs: writeOffsMap,
+          ));
+    }
 
     await ShiftClosePdf.generateAndShare(
       currency: ref.read(settingsRepositoryProvider).currency,

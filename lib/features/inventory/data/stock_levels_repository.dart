@@ -2,12 +2,17 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:horeca_app/app/di.dart';
+import 'package:horeca_app/features/venue/data/venue_repository.dart';
 
 class StockLevelsRepository extends StateNotifier<Map<String, double>> {
   final SharedPreferences _prefs;
-  static const _key = 'current_stock_levels';
+  // Отдельно для каждого заведения: id товаров ("1".."10" у стартового
+  // набора) совпадают в разных заведениях, и общий ключ смешивал их остатки.
+  final String _key;
 
-  StockLevelsRepository(this._prefs) : super({}) {
+  StockLevelsRepository(this._prefs, String venueCode)
+      : _key = 'current_stock_levels${venueKeySuffix(venueCode)}',
+        super({}) {
     _load();
   }
 
@@ -31,5 +36,6 @@ class StockLevelsRepository extends StateNotifier<Map<String, double>> {
 final stockLevelsRepositoryProvider =
     StateNotifierProvider<StockLevelsRepository, Map<String, double>>((ref) {
   final prefs = ref.watch(sharedPreferencesProvider);
-  return StockLevelsRepository(prefs);
+  final venueCode = ref.watch(venueRepositoryProvider).activeVenueCode;
+  return StockLevelsRepository(prefs, venueCode);
 });

@@ -20,22 +20,11 @@ import 'package:horeca_app/features/inventory/data/stock_levels_repository.dart'
 class ReportStep extends ConsumerWidget {
   const ReportStep({super.key});
 
-  String _getDeptName(String? departmentId, AppLocalizations l10n) {
+  String _getDeptName(String? departmentId, AppLocalizations l10n,
+      List<DepartmentModel> allDepartments) {
     if (departmentId == 'all') return l10n.allDepartments;
-    switch (departmentId) {
-      case '1':
-        return 'Кухня';
-      case '2':
-        return 'Бар';
-      case '3':
-        return 'Зал';
-      case '4':
-        return 'Склад';
-      case '5':
-        return 'Клининг';
-      default:
-        return departmentId ?? 'Неизвестный отдел';
-    }
+    final matches = allDepartments.where((d) => d.id == departmentId);
+    return matches.isEmpty ? 'Неизвестный отдел' : matches.first.name;
   }
 
   String _generateReport(
@@ -52,7 +41,7 @@ class ReportStep extends ConsumerWidget {
         '${l10n.date}: ${DateTime.now().toLocal().toString().split('.')[0]}');
     buffer.writeln('${l10n.establishment}: "$establishmentName"');
     buffer.writeln(
-        '${l10n.department}: ${_getDeptName(state.departmentId, l10n)}');
+        '${l10n.department}: ${_getDeptName(state.departmentId, l10n, allDepartments)}');
     buffer.writeln();
 
     final Map<String, List<InventoryItem>> grouped = {};
@@ -85,7 +74,10 @@ class ReportStep extends ConsumerWidget {
     for (final catName in catOrder) {
       buffer.writeln('${l10n.category}: $catName');
       for (final item in grouped[catName]!) {
-        buffer.writeln('- ${item.productName}: ${item.remaining} ${item.unit}');
+        final remaining = item.remaining == item.remaining.truncateToDouble()
+            ? item.remaining.toInt().toString()
+            : item.remaining.toString();
+        buffer.writeln('- ${item.productName}: $remaining ${item.unit}');
       }
       buffer.writeln();
     }
@@ -103,7 +95,8 @@ class ReportStep extends ConsumerWidget {
     final allCategories = settings.categories;
     final allDepartments = settings.departments;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final deptName = _getDeptName(state.departmentId, l10n);
+    final deptName =
+        _getDeptName(state.departmentId, l10n, allDepartments);
     final text = _generateReport(state, l10n, establishmentName, allProducts,
         allCategories, allDepartments);
 
