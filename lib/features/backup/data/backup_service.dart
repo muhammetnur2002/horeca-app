@@ -3,125 +3,128 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:horeca_app/features/venue/data/venue_repository.dart';
+import 'package:horeca_app/core/db/app_database.dart';
+import 'package:horeca_app/core/db/legacy_migration.dart';
 
 enum RestoreResult { success, invalidFile, error }
 
+/// Резервная копия всех данных устройства (все заведения).
+///
+/// Формат версии 2 — выгрузка таблиц локальной базы «как есть» (строки
+/// SQL-таблиц). Файлы версии 1 (ключи SharedPreferences из старых версий
+/// приложения) тоже восстанавливаются: ключи кладутся на место и
+/// прогоняются через тот же перенос, что и при обновлении.
+///
+/// PIN-коды в бэкап сознательно не входят: файл пересылают через
+/// мессенджеры, и это была бы утечка кода доступа.
 class BackupService {
-  // Ключи, которые ведутся отдельно на каждое заведение (см.
-  // venueKeySuffix) — при бэкапе к каждому добавляется суффикс кода
-  // заведения. 'notification_data' сюда не входит — это единый глобальный
-  // ключ на всё устройство, не привязанный к конкретному заведению.
-  static const _perVenueKeys = [
-    'settings_data',
-    'history_data',
-    'shift_records',
-  ];
+  static const _formatVersion = 2;
 
-  // Глобальные ключи (одни на всё устройство, не по заведениям).
-  static const _globalKeys = [
-    'notification_data',
-    'venues_list',
-    'active_venue_code',
-  ];
-
-  /// PIN-коды сюда сознательно не входят: они хранятся в зашифрованном
-  /// secure storage, а не в SharedPreferences, и включение их в файл
-  /// бэкапа (который пользователь потом пересылает через WhatsApp/Telegram)
-  /// было бы утечкой кода доступа. После восстановления бэкапа PIN нужно
-  /// будет задать заново в Настройках.
-  static Future<String> createBackup(SharedPreferences prefs) async {
-    final Map<String, dynamic> data = {};
-
-    for (final key in _globalKeys) {
-      final value = prefs.getString(key);
-      if (value != null) data[key] = value;
+  /// Содержимое бэкапа — все таблицы базы.
+  static Future<Map<String, dynamic>> exportData(AppDatabase db) async {
+    final tables = <String, List<Map<String, Object?>>>{};
+    for (final table in db.allTables) {
+      final rows = await db
+          .customSelect('SELECT * FROM "${table.actualTableName}"')
+          .get();
+      tables[table.actualTableName] = rows.map((r) => r.data).toList();
     }
 
-    // Бэкапим данные КАЖДОГО заведения, а не только активного — иначе при
-    // восстановлении на новом устройстве все заведения, кроме первого,
-    // молча теряются.
-    final codes = _venueCodesFromPrefs(prefs);
-    for (final code in codes) {
-      final suffix = venueKeySuffix(code);
-      for (final key in _perVenueKeys) {
-        final value = prefs.getString('$key$suffix');
-        if (value != null) data['$key$suffix'] = value;
-      }
-    }
-
-    final Map<String, dynamic> backup = {
+    return <String, dynamic>{
       'app': 'Akyl',
-      'version': '1.0.0',
+      'version': _formatVersion,
+      'schemaVersion': db.schemaVersion,
       'createdAt': DateTime.now().toIso8601String(),
-      'data': data,
+      'tables': tables,
     };
+  }
 
-    final jsonString = jsonEncode(backup);
+  static Future<String> createBackup(AppDatabase db) async {
+    final backup = await exportData(db);
     final dir = await getTemporaryDirectory();
     final dateStr = DateTime.now().toIso8601String().split('T')[0];
     final file = File('${dir.path}/akyl_backup_$dateStr.json');
-    await file.writeAsString(jsonString);
+    await file.writeAsString(jsonEncode(backup));
     return file.path;
   }
 
-  static Future<void> shareBackup(SharedPreferences prefs) async {
-    final path = await createBackup(prefs);
+  static Future<void> shareBackup(AppDatabase db) async {
+    final path = await createBackup(db);
     await Share.shareXFiles(
       [XFile(path, mimeType: 'application/json')],
       subject: 'Резервная копия Akyl',
     );
   }
 
+  /// Полностью заменяет данные на устройстве данными из файла.
+  /// После восстановления приложение нужно перезапустить.
   static Future<RestoreResult> restoreFromFile(
-      String filePath, SharedPreferences prefs) async {
+      String filePath, AppDatabase db, SharedPreferences prefs) async {
+    final Map<String, dynamic> backup;
     try {
-      final file = File(filePath);
-      final content = await file.readAsString();
-      final backup = jsonDecode(content) as Map<String, dynamic>;
+      backup = jsonDecode(await File(filePath).readAsString())
+          as Map<String, dynamic>;
+    } on FormatException {
+      return RestoreResult.invalidFile;
+    } catch (_) {
+      return RestoreResult.error;
+    }
+    return importData(backup, db, prefs);
+  }
 
-      if (backup['app'] != 'Akyl') {
-        return RestoreResult.invalidFile;
-      }
-
-      final data = backup['data'] as Map<String, dynamic>;
-      // Восстанавливаем всё, что есть в файле, каким бы ни был набор
-      // ключей (старые бэкапы — только заведение "01", новые — все сразу).
-      for (final entry in data.entries) {
-        if (entry.value is String) {
-          await prefs.setString(entry.key, entry.value as String);
-        }
+  /// Заменяет данные на устройстве содержимым бэкапа (любой версии).
+  static Future<RestoreResult> importData(Map<String, dynamic> backup,
+      AppDatabase db, SharedPreferences prefs) async {
+    if (backup['app'] != 'Akyl') return RestoreResult.invalidFile;
+    try {
+      if (backup['version'] == _formatVersion) {
+        await _restoreTables(db, backup['tables'] as Map<String, dynamic>);
+      } else {
+        await _restoreLegacy(db, prefs, backup['data'] as Map<String, dynamic>);
       }
       return RestoreResult.success;
-    } on FormatException {
-      // Файл не в формате JSON вообще — точно не наш бэкап.
-      return RestoreResult.invalidFile;
-    } catch (e) {
-      // Любая другая ошибка (нет доступа к файлу, повреждённые данные
-      // внутри валидного JSON и т.п.) — это не обязательно "неверный
-      // файл", поэтому раньше вводящее в заблуждение сообщение теперь
-      // разделено на два разных случая (см. RestoreResult).
+    } catch (_) {
       return RestoreResult.error;
     }
   }
 
-  /// Коды заведений, которые реально существуют на этом устройстве.
-  /// Читаем 'venues_list' напрямую из SharedPreferences (а не через
-  /// VenueRepository), чтобы бэкап не зависел от Riverpod-контекста —
-  /// если список повреждён/отсутствует, считаем, что есть только "01"
-  /// (устройства без мультизаведений).
-  static List<String> _venueCodesFromPrefs(SharedPreferences prefs) {
-    try {
-      final raw = prefs.getString('venues_list');
-      if (raw == null) return const ['01'];
-      final list = jsonDecode(raw) as List;
-      final codes = list
-          .map((e) => (e as Map<String, dynamic>)['code'] as String?)
-          .whereType<String>()
-          .toList();
-      return codes.isEmpty ? const ['01'] : codes;
-    } catch (_) {
-      return const ['01'];
+  static Future<void> _restoreTables(
+      AppDatabase db, Map<String, dynamic> tables) async {
+    final known = {for (final t in db.allTables) t.actualTableName};
+    await db.transaction(() async {
+      for (final name in known) {
+        await db.customStatement('DELETE FROM "$name"');
+      }
+      for (final entry in tables.entries) {
+        // Таблицы из файла, которых нет в этой версии схемы, пропускаем.
+        if (!known.contains(entry.key)) continue;
+        for (final raw in entry.value as List) {
+          final row = Map<String, Object?>.from(raw as Map);
+          if (row.isEmpty) continue;
+          final columns = row.keys.map((c) => '"$c"').join(', ');
+          final placeholders = List.filled(row.length, '?').join(', ');
+          await db.customStatement(
+            'INSERT INTO "${entry.key}" ($columns) VALUES ($placeholders)',
+            row.values.toList(),
+          );
+        }
+      }
+    });
+  }
+
+  /// Файл старого формата: ключи SharedPreferences.
+  static Future<void> _restoreLegacy(AppDatabase db, SharedPreferences prefs,
+      Map<String, dynamic> data) async {
+    for (final entry in data.entries) {
+      if (entry.value is String) {
+        await prefs.setString(entry.key, entry.value as String);
+      }
     }
+    await db.transaction(() async {
+      for (final table in db.allTables) {
+        await db.customStatement('DELETE FROM "${table.actualTableName}"');
+      }
+    });
+    await LegacyMigration.run(db: db, prefs: prefs, force: true);
   }
 }

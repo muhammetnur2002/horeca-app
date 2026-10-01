@@ -183,7 +183,9 @@ class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
     for (final m in _manualWriteOffs) {
       writeOffsMap[m.name] = (writeOffsMap[m.name] ?? 0) + m.quantity;
     }
-    ref.read(analyticsRepositoryProvider).addShift(ShiftRecord(
+    final settings = ref.read(settingsRepositoryProvider);
+    final productIdByName = {for (final p in settings.products) p.name: p.id};
+    ref.read(analyticsRepositoryProvider.notifier).addShift(ShiftRecord(
           date: DateTime.now(),
           revenue: _finalTotal,
           qr: double.tryParse(_qrCtrl.text) ?? 0,
@@ -192,7 +194,14 @@ class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
           morningCash: double.tryParse(_morningCashCtrl.text) ?? 0,
           eveningCash: double.tryParse(_eveningCashCtrl.text) ?? 0,
           writeOffs: writeOffsMap,
-        ));
+        ),
+        staffNames: _selectedStaff.toList(),
+        inkass: _hasInkass ? (double.tryParse(_inkassCtrl.text) ?? 0) : 0,
+        writeoffProductIds: {
+          for (final d in _desserts.where((d) => d.writeOff > 0))
+            if (productIdByName[d.name] != null) d.name: productIdByName[d.name]!,
+        },
+        writeoffUnits: {for (final m in _manualWriteOffs) m.name: m.unit});
 
     await ShiftClosePdf.generateAndShare(
       currency: ref.read(settingsRepositoryProvider).currency,

@@ -59,6 +59,33 @@ class CatalogDao {
     return rowId;
   }
 
+  /// Частичное обновление полей заведения (не переданные — не меняются).
+  Future<void> updateVenue(
+    String id, {
+    String? name,
+    String? reportName,
+    String? currency,
+    String? logoPath,
+    bool clearLogo = false,
+    bool? showShiftDesserts,
+  }) async {
+    await (_db.update(_db.venues)..where((t) => t.id.equals(id))).write(
+      VenuesCompanion(
+        name: name == null ? const Value.absent() : Value(name),
+        reportName:
+            reportName == null ? const Value.absent() : Value(reportName),
+        currency: currency == null ? const Value.absent() : Value(currency),
+        logoPath: clearLogo
+            ? const Value(null)
+            : (logoPath == null ? const Value.absent() : Value(logoPath)),
+        showShiftDesserts: showShiftDesserts == null
+            ? const Value.absent()
+            : Value(showShiftDesserts),
+        updatedAt: Value(_now()),
+      ),
+    );
+  }
+
   /// Мягкое удаление заведения вместе со всеми его справочниками.
   Future<void> deleteVenue(String venueId) async {
     final now = _now();
@@ -101,7 +128,7 @@ class CatalogDao {
     String? id,
     required String name,
     String iconKey = 'category',
-    int sortOrder = 0,
+    int? sortOrder,
   }) async {
     final now = _now();
     final rowId = id ?? Ids.newId();
@@ -112,12 +139,15 @@ class CatalogDao {
       venueId: venueId,
       name: name,
       iconKey: Value(iconKey),
-      sortOrder: Value(sortOrder),
+      sortOrder: Value(sortOrder ?? 0),
     );
     // При обновлении дата создания остаётся прежней.
     await _db.into(_db.departments).insert(row,
-        onConflict:
-            DoUpdate((_) => row.copyWith(createdAt: const Value.absent())));
+        onConflict: DoUpdate((_) => row.copyWith(
+            createdAt: const Value.absent(),
+            // Без явного порядка при обновлении сохраняем прежний.
+            sortOrder:
+                sortOrder == null ? const Value.absent() : Value(sortOrder))));
     return rowId;
   }
 
@@ -164,7 +194,7 @@ class CatalogDao {
     required String name,
     String? departmentId,
     bool isDessert = false,
-    int sortOrder = 0,
+    int? sortOrder,
   }) async {
     final now = _now();
     final rowId = id ?? Ids.newId();
@@ -176,12 +206,15 @@ class CatalogDao {
       name: name,
       departmentId: Value(departmentId),
       isDessert: Value(isDessert),
-      sortOrder: Value(sortOrder),
+      sortOrder: Value(sortOrder ?? 0),
     );
     // При обновлении дата создания остаётся прежней.
     await _db.into(_db.categories).insert(row,
-        onConflict:
-            DoUpdate((_) => row.copyWith(createdAt: const Value.absent())));
+        onConflict: DoUpdate((_) => row.copyWith(
+            createdAt: const Value.absent(),
+            // Без явного порядка при обновлении сохраняем прежний.
+            sortOrder:
+                sortOrder == null ? const Value.absent() : Value(sortOrder))));
     return rowId;
   }
 
@@ -220,7 +253,7 @@ class CatalogDao {
     String? categoryId,
     double? minStock,
     String? iikoProductId,
-    int sortOrder = 0,
+    int? sortOrder,
   }) async {
     final now = _now();
     final rowId = id ?? Ids.newId();
@@ -236,12 +269,15 @@ class CatalogDao {
       categoryId: Value(categoryId),
       minStock: Value(minStock),
       iikoProductId: Value(iikoProductId),
-      sortOrder: Value(sortOrder),
+      sortOrder: Value(sortOrder ?? 0),
     );
     // При обновлении дата создания остаётся прежней.
     await _db.into(_db.products).insert(row,
-        onConflict:
-            DoUpdate((_) => row.copyWith(createdAt: const Value.absent())));
+        onConflict: DoUpdate((_) => row.copyWith(
+            createdAt: const Value.absent(),
+            // Без явного порядка при обновлении сохраняем прежний.
+            sortOrder:
+                sortOrder == null ? const Value.absent() : Value(sortOrder))));
     return rowId;
   }
 

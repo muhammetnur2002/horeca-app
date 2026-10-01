@@ -11,9 +11,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart' as fp;
 import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/app/di.dart';
+import 'package:horeca_app/core/db/app_database.dart';
 import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
-import 'package:horeca_app/features/settings/data/settings_repository_staff.dart';
 
 import 'package:horeca_app/features/backup/data/backup_service.dart';
 
@@ -132,9 +132,8 @@ void showEditEstablishmentNameDialog(BuildContext context, String currentName,
 }
 
 Future<void> createAppBackup(BuildContext context, WidgetRef ref) async {
-  final prefs = ref.read(sharedPreferencesProvider);
   try {
-    await BackupService.shareBackup(prefs);
+    await BackupService.shareBackup(ref.read(appDatabaseProvider));
   } catch (e) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -185,8 +184,8 @@ Future<void> restoreAppBackup(
   if (result == null || result.files.single.path == null) return;
 
   final prefs = ref.read(sharedPreferencesProvider);
-  final restoreResult =
-      await BackupService.restoreFromFile(result.files.single.path!, prefs);
+  final restoreResult = await BackupService.restoreFromFile(
+      result.files.single.path!, ref.read(appDatabaseProvider), prefs);
 
   if (context.mounted) {
     final String message;

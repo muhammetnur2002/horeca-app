@@ -7,7 +7,6 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
-import 'package:horeca_app/app/di.dart';
 import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
 import 'package:horeca_app/features/account/data/account_repository.dart';
 import 'package:horeca_app/features/account/data/cloud_sync_service.dart';
@@ -31,20 +30,16 @@ class _AccountSectionState extends ConsumerState<AccountSection> {
     final uid = ref.read(accountRepositoryProvider).uid;
     if (uid == null) return;
     setState(() => _isSyncing = true);
-    final prefs = ref.read(sharedPreferencesProvider);
-    final venueCode = ref.read(venueRepositoryProvider).activeVenueCode;
-    final registryOk = await CloudSyncService.pushVenueRegistry(
+    // Пока отправляется только список заведений: синхронизация данных
+    // вернётся с переездом на новый сервер — честно говорим об этом.
+    final success = await CloudSyncService.pushVenueRegistry(
         uid, ref.read(venueRepositoryProvider).venues);
-    final dataOk = await CloudSyncService.pushToCloud(uid, prefs, venueCode);
-    // Раньше здесь всегда показывалось "Данные отправлены", даже если оба
-    // вызова выше молча падали (например, нет сети) — сотрудник считал
-    // данные синхронизированными, хотя они оставались только на устройстве.
-    final success = registryOk && dataOk;
     if (mounted) {
       setState(() => _isSyncing = false);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(success
-            ? 'Данные отправлены в облако'
+            ? 'Список заведений отправлен. Синхронизация данных временно '
+                'отключена — переезд на новый сервер'
             : 'Не удалось синхронизировать — проверьте интернет'),
         backgroundColor: success ? null : Colors.redAccent,
         behavior: SnackBarBehavior.floating,

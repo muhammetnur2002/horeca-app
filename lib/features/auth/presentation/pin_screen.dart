@@ -1,16 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
-import 'package:horeca_app/app/di.dart';
 import 'package:horeca_app/features/auth/data/auth_repository.dart';
 import 'package:horeca_app/features/auth/presentation/pin_recovery_dialog.dart';
 import 'package:horeca_app/features/venue/data/venue_repository.dart';
-import 'package:horeca_app/features/account/data/account_repository.dart';
-import 'package:horeca_app/features/account/data/cloud_sync_service.dart';
-import 'package:horeca_app/features/settings/data/settings_repository.dart';
-import 'package:horeca_app/features/history/data/history_repository.dart';
-import 'package:horeca_app/features/analytics/data/analytics_repository.dart';
-import 'package:horeca_app/features/notifications/data/notification_repository.dart';
 
 class PinScreen extends ConsumerStatefulWidget {
   const PinScreen({super.key});
@@ -81,23 +74,6 @@ class _PinScreenState extends ConsumerState<PinScreen> {
     final role = await repo.checkPinReady(password);
     if (!mounted || _pin != currentPin) return;
     if (role != null) {
-      // Если это заведение на этом устройстве ещё не открывали (данных нет
-      // локально), а аккаунт залогинен в облако — подтягиваем его данные,
-      // прежде чем показать приложение (иначе увидим пустые заготовки
-      // вместо реальных отделов/истории этого заведения).
-      final account = ref.read(accountRepositoryProvider);
-      if (account.isLoggedIn && account.uid != null) {
-        final prefs = ref.read(sharedPreferencesProvider);
-        final hasLocalData =
-            prefs.getString('settings_data${venueKeySuffix(code)}') != null;
-        if (!hasLocalData) {
-          await CloudSyncService.pullToLocal(account.uid!, prefs, code);
-          ref.invalidate(settingsRepositoryProvider);
-          ref.invalidate(historyRepositoryProvider);
-          ref.invalidate(analyticsRepositoryProvider);
-          ref.invalidate(notificationRepositoryProvider);
-        }
-      }
       repo.login(role);
     } else if (repo.lockoutSecondsRemaining > 0) {
       setState(() {

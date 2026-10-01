@@ -182,7 +182,7 @@ class AboutScreen extends ConsumerWidget {
               onPressed: () {
                 Navigator.pop(ctx);
                 ref.read(settingsRepositoryProvider.notifier).resetAll();
-                ref.read(historyRepositoryProvider).clear();
+                ref.read(historyRepositoryProvider.notifier).clear();
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                   content: Text('Все данные очищены'),
                   behavior: SnackBarBehavior.floating,

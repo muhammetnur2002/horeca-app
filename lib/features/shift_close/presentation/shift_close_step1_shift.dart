@@ -37,7 +37,11 @@ Widget buildShiftStep1({
         }).toList();
   final settings = ref.read(settingsRepositoryProvider);
   final showDesserts = settings.showShiftDesserts;
-  if (showDesserts && !dessertsLoaded) {
+  // Ждём, пока каталог загрузится из базы, иначе список десертов
+  // зафиксировался бы пустым на всю смену.
+  if (showDesserts &&
+      !dessertsLoaded &&
+      ref.read(settingsRepositoryProvider.notifier).isLoaded) {
     // Раньше категория для этого шага угадывалась по названию (искали
     // "десерт" в имени) — ломалось на любом другом написании. Теперь
     // это явный флаг isDessertCategory, который включается в

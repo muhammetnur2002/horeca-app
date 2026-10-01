@@ -236,7 +236,7 @@ class ReportStep extends ConsumerWidget {
                   ));
                   return;
                 }
-                final repo = ref.read(historyRepositoryProvider);
+                final repo = ref.read(historyRepositoryProvider.notifier);
                 repo.add(HistoryEntry(
                   id: DateTime.now().millisecondsSinceEpoch.toString(),
                   type: HistoryType.inventory,

@@ -1,8 +1,8 @@
-import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:horeca_app/app/di.dart';
-import 'package:horeca_app/features/account/data/cloud_auto_sync.dart';
+import 'package:horeca_app/core/db/dao/operations_dao.dart';
+import 'package:horeca_app/core/db/db_providers.dart';
+import 'package:horeca_app/core/db/ids.dart';
+import 'package:horeca_app/core/money.dart';
 import 'package:horeca_app/features/venue/data/venue_repository.dart';
 
 class ShiftRecord {
@@ -49,45 +49,87 @@ class ShiftRecord {
   );
 }
 
-class AnalyticsRepository {
-  final SharedPreferences _prefs;
-  final String _key;
-  final void Function()? _onChanged;
-  List<ShiftRecord> _records = [];
+int _toMinor(double v) => (Money.round(v) * 100).round();
+double _fromMinor(int v) => v / 100;
 
-  AnalyticsRepository(this._prefs, String venueCode, {void Function()? onChanged})
-      : _key = 'shift_records${venueKeySuffix(venueCode)}',
-        _onChanged = onChanged {
-    _load();
+/// Закрытые смены заведения. Хранятся в базе (суммы — в минорных
+/// единицах), состояние — список от старых к новым.
+class AnalyticsRepository extends StateNotifier<List<ShiftRecord>> {
+  final OperationsDao _dao;
+  final String _venueId;
+
+  AnalyticsRepository(this._dao, this._venueId) : super(const []) {
+    _ready = _load();
   }
 
-  void _load() {
-    final jsonString = _prefs.getString(_key);
-    if (jsonString == null) return;
-    try {
-      final List<dynamic> data = jsonDecode(jsonString);
-      _records = data.map((e) => ShiftRecord.fromJson(e)).toList();
-    } catch (_) {
-      _records = [];
+  late final Future<void> _ready;
+
+  /// Завершается, когда данные загружены из базы.
+  Future<void> get ready => _ready;
+
+  Future<void> _load() async {
+    final shifts = await _dao.loadShifts(_venueId);
+    final records = <ShiftRecord>[];
+    for (final s in shifts) {
+      final writeoffs = await _dao.loadWriteoffs(s.id);
+      final map = <String, int>{};
+      for (final w in writeoffs) {
+        map[w.productName] = (map[w.productName] ?? 0) + w.quantity.round();
+      }
+      records.add(ShiftRecord(
+        date: s.closedAt.toLocal(),
+        revenue: _fromMinor(s.revenueMinor),
+        qr: _fromMinor(s.qrMinor),
+        card: _fromMinor(s.cardMinor),
+        cash: _fromMinor(s.cashMinor),
+        morningCash: _fromMinor(s.morningCashMinor),
+        eveningCash: _fromMinor(s.eveningCashMinor),
+        writeOffs: map,
+      ));
     }
+    if (!mounted) return;
+    state = records;
   }
 
-  void _save() {
-    final data = _records.map((r) => r.toJson()).toList();
-    _prefs.setString(_key, jsonEncode(data));
-    _onChanged?.call();
+  /// Сохраняет закрытую смену. [shiftId] — защита от двойной записи:
+  /// смена с тем же id повторно не сохраняется.
+  void addShift(
+    ShiftRecord record, {
+    String? shiftId,
+    List<String> staffNames = const [],
+    double inkass = 0,
+    Map<String, String> writeoffProductIds = const {},
+    Map<String, String> writeoffUnits = const {},
+  }) {
+    state = [...state, record];
+    _dao.addShift(
+      venueId: _venueId,
+      id: shiftId ?? Ids.newId(),
+      closedAt: record.date,
+      staffNames: staffNames,
+      revenueMinor: _toMinor(record.revenue),
+      qrMinor: _toMinor(record.qr),
+      cardMinor: _toMinor(record.card),
+      cashMinor: _toMinor(record.cash),
+      morningCashMinor: _toMinor(record.morningCash),
+      eveningCashMinor: _toMinor(record.eveningCash),
+      inkassMinor: _toMinor(inkass),
+      writeoffs: record.writeOffs.entries
+          .map((e) => ShiftWriteoffInput(
+                productId: writeoffProductIds[e.key],
+                productName: e.key,
+                quantity: e.value.toDouble(),
+                unit: writeoffUnits[e.key] ?? 'шт',
+              ))
+          .toList(),
+    );
   }
 
-  void addShift(ShiftRecord record) {
-    _records.add(record);
-    _save();
-  }
-
-  List<ShiftRecord> getAll() => List.unmodifiable(_records);
+  List<ShiftRecord> getAll() => List.unmodifiable(state);
 
   List<ShiftRecord> getLastNDays(int n) {
     final cutoff = DateTime.now().subtract(Duration(days: n));
-    return _records.where((r) => r.date.isAfter(cutoff)).toList()
+    return state.where((r) => r.date.isAfter(cutoff)).toList()
       ..sort((a, b) => a.date.compareTo(b.date));
   }
 
@@ -95,14 +137,15 @@ class AnalyticsRepository {
     final now = DateTime.now();
     final yesterday = DateTime(now.year, now.month, now.day - 1);
     final todayStart = DateTime(now.year, now.month, now.day);
-    final candidates = _records.where((r) =>
+    final candidates = state.where((r) =>
         r.date.isAfter(yesterday) && r.date.isBefore(todayStart)).toList();
     if (candidates.isEmpty) return null;
     candidates.sort((a, b) => b.date.compareTo(a.date));
     return candidates.first;
   }
+
   double? getRevenueChangePercent() {
-    final sorted = List<ShiftRecord>.from(_records)
+    final sorted = List<ShiftRecord>.from(state)
       ..sort((a, b) => b.date.compareTo(a.date));
     if (sorted.length < 2) return null;
     final today = sorted[0].revenue;
@@ -113,7 +156,7 @@ class AnalyticsRepository {
 
   Map<String, int> getTopWriteOffs({int limit = 5}) {
     final Map<String, int> totals = {};
-    for (final record in _records) {
+    for (final record in state) {
       record.writeOffs.forEach((name, qty) {
         totals[name] = (totals[name] ?? 0) + qty;
       });
@@ -124,14 +167,15 @@ class AnalyticsRepository {
   }
 
   void clear() {
-    _records.clear();
-    _save();
+    state = const [];
+    _dao.clearShifts(_venueId);
   }
 }
 
-final analyticsRepositoryProvider = Provider<AnalyticsRepository>((ref) {
-  final prefs = ref.watch(sharedPreferencesProvider);
-  final venueCode = ref.watch(venueRepositoryProvider).activeVenueCode;
-  return AnalyticsRepository(prefs, venueCode,
-      onChanged: () => ref.read(cloudAutoSyncProvider).scheduleSync());
+final analyticsRepositoryProvider =
+    StateNotifierProvider<AnalyticsRepository, List<ShiftRecord>>((ref) {
+  return AnalyticsRepository(
+    ref.watch(operationsDaoProvider),
+    ref.watch(activeVenueIdProvider),
+  );
 });

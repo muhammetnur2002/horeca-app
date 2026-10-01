@@ -1,77 +1,74 @@
-import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:horeca_app/app/di.dart';
-import 'package:horeca_app/features/account/data/cloud_auto_sync.dart';
+import 'package:horeca_app/core/db/dao/operations_dao.dart';
+import 'package:horeca_app/core/db/db_providers.dart';
 import 'package:horeca_app/features/history/domain/history_entry.dart';
 import 'package:horeca_app/features/venue/data/venue_repository.dart';
 
-class HistoryRepository {
-  final SharedPreferences _prefs;
-  final String _historyKey;
-  final void Function()? _onChanged;
-  List<HistoryEntry> _entries = [];
+/// История заявок и инвентаризаций заведения. Записи хранятся в базе,
+/// состояние — список от новых к старым.
+class HistoryRepository extends StateNotifier<List<HistoryEntry>> {
+  final OperationsDao _dao;
+  final String _venueId;
 
-  HistoryRepository(this._prefs, String venueCode, {void Function()? onChanged})
-      : _historyKey = 'history_data${venueKeySuffix(venueCode)}',
-        _onChanged = onChanged {
-    _loadFromPrefs();
+  HistoryRepository(this._dao, this._venueId) : super(const []) {
+    _ready = _load();
   }
 
-  void _saveToPrefs() {
-    final data = _entries.map((e) => {
-      'id': e.id,
-      'type': e.type == HistoryType.request ? 'request' : 'inventory',
-      'title': e.title,
-      'text': e.text,
-      'createdAt': e.createdAt.toIso8601String(),
-    }).toList();
-    _prefs.setString(_historyKey, jsonEncode(data));
-    _onChanged?.call();
+  late final Future<void> _ready;
+
+  /// Завершается, когда данные загружены из базы.
+  Future<void> get ready => _ready;
+
+  Future<void> _load() async {
+    final rows = await _dao.loadHistory(_venueId);
+    if (!mounted) return;
+    state = rows
+        .map((r) => HistoryEntry(
+              id: r.id,
+              type: r.kind == 'inventory'
+                  ? HistoryType.inventory
+                  : HistoryType.request,
+              title: r.title,
+              text: r.body,
+              createdAt: r.createdAt.toLocal(),
+            ))
+        .toList();
   }
 
-  void _loadFromPrefs() {
-    final jsonString = _prefs.getString(_historyKey);
-    if (jsonString == null) return;
-    try {
-      final List<dynamic> data = jsonDecode(jsonString);
-      _entries = data.map((item) => HistoryEntry(
-        id: item['id'] as String,
-        type: item['type'] == 'request' ? HistoryType.request : HistoryType.inventory,
-        title: item['title'] as String,
-        text: item['text'] as String,
-        createdAt: DateTime.parse(item['createdAt'] as String),
-      )).toList();
-    } catch (_) {
-      _entries = [];
-    }
-  }
-
-  List<HistoryEntry> getAll() => List.unmodifiable(_entries.reversed);
+  List<HistoryEntry> getAll() => List.unmodifiable(state);
 
   void add(HistoryEntry entry) {
-    _entries.add(entry);
-    _saveToPrefs();
+    state = [entry, ...state];
+    _dao.addHistoryEntry(
+      venueId: _venueId,
+      kind: entry.type == HistoryType.inventory ? 'inventory' : 'request',
+      title: entry.title,
+      body: entry.text,
+      createdAt: entry.createdAt,
+    );
   }
 
   void clear() {
-    _entries.clear();
-    _saveToPrefs();
+    state = const [];
+    _dao.clearHistory(_venueId);
   }
 
   void clearByType(HistoryType type) {
-    _entries.removeWhere((entry) => entry.type == type);
-    _saveToPrefs();
+    state = state.where((e) => e.type != type).toList();
+    _dao.clearHistory(_venueId,
+        kind: type == HistoryType.inventory ? 'inventory' : 'request');
   }
 }
 
-final historyRepositoryProvider = Provider<HistoryRepository>((ref) {
-  final prefs = ref.watch(sharedPreferencesProvider);
-  final venueCode = ref.watch(venueRepositoryProvider).activeVenueCode;
-  return HistoryRepository(prefs, venueCode,
-      onChanged: () => ref.read(cloudAutoSyncProvider).scheduleSync());
+final historyRepositoryProvider =
+    StateNotifierProvider<HistoryRepository, List<HistoryEntry>>((ref) {
+  return HistoryRepository(
+    ref.watch(operationsDaoProvider),
+    ref.watch(activeVenueIdProvider),
+  );
 });
 
+/// Записи от новых к старым.
 final historyEntriesProvider = Provider<List<HistoryEntry>>((ref) {
-  return ref.watch(historyRepositoryProvider).getAll();
+  return ref.watch(historyRepositoryProvider);
 });

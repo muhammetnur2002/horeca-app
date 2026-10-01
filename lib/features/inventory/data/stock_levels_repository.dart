@@ -1,28 +1,27 @@
-import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:horeca_app/app/di.dart';
+import 'package:horeca_app/core/db/dao/operations_dao.dart';
+import 'package:horeca_app/core/db/db_providers.dart';
+import 'package:horeca_app/features/venue/data/venue_repository.dart';
 
+/// Последние измеренные остатки заведения (id товара → количество).
+/// Хранятся в базе отдельно для каждого заведения.
 class StockLevelsRepository extends StateNotifier<Map<String, double>> {
-  final SharedPreferences _prefs;
-  static const _key = 'current_stock_levels';
+  final OperationsDao _dao;
+  final String _venueId;
 
-  StockLevelsRepository(this._prefs) : super({}) {
+  StockLevelsRepository(this._dao, this._venueId) : super({}) {
     _load();
   }
 
-  void _load() {
-    final jsonString = _prefs.getString(_key);
-    if (jsonString == null) return;
-    try {
-      final Map<String, dynamic> data = jsonDecode(jsonString);
-      state = data.map((k, v) => MapEntry(k, (v as num).toDouble()));
-    } catch (_) {}
+  Future<void> _load() async {
+    final levels = await _dao.loadStockLevels(_venueId);
+    if (!mounted) return;
+    state = levels;
   }
 
   void updateLevels(Map<String, double> levels) {
     state = {...state, ...levels};
-    _prefs.setString(_key, jsonEncode(state));
+    _dao.saveStockLevels(venueId: _venueId, levels: levels);
   }
 
   double? getLevel(String productId) => state[productId];
@@ -30,6 +29,8 @@ class StockLevelsRepository extends StateNotifier<Map<String, double>> {
 
 final stockLevelsRepositoryProvider =
     StateNotifierProvider<StockLevelsRepository, Map<String, double>>((ref) {
-  final prefs = ref.watch(sharedPreferencesProvider);
-  return StockLevelsRepository(prefs);
+  return StockLevelsRepository(
+    ref.watch(operationsDaoProvider),
+    ref.watch(activeVenueIdProvider),
+  );
 });

@@ -5,6 +5,7 @@ class ProductModel {
   String inventoryUnit;  // единица для инвентаризации
   String categoryId;
   double? minStock;      // минимальный остаток для уведомления
+  String? iikoProductId; // id товара в номенклатуре iiko
   ProductModel({
     required this.id,
     required this.name,
@@ -12,5 +13,6 @@ class ProductModel {
     String? inventoryUnit,
     required this.categoryId,
     this.minStock,
+    this.iikoProductId,
   }) : inventoryUnit = inventoryUnit ?? unit;
 }
