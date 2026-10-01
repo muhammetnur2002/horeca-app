@@ -141,6 +141,7 @@ class VenueRepository extends StateNotifier<VenueState> {
       'history_data',
       'shift_records',
       'notification_data',
+      'current_stock_levels',
       'cloud_sync_last_known_update_ms',
       'pins_enabled',
       'pin_failed_attempts',

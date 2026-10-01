@@ -7,6 +7,8 @@ import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
 import 'package:horeca_app/features/auth/data/auth_repository.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
 import 'package:horeca_app/features/inventory/data/stock_levels_repository.dart';
+import 'package:horeca_app/features/onboarding/data/onboarding_repository.dart';
+import 'package:horeca_app/features/onboarding/presentation/onboarding_overlay.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -19,6 +21,7 @@ class HomeScreen extends ConsumerWidget {
     final isAdmin = authState.role != UserRole.staff;
     final pinsEnabled = ref.read(authRepositoryProvider.notifier).pinsEnabled;
 
+    final onboardingSeen = ref.watch(onboardingRepositoryProvider);
     final settings = ref.watch(settingsRepositoryProvider);
     final stockLevels = ref.watch(stockLevelsRepositoryProvider);
     final lowStockItems = settings.products.where((p) {
@@ -120,6 +123,11 @@ class HomeScreen extends ConsumerWidget {
               ),
             ),
           ),
+          if (!onboardingSeen)
+            OnboardingOverlay(
+              onFinish: () =>
+                  ref.read(onboardingRepositoryProvider.notifier).markSeen(),
+            ),
         ],
       ),
     );

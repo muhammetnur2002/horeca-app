@@ -53,7 +53,7 @@ Widget buildShiftStep3({
               child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Касса на следуюущую смену',
+                    const Text('Касса на следующую смену',
                         style: TextStyle(fontSize: 13, color: AppColors.muted)),
                     Text('${shiftCloseFormatMoney(tomorrowCash)} $currency',
                         style: TextStyle(

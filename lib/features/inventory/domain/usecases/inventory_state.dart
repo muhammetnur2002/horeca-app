@@ -72,6 +72,12 @@ class InventoryStateNotifier extends StateNotifier<InventoryState> {
     state = state.copyWith(step: 2);
   }
 
+  /// Возврат с ввода остатков к выбору категорий — введённые значения
+  /// сохраняются.
+  void backToCategories() {
+    state = state.copyWith(step: 1);
+  }
+
   void setSelectedCategories(List<String> ids) {
     state = state.copyWith(selectedCategoryIds: ids);
   }
