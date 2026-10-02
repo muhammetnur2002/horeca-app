@@ -2662,6 +2662,17 @@ class $HistoryEntriesTable extends HistoryEntries
   late final GeneratedColumn<String> staffId = GeneratedColumn<String>(
       'staff_id', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _refIdMeta = const VerificationMeta('refId');
+  @override
+  late final GeneratedColumn<String> refId = GeneratedColumn<String>(
+      'ref_id', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _attachmentPathMeta =
+      const VerificationMeta('attachmentPath');
+  @override
+  late final GeneratedColumn<String> attachmentPath = GeneratedColumn<String>(
+      'attachment_path', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -2672,7 +2683,9 @@ class $HistoryEntriesTable extends HistoryEntries
         kind,
         title,
         body,
-        staffId
+        staffId,
+        refId,
+        attachmentPath
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2733,6 +2746,16 @@ class $HistoryEntriesTable extends HistoryEntries
       context.handle(_staffIdMeta,
           staffId.isAcceptableOrUnknown(data['staff_id']!, _staffIdMeta));
     }
+    if (data.containsKey('ref_id')) {
+      context.handle(
+          _refIdMeta, refId.isAcceptableOrUnknown(data['ref_id']!, _refIdMeta));
+    }
+    if (data.containsKey('attachment_path')) {
+      context.handle(
+          _attachmentPathMeta,
+          attachmentPath.isAcceptableOrUnknown(
+              data['attachment_path']!, _attachmentPathMeta));
+    }
     return context;
   }
 
@@ -2760,6 +2783,10 @@ class $HistoryEntriesTable extends HistoryEntries
           .read(DriftSqlType.string, data['${effectivePrefix}body'])!,
       staffId: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}staff_id']),
+      refId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}ref_id']),
+      attachmentPath: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}attachment_path']),
     );
   }
 
@@ -2776,11 +2803,17 @@ class HistoryEntryRow extends DataClass implements Insertable<HistoryEntryRow> {
   final DateTime? deletedAt;
   final String venueId;
 
-  /// 'request' или 'inventory'.
+  /// 'request', 'inventory' или 'receipt' (приёмка поставки).
   final String kind;
   final String title;
   final String body;
   final String? staffId;
+
+  /// Связанный документ: для приёмки — заявка, по которой пришла поставка.
+  final String? refId;
+
+  /// Путь к файлу-вложению на устройстве (фото накладной).
+  final String? attachmentPath;
   const HistoryEntryRow(
       {required this.id,
       required this.createdAt,
@@ -2790,7 +2823,9 @@ class HistoryEntryRow extends DataClass implements Insertable<HistoryEntryRow> {
       required this.kind,
       required this.title,
       required this.body,
-      this.staffId});
+      this.staffId,
+      this.refId,
+      this.attachmentPath});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -2806,6 +2841,12 @@ class HistoryEntryRow extends DataClass implements Insertable<HistoryEntryRow> {
     map['body'] = Variable<String>(body);
     if (!nullToAbsent || staffId != null) {
       map['staff_id'] = Variable<String>(staffId);
+    }
+    if (!nullToAbsent || refId != null) {
+      map['ref_id'] = Variable<String>(refId);
+    }
+    if (!nullToAbsent || attachmentPath != null) {
+      map['attachment_path'] = Variable<String>(attachmentPath);
     }
     return map;
   }
@@ -2825,6 +2866,11 @@ class HistoryEntryRow extends DataClass implements Insertable<HistoryEntryRow> {
       staffId: staffId == null && nullToAbsent
           ? const Value.absent()
           : Value(staffId),
+      refId:
+          refId == null && nullToAbsent ? const Value.absent() : Value(refId),
+      attachmentPath: attachmentPath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(attachmentPath),
     );
   }
 
@@ -2841,6 +2887,8 @@ class HistoryEntryRow extends DataClass implements Insertable<HistoryEntryRow> {
       title: serializer.fromJson<String>(json['title']),
       body: serializer.fromJson<String>(json['body']),
       staffId: serializer.fromJson<String?>(json['staffId']),
+      refId: serializer.fromJson<String?>(json['refId']),
+      attachmentPath: serializer.fromJson<String?>(json['attachmentPath']),
     );
   }
   @override
@@ -2856,6 +2904,8 @@ class HistoryEntryRow extends DataClass implements Insertable<HistoryEntryRow> {
       'title': serializer.toJson<String>(title),
       'body': serializer.toJson<String>(body),
       'staffId': serializer.toJson<String?>(staffId),
+      'refId': serializer.toJson<String?>(refId),
+      'attachmentPath': serializer.toJson<String?>(attachmentPath),
     };
   }
 
@@ -2868,7 +2918,9 @@ class HistoryEntryRow extends DataClass implements Insertable<HistoryEntryRow> {
           String? kind,
           String? title,
           String? body,
-          Value<String?> staffId = const Value.absent()}) =>
+          Value<String?> staffId = const Value.absent(),
+          Value<String?> refId = const Value.absent(),
+          Value<String?> attachmentPath = const Value.absent()}) =>
       HistoryEntryRow(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -2879,6 +2931,9 @@ class HistoryEntryRow extends DataClass implements Insertable<HistoryEntryRow> {
         title: title ?? this.title,
         body: body ?? this.body,
         staffId: staffId.present ? staffId.value : this.staffId,
+        refId: refId.present ? refId.value : this.refId,
+        attachmentPath:
+            attachmentPath.present ? attachmentPath.value : this.attachmentPath,
       );
   HistoryEntryRow copyWithCompanion(HistoryEntriesCompanion data) {
     return HistoryEntryRow(
@@ -2891,6 +2946,10 @@ class HistoryEntryRow extends DataClass implements Insertable<HistoryEntryRow> {
       title: data.title.present ? data.title.value : this.title,
       body: data.body.present ? data.body.value : this.body,
       staffId: data.staffId.present ? data.staffId.value : this.staffId,
+      refId: data.refId.present ? data.refId.value : this.refId,
+      attachmentPath: data.attachmentPath.present
+          ? data.attachmentPath.value
+          : this.attachmentPath,
     );
   }
 
@@ -2905,14 +2964,16 @@ class HistoryEntryRow extends DataClass implements Insertable<HistoryEntryRow> {
           ..write('kind: $kind, ')
           ..write('title: $title, ')
           ..write('body: $body, ')
-          ..write('staffId: $staffId')
+          ..write('staffId: $staffId, ')
+          ..write('refId: $refId, ')
+          ..write('attachmentPath: $attachmentPath')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
-      id, createdAt, updatedAt, deletedAt, venueId, kind, title, body, staffId);
+  int get hashCode => Object.hash(id, createdAt, updatedAt, deletedAt, venueId,
+      kind, title, body, staffId, refId, attachmentPath);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -2925,7 +2986,9 @@ class HistoryEntryRow extends DataClass implements Insertable<HistoryEntryRow> {
           other.kind == this.kind &&
           other.title == this.title &&
           other.body == this.body &&
-          other.staffId == this.staffId);
+          other.staffId == this.staffId &&
+          other.refId == this.refId &&
+          other.attachmentPath == this.attachmentPath);
 }
 
 class HistoryEntriesCompanion extends UpdateCompanion<HistoryEntryRow> {
@@ -2938,6 +3001,8 @@ class HistoryEntriesCompanion extends UpdateCompanion<HistoryEntryRow> {
   final Value<String> title;
   final Value<String> body;
   final Value<String?> staffId;
+  final Value<String?> refId;
+  final Value<String?> attachmentPath;
   final Value<int> rowid;
   const HistoryEntriesCompanion({
     this.id = const Value.absent(),
@@ -2949,6 +3014,8 @@ class HistoryEntriesCompanion extends UpdateCompanion<HistoryEntryRow> {
     this.title = const Value.absent(),
     this.body = const Value.absent(),
     this.staffId = const Value.absent(),
+    this.refId = const Value.absent(),
+    this.attachmentPath = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   HistoryEntriesCompanion.insert({
@@ -2961,6 +3028,8 @@ class HistoryEntriesCompanion extends UpdateCompanion<HistoryEntryRow> {
     required String title,
     required String body,
     this.staffId = const Value.absent(),
+    this.refId = const Value.absent(),
+    this.attachmentPath = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
         createdAt = Value(createdAt),
@@ -2979,6 +3048,8 @@ class HistoryEntriesCompanion extends UpdateCompanion<HistoryEntryRow> {
     Expression<String>? title,
     Expression<String>? body,
     Expression<String>? staffId,
+    Expression<String>? refId,
+    Expression<String>? attachmentPath,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -2991,6 +3062,8 @@ class HistoryEntriesCompanion extends UpdateCompanion<HistoryEntryRow> {
       if (title != null) 'title': title,
       if (body != null) 'body': body,
       if (staffId != null) 'staff_id': staffId,
+      if (refId != null) 'ref_id': refId,
+      if (attachmentPath != null) 'attachment_path': attachmentPath,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -3005,6 +3078,8 @@ class HistoryEntriesCompanion extends UpdateCompanion<HistoryEntryRow> {
       Value<String>? title,
       Value<String>? body,
       Value<String?>? staffId,
+      Value<String?>? refId,
+      Value<String?>? attachmentPath,
       Value<int>? rowid}) {
     return HistoryEntriesCompanion(
       id: id ?? this.id,
@@ -3016,6 +3091,8 @@ class HistoryEntriesCompanion extends UpdateCompanion<HistoryEntryRow> {
       title: title ?? this.title,
       body: body ?? this.body,
       staffId: staffId ?? this.staffId,
+      refId: refId ?? this.refId,
+      attachmentPath: attachmentPath ?? this.attachmentPath,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -3050,6 +3127,12 @@ class HistoryEntriesCompanion extends UpdateCompanion<HistoryEntryRow> {
     if (staffId.present) {
       map['staff_id'] = Variable<String>(staffId.value);
     }
+    if (refId.present) {
+      map['ref_id'] = Variable<String>(refId.value);
+    }
+    if (attachmentPath.present) {
+      map['attachment_path'] = Variable<String>(attachmentPath.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -3068,6 +3151,530 @@ class HistoryEntriesCompanion extends UpdateCompanion<HistoryEntryRow> {
           ..write('title: $title, ')
           ..write('body: $body, ')
           ..write('staffId: $staffId, ')
+          ..write('refId: $refId, ')
+          ..write('attachmentPath: $attachmentPath, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $DocumentLinesTable extends DocumentLines
+    with TableInfo<$DocumentLinesTable, DocumentLineRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DocumentLinesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _venueIdMeta =
+      const VerificationMeta('venueId');
+  @override
+  late final GeneratedColumn<String> venueId = GeneratedColumn<String>(
+      'venue_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _documentIdMeta =
+      const VerificationMeta('documentId');
+  @override
+  late final GeneratedColumn<String> documentId = GeneratedColumn<String>(
+      'document_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _productIdMeta =
+      const VerificationMeta('productId');
+  @override
+  late final GeneratedColumn<String> productId = GeneratedColumn<String>(
+      'product_id', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _productNameMeta =
+      const VerificationMeta('productName');
+  @override
+  late final GeneratedColumn<String> productName = GeneratedColumn<String>(
+      'product_name', aliasedName, false,
+      additionalChecks:
+          GeneratedColumn.checkTextLength(minTextLength: 1, maxTextLength: 200),
+      type: DriftSqlType.string,
+      requiredDuringInsert: true);
+  static const VerificationMeta _unitMeta = const VerificationMeta('unit');
+  @override
+  late final GeneratedColumn<String> unit = GeneratedColumn<String>(
+      'unit', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('шт'));
+  static const VerificationMeta _orderedMeta =
+      const VerificationMeta('ordered');
+  @override
+  late final GeneratedColumn<double> ordered = GeneratedColumn<double>(
+      'ordered', aliasedName, true,
+      type: DriftSqlType.double, requiredDuringInsert: false);
+  static const VerificationMeta _quantityMeta =
+      const VerificationMeta('quantity');
+  @override
+  late final GeneratedColumn<double> quantity = GeneratedColumn<double>(
+      'quantity', aliasedName, false,
+      type: DriftSqlType.double, requiredDuringInsert: true);
+  static const VerificationMeta _sortOrderMeta =
+      const VerificationMeta('sortOrder');
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+      'sort_order', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        venueId,
+        documentId,
+        productId,
+        productName,
+        unit,
+        ordered,
+        quantity,
+        sortOrder,
+        createdAt
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'document_lines';
+  @override
+  VerificationContext validateIntegrity(Insertable<DocumentLineRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('venue_id')) {
+      context.handle(_venueIdMeta,
+          venueId.isAcceptableOrUnknown(data['venue_id']!, _venueIdMeta));
+    } else if (isInserting) {
+      context.missing(_venueIdMeta);
+    }
+    if (data.containsKey('document_id')) {
+      context.handle(
+          _documentIdMeta,
+          documentId.isAcceptableOrUnknown(
+              data['document_id']!, _documentIdMeta));
+    } else if (isInserting) {
+      context.missing(_documentIdMeta);
+    }
+    if (data.containsKey('product_id')) {
+      context.handle(_productIdMeta,
+          productId.isAcceptableOrUnknown(data['product_id']!, _productIdMeta));
+    }
+    if (data.containsKey('product_name')) {
+      context.handle(
+          _productNameMeta,
+          productName.isAcceptableOrUnknown(
+              data['product_name']!, _productNameMeta));
+    } else if (isInserting) {
+      context.missing(_productNameMeta);
+    }
+    if (data.containsKey('unit')) {
+      context.handle(
+          _unitMeta, unit.isAcceptableOrUnknown(data['unit']!, _unitMeta));
+    }
+    if (data.containsKey('ordered')) {
+      context.handle(_orderedMeta,
+          ordered.isAcceptableOrUnknown(data['ordered']!, _orderedMeta));
+    }
+    if (data.containsKey('quantity')) {
+      context.handle(_quantityMeta,
+          quantity.isAcceptableOrUnknown(data['quantity']!, _quantityMeta));
+    } else if (isInserting) {
+      context.missing(_quantityMeta);
+    }
+    if (data.containsKey('sort_order')) {
+      context.handle(_sortOrderMeta,
+          sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  DocumentLineRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return DocumentLineRow(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      venueId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}venue_id'])!,
+      documentId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}document_id'])!,
+      productId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}product_id']),
+      productName: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}product_name'])!,
+      unit: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}unit'])!,
+      ordered: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}ordered']),
+      quantity: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}quantity'])!,
+      sortOrder: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}sort_order'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+    );
+  }
+
+  @override
+  $DocumentLinesTable createAlias(String alias) {
+    return $DocumentLinesTable(attachedDatabase, alias);
+  }
+}
+
+class DocumentLineRow extends DataClass implements Insertable<DocumentLineRow> {
+  final String id;
+  final String venueId;
+
+  /// id записи HistoryEntries.
+  final String documentId;
+  final String? productId;
+
+  /// Название на момент документа.
+  final String productName;
+  final String unit;
+
+  /// Сколько заказали (для приёмки — по заявке; у строк вне заявки пусто).
+  final double? ordered;
+
+  /// Основное количество: в заявке — заказ, в приёмке — сколько пришло,
+  /// в инвентаризации — остаток.
+  final double quantity;
+  final int sortOrder;
+  final DateTime createdAt;
+  const DocumentLineRow(
+      {required this.id,
+      required this.venueId,
+      required this.documentId,
+      this.productId,
+      required this.productName,
+      required this.unit,
+      this.ordered,
+      required this.quantity,
+      required this.sortOrder,
+      required this.createdAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['venue_id'] = Variable<String>(venueId);
+    map['document_id'] = Variable<String>(documentId);
+    if (!nullToAbsent || productId != null) {
+      map['product_id'] = Variable<String>(productId);
+    }
+    map['product_name'] = Variable<String>(productName);
+    map['unit'] = Variable<String>(unit);
+    if (!nullToAbsent || ordered != null) {
+      map['ordered'] = Variable<double>(ordered);
+    }
+    map['quantity'] = Variable<double>(quantity);
+    map['sort_order'] = Variable<int>(sortOrder);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  DocumentLinesCompanion toCompanion(bool nullToAbsent) {
+    return DocumentLinesCompanion(
+      id: Value(id),
+      venueId: Value(venueId),
+      documentId: Value(documentId),
+      productId: productId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(productId),
+      productName: Value(productName),
+      unit: Value(unit),
+      ordered: ordered == null && nullToAbsent
+          ? const Value.absent()
+          : Value(ordered),
+      quantity: Value(quantity),
+      sortOrder: Value(sortOrder),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory DocumentLineRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return DocumentLineRow(
+      id: serializer.fromJson<String>(json['id']),
+      venueId: serializer.fromJson<String>(json['venueId']),
+      documentId: serializer.fromJson<String>(json['documentId']),
+      productId: serializer.fromJson<String?>(json['productId']),
+      productName: serializer.fromJson<String>(json['productName']),
+      unit: serializer.fromJson<String>(json['unit']),
+      ordered: serializer.fromJson<double?>(json['ordered']),
+      quantity: serializer.fromJson<double>(json['quantity']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'venueId': serializer.toJson<String>(venueId),
+      'documentId': serializer.toJson<String>(documentId),
+      'productId': serializer.toJson<String?>(productId),
+      'productName': serializer.toJson<String>(productName),
+      'unit': serializer.toJson<String>(unit),
+      'ordered': serializer.toJson<double?>(ordered),
+      'quantity': serializer.toJson<double>(quantity),
+      'sortOrder': serializer.toJson<int>(sortOrder),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  DocumentLineRow copyWith(
+          {String? id,
+          String? venueId,
+          String? documentId,
+          Value<String?> productId = const Value.absent(),
+          String? productName,
+          String? unit,
+          Value<double?> ordered = const Value.absent(),
+          double? quantity,
+          int? sortOrder,
+          DateTime? createdAt}) =>
+      DocumentLineRow(
+        id: id ?? this.id,
+        venueId: venueId ?? this.venueId,
+        documentId: documentId ?? this.documentId,
+        productId: productId.present ? productId.value : this.productId,
+        productName: productName ?? this.productName,
+        unit: unit ?? this.unit,
+        ordered: ordered.present ? ordered.value : this.ordered,
+        quantity: quantity ?? this.quantity,
+        sortOrder: sortOrder ?? this.sortOrder,
+        createdAt: createdAt ?? this.createdAt,
+      );
+  DocumentLineRow copyWithCompanion(DocumentLinesCompanion data) {
+    return DocumentLineRow(
+      id: data.id.present ? data.id.value : this.id,
+      venueId: data.venueId.present ? data.venueId.value : this.venueId,
+      documentId:
+          data.documentId.present ? data.documentId.value : this.documentId,
+      productId: data.productId.present ? data.productId.value : this.productId,
+      productName:
+          data.productName.present ? data.productName.value : this.productName,
+      unit: data.unit.present ? data.unit.value : this.unit,
+      ordered: data.ordered.present ? data.ordered.value : this.ordered,
+      quantity: data.quantity.present ? data.quantity.value : this.quantity,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DocumentLineRow(')
+          ..write('id: $id, ')
+          ..write('venueId: $venueId, ')
+          ..write('documentId: $documentId, ')
+          ..write('productId: $productId, ')
+          ..write('productName: $productName, ')
+          ..write('unit: $unit, ')
+          ..write('ordered: $ordered, ')
+          ..write('quantity: $quantity, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, venueId, documentId, productId,
+      productName, unit, ordered, quantity, sortOrder, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is DocumentLineRow &&
+          other.id == this.id &&
+          other.venueId == this.venueId &&
+          other.documentId == this.documentId &&
+          other.productId == this.productId &&
+          other.productName == this.productName &&
+          other.unit == this.unit &&
+          other.ordered == this.ordered &&
+          other.quantity == this.quantity &&
+          other.sortOrder == this.sortOrder &&
+          other.createdAt == this.createdAt);
+}
+
+class DocumentLinesCompanion extends UpdateCompanion<DocumentLineRow> {
+  final Value<String> id;
+  final Value<String> venueId;
+  final Value<String> documentId;
+  final Value<String?> productId;
+  final Value<String> productName;
+  final Value<String> unit;
+  final Value<double?> ordered;
+  final Value<double> quantity;
+  final Value<int> sortOrder;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const DocumentLinesCompanion({
+    this.id = const Value.absent(),
+    this.venueId = const Value.absent(),
+    this.documentId = const Value.absent(),
+    this.productId = const Value.absent(),
+    this.productName = const Value.absent(),
+    this.unit = const Value.absent(),
+    this.ordered = const Value.absent(),
+    this.quantity = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  DocumentLinesCompanion.insert({
+    required String id,
+    required String venueId,
+    required String documentId,
+    this.productId = const Value.absent(),
+    required String productName,
+    this.unit = const Value.absent(),
+    this.ordered = const Value.absent(),
+    required double quantity,
+    this.sortOrder = const Value.absent(),
+    required DateTime createdAt,
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        venueId = Value(venueId),
+        documentId = Value(documentId),
+        productName = Value(productName),
+        quantity = Value(quantity),
+        createdAt = Value(createdAt);
+  static Insertable<DocumentLineRow> custom({
+    Expression<String>? id,
+    Expression<String>? venueId,
+    Expression<String>? documentId,
+    Expression<String>? productId,
+    Expression<String>? productName,
+    Expression<String>? unit,
+    Expression<double>? ordered,
+    Expression<double>? quantity,
+    Expression<int>? sortOrder,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (venueId != null) 'venue_id': venueId,
+      if (documentId != null) 'document_id': documentId,
+      if (productId != null) 'product_id': productId,
+      if (productName != null) 'product_name': productName,
+      if (unit != null) 'unit': unit,
+      if (ordered != null) 'ordered': ordered,
+      if (quantity != null) 'quantity': quantity,
+      if (sortOrder != null) 'sort_order': sortOrder,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  DocumentLinesCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? venueId,
+      Value<String>? documentId,
+      Value<String?>? productId,
+      Value<String>? productName,
+      Value<String>? unit,
+      Value<double?>? ordered,
+      Value<double>? quantity,
+      Value<int>? sortOrder,
+      Value<DateTime>? createdAt,
+      Value<int>? rowid}) {
+    return DocumentLinesCompanion(
+      id: id ?? this.id,
+      venueId: venueId ?? this.venueId,
+      documentId: documentId ?? this.documentId,
+      productId: productId ?? this.productId,
+      productName: productName ?? this.productName,
+      unit: unit ?? this.unit,
+      ordered: ordered ?? this.ordered,
+      quantity: quantity ?? this.quantity,
+      sortOrder: sortOrder ?? this.sortOrder,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (venueId.present) {
+      map['venue_id'] = Variable<String>(venueId.value);
+    }
+    if (documentId.present) {
+      map['document_id'] = Variable<String>(documentId.value);
+    }
+    if (productId.present) {
+      map['product_id'] = Variable<String>(productId.value);
+    }
+    if (productName.present) {
+      map['product_name'] = Variable<String>(productName.value);
+    }
+    if (unit.present) {
+      map['unit'] = Variable<String>(unit.value);
+    }
+    if (ordered.present) {
+      map['ordered'] = Variable<double>(ordered.value);
+    }
+    if (quantity.present) {
+      map['quantity'] = Variable<double>(quantity.value);
+    }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DocumentLinesCompanion(')
+          ..write('id: $id, ')
+          ..write('venueId: $venueId, ')
+          ..write('documentId: $documentId, ')
+          ..write('productId: $productId, ')
+          ..write('productName: $productName, ')
+          ..write('unit: $unit, ')
+          ..write('ordered: $ordered, ')
+          ..write('quantity: $quantity, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -6695,6 +7302,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ProductsTable products = $ProductsTable(this);
   late final $StaffMembersTable staffMembers = $StaffMembersTable(this);
   late final $HistoryEntriesTable historyEntries = $HistoryEntriesTable(this);
+  late final $DocumentLinesTable documentLines = $DocumentLinesTable(this);
   late final $ShiftRecordsTable shiftRecords = $ShiftRecordsTable(this);
   late final $ShiftWriteoffsTable shiftWriteoffs = $ShiftWriteoffsTable(this);
   late final $StockLevelsTable stockLevels = $StockLevelsTable(this);
@@ -6714,6 +7322,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         products,
         staffMembers,
         historyEntries,
+        documentLines,
         shiftRecords,
         shiftWriteoffs,
         stockLevels,
@@ -7979,6 +8588,8 @@ typedef $$HistoryEntriesTableCreateCompanionBuilder = HistoryEntriesCompanion
   required String title,
   required String body,
   Value<String?> staffId,
+  Value<String?> refId,
+  Value<String?> attachmentPath,
   Value<int> rowid,
 });
 typedef $$HistoryEntriesTableUpdateCompanionBuilder = HistoryEntriesCompanion
@@ -7992,6 +8603,8 @@ typedef $$HistoryEntriesTableUpdateCompanionBuilder = HistoryEntriesCompanion
   Value<String> title,
   Value<String> body,
   Value<String?> staffId,
+  Value<String?> refId,
+  Value<String?> attachmentPath,
   Value<int> rowid,
 });
 
@@ -8030,6 +8643,13 @@ class $$HistoryEntriesTableFilterComposer
 
   ColumnFilters<String> get staffId => $composableBuilder(
       column: $table.staffId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get refId => $composableBuilder(
+      column: $table.refId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get attachmentPath => $composableBuilder(
+      column: $table.attachmentPath,
+      builder: (column) => ColumnFilters(column));
 }
 
 class $$HistoryEntriesTableOrderingComposer
@@ -8067,6 +8687,13 @@ class $$HistoryEntriesTableOrderingComposer
 
   ColumnOrderings<String> get staffId => $composableBuilder(
       column: $table.staffId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get refId => $composableBuilder(
+      column: $table.refId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get attachmentPath => $composableBuilder(
+      column: $table.attachmentPath,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$HistoryEntriesTableAnnotationComposer
@@ -8104,6 +8731,12 @@ class $$HistoryEntriesTableAnnotationComposer
 
   GeneratedColumn<String> get staffId =>
       $composableBuilder(column: $table.staffId, builder: (column) => column);
+
+  GeneratedColumn<String> get refId =>
+      $composableBuilder(column: $table.refId, builder: (column) => column);
+
+  GeneratedColumn<String> get attachmentPath => $composableBuilder(
+      column: $table.attachmentPath, builder: (column) => column);
 }
 
 class $$HistoryEntriesTableTableManager extends RootTableManager<
@@ -8142,6 +8775,8 @@ class $$HistoryEntriesTableTableManager extends RootTableManager<
             Value<String> title = const Value.absent(),
             Value<String> body = const Value.absent(),
             Value<String?> staffId = const Value.absent(),
+            Value<String?> refId = const Value.absent(),
+            Value<String?> attachmentPath = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               HistoryEntriesCompanion(
@@ -8154,6 +8789,8 @@ class $$HistoryEntriesTableTableManager extends RootTableManager<
             title: title,
             body: body,
             staffId: staffId,
+            refId: refId,
+            attachmentPath: attachmentPath,
             rowid: rowid,
           ),
           createCompanionCallback: ({
@@ -8166,6 +8803,8 @@ class $$HistoryEntriesTableTableManager extends RootTableManager<
             required String title,
             required String body,
             Value<String?> staffId = const Value.absent(),
+            Value<String?> refId = const Value.absent(),
+            Value<String?> attachmentPath = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               HistoryEntriesCompanion.insert(
@@ -8178,6 +8817,8 @@ class $$HistoryEntriesTableTableManager extends RootTableManager<
             title: title,
             body: body,
             staffId: staffId,
+            refId: refId,
+            attachmentPath: attachmentPath,
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
@@ -8205,6 +8846,258 @@ typedef $$HistoryEntriesTableProcessedTableManager = ProcessedTableManager<
       BaseReferences<_$AppDatabase, $HistoryEntriesTable, HistoryEntryRow>
     ),
     HistoryEntryRow,
+    PrefetchHooks Function()>;
+typedef $$DocumentLinesTableCreateCompanionBuilder = DocumentLinesCompanion
+    Function({
+  required String id,
+  required String venueId,
+  required String documentId,
+  Value<String?> productId,
+  required String productName,
+  Value<String> unit,
+  Value<double?> ordered,
+  required double quantity,
+  Value<int> sortOrder,
+  required DateTime createdAt,
+  Value<int> rowid,
+});
+typedef $$DocumentLinesTableUpdateCompanionBuilder = DocumentLinesCompanion
+    Function({
+  Value<String> id,
+  Value<String> venueId,
+  Value<String> documentId,
+  Value<String?> productId,
+  Value<String> productName,
+  Value<String> unit,
+  Value<double?> ordered,
+  Value<double> quantity,
+  Value<int> sortOrder,
+  Value<DateTime> createdAt,
+  Value<int> rowid,
+});
+
+class $$DocumentLinesTableFilterComposer
+    extends Composer<_$AppDatabase, $DocumentLinesTable> {
+  $$DocumentLinesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get venueId => $composableBuilder(
+      column: $table.venueId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get documentId => $composableBuilder(
+      column: $table.documentId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get productId => $composableBuilder(
+      column: $table.productId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get productName => $composableBuilder(
+      column: $table.productName, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get unit => $composableBuilder(
+      column: $table.unit, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get ordered => $composableBuilder(
+      column: $table.ordered, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get quantity => $composableBuilder(
+      column: $table.quantity, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+      column: $table.sortOrder, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$DocumentLinesTableOrderingComposer
+    extends Composer<_$AppDatabase, $DocumentLinesTable> {
+  $$DocumentLinesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get venueId => $composableBuilder(
+      column: $table.venueId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get documentId => $composableBuilder(
+      column: $table.documentId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get productId => $composableBuilder(
+      column: $table.productId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get productName => $composableBuilder(
+      column: $table.productName, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get unit => $composableBuilder(
+      column: $table.unit, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get ordered => $composableBuilder(
+      column: $table.ordered, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get quantity => $composableBuilder(
+      column: $table.quantity, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+      column: $table.sortOrder, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$DocumentLinesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $DocumentLinesTable> {
+  $$DocumentLinesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get venueId =>
+      $composableBuilder(column: $table.venueId, builder: (column) => column);
+
+  GeneratedColumn<String> get documentId => $composableBuilder(
+      column: $table.documentId, builder: (column) => column);
+
+  GeneratedColumn<String> get productId =>
+      $composableBuilder(column: $table.productId, builder: (column) => column);
+
+  GeneratedColumn<String> get productName => $composableBuilder(
+      column: $table.productName, builder: (column) => column);
+
+  GeneratedColumn<String> get unit =>
+      $composableBuilder(column: $table.unit, builder: (column) => column);
+
+  GeneratedColumn<double> get ordered =>
+      $composableBuilder(column: $table.ordered, builder: (column) => column);
+
+  GeneratedColumn<double> get quantity =>
+      $composableBuilder(column: $table.quantity, builder: (column) => column);
+
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$DocumentLinesTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $DocumentLinesTable,
+    DocumentLineRow,
+    $$DocumentLinesTableFilterComposer,
+    $$DocumentLinesTableOrderingComposer,
+    $$DocumentLinesTableAnnotationComposer,
+    $$DocumentLinesTableCreateCompanionBuilder,
+    $$DocumentLinesTableUpdateCompanionBuilder,
+    (
+      DocumentLineRow,
+      BaseReferences<_$AppDatabase, $DocumentLinesTable, DocumentLineRow>
+    ),
+    DocumentLineRow,
+    PrefetchHooks Function()> {
+  $$DocumentLinesTableTableManager(_$AppDatabase db, $DocumentLinesTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$DocumentLinesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$DocumentLinesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$DocumentLinesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> venueId = const Value.absent(),
+            Value<String> documentId = const Value.absent(),
+            Value<String?> productId = const Value.absent(),
+            Value<String> productName = const Value.absent(),
+            Value<String> unit = const Value.absent(),
+            Value<double?> ordered = const Value.absent(),
+            Value<double> quantity = const Value.absent(),
+            Value<int> sortOrder = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              DocumentLinesCompanion(
+            id: id,
+            venueId: venueId,
+            documentId: documentId,
+            productId: productId,
+            productName: productName,
+            unit: unit,
+            ordered: ordered,
+            quantity: quantity,
+            sortOrder: sortOrder,
+            createdAt: createdAt,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String venueId,
+            required String documentId,
+            Value<String?> productId = const Value.absent(),
+            required String productName,
+            Value<String> unit = const Value.absent(),
+            Value<double?> ordered = const Value.absent(),
+            required double quantity,
+            Value<int> sortOrder = const Value.absent(),
+            required DateTime createdAt,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              DocumentLinesCompanion.insert(
+            id: id,
+            venueId: venueId,
+            documentId: documentId,
+            productId: productId,
+            productName: productName,
+            unit: unit,
+            ordered: ordered,
+            quantity: quantity,
+            sortOrder: sortOrder,
+            createdAt: createdAt,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable<$DocumentLinesTable, DocumentLineRow>(table),
+                    BaseReferences<_$AppDatabase, $DocumentLinesTable,
+                        DocumentLineRow>(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$DocumentLinesTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $DocumentLinesTable,
+    DocumentLineRow,
+    $$DocumentLinesTableFilterComposer,
+    $$DocumentLinesTableOrderingComposer,
+    $$DocumentLinesTableAnnotationComposer,
+    $$DocumentLinesTableCreateCompanionBuilder,
+    $$DocumentLinesTableUpdateCompanionBuilder,
+    (
+      DocumentLineRow,
+      BaseReferences<_$AppDatabase, $DocumentLinesTable, DocumentLineRow>
+    ),
+    DocumentLineRow,
     PrefetchHooks Function()>;
 typedef $$ShiftRecordsTableCreateCompanionBuilder = ShiftRecordsCompanion
     Function({
@@ -9965,6 +10858,8 @@ class $AppDatabaseManager {
       $$StaffMembersTableTableManager(_db, _db.staffMembers);
   $$HistoryEntriesTableTableManager get historyEntries =>
       $$HistoryEntriesTableTableManager(_db, _db.historyEntries);
+  $$DocumentLinesTableTableManager get documentLines =>
+      $$DocumentLinesTableTableManager(_db, _db.documentLines);
   $$ShiftRecordsTableTableManager get shiftRecords =>
       $$ShiftRecordsTableTableManager(_db, _db.shiftRecords);
   $$ShiftWriteoffsTableTableManager get shiftWriteoffs =>

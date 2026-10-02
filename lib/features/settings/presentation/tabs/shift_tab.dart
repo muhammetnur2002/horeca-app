@@ -5,6 +5,7 @@ import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
 import 'package:horeca_app/features/settings/data/settings_repository_staff.dart';
 import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
+import 'package:horeca_app/features/settings/presentation/tabs/staff_pin_dialog.dart';
 
 class ShiftTab extends ConsumerWidget {
   const ShiftTab({super.key});
@@ -15,6 +16,9 @@ class ShiftTab extends ConsumerWidget {
     final staff = settings.staff;
     final repo = ref.read(settingsRepositoryProvider.notifier);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Роли и личные PIN — из базы; список имён — из настроек.
+    final rows = ref.watch(staffRowsProvider).valueOrNull ?? const [];
+    final rowByName = {for (final r in rows) r.fullName: r};
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -68,9 +72,15 @@ class ShiftTab extends ConsumerWidget {
                     itemCount: staff.length,
                     itemBuilder: (_, index) {
                       final name = staff[index];
+                      final row = rowByName[name];
                       return _StaffItem(
                         name: name,
                         isDark: isDark,
+                        hasPin: row?.pinHash != null,
+                        isAdmin: row?.role == 'admin',
+                        onPin: row == null
+                            ? null
+                            : () => showStaffPinDialog(context, ref, row),
                         onDelete: () =>
                             _confirmDelete(context, repo, name, isDark),
                         onEdit: () =>
@@ -225,12 +235,18 @@ class _StaffItem extends StatelessWidget {
   final bool isDark;
   final VoidCallback onDelete;
   final VoidCallback onEdit;
+  final bool hasPin;
+  final bool isAdmin;
+  final VoidCallback? onPin;
 
   const _StaffItem({
     required this.name,
     required this.isDark,
     required this.onDelete,
     required this.onEdit,
+    this.hasPin = false,
+    this.isAdmin = false,
+    this.onPin,
   });
 
   @override
@@ -273,14 +289,36 @@ class _StaffItem extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Text(
-                    name,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: isDark ? Colors.white : AppColors.ink,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          color: isDark ? Colors.white : AppColors.ink,
+                        ),
+                      ),
+                      if (hasPin || isAdmin)
+                        Text(
+                          [
+                            if (isAdmin) 'Администратор',
+                            if (hasPin) 'личный PIN',
+                          ].join(' · '),
+                          style:
+                              TextStyle(fontSize: 12, color: AppColors.muted),
+                        ),
+                    ],
                   ),
+                ),
+                IconButton(
+                  tooltip: 'Личный PIN и роль',
+                  icon: Icon(
+                      hasPin ? Icons.key_rounded : Icons.key_off_outlined,
+                      color: hasPin ? AppColors.green : AppColors.muted,
+                      size: 20),
+                  onPressed: onPin,
                 ),
                 IconButton(
                   icon: const Icon(Icons.delete_outline_rounded,

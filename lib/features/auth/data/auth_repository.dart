@@ -12,13 +12,18 @@ class AuthState {
   final UserRole? role;
   final String? userName;
 
-  const AuthState({this.isLoggedIn = false, this.role, this.userName});
+  /// id сотрудника, если вход был по личному PIN (иначе — общий PIN).
+  final String? staffId;
+
+  const AuthState(
+      {this.isLoggedIn = false, this.role, this.userName, this.staffId});
 
   AuthState copyWith({bool? isLoggedIn, UserRole? role, String? userName}) =>
       AuthState(
         isLoggedIn: isLoggedIn ?? this.isLoggedIn,
         role: role ?? this.role,
         userName: userName ?? this.userName,
+        staffId: staffId,
       );
 }
 
@@ -169,6 +174,9 @@ class AuthRepository extends StateNotifier<AuthState> {
     return null;
   }
 
+  /// Сбрасывает счётчик неверных попыток (успешный вход по личному PIN).
+  void resetFailedAttempts() => _failedAttempts = 0;
+
   /// То же самое, но сначала дожидается, пока PIN-коды заведения реально
   /// прочитаются из secure storage — нужно при входе сразу после
   /// переключения на другое заведение (см. PinScreen), когда экземпляр
@@ -240,8 +248,9 @@ class AuthRepository extends StateNotifier<AuthState> {
     await prefs.setBool('pins_enabled${venueKeySuffix(venueCode)}', false);
   }
 
-  void login(UserRole role, {String? userName}) {
-    state = AuthState(isLoggedIn: true, role: role, userName: userName);
+  void login(UserRole role, {String? userName, String? staffId}) {
+    state = AuthState(
+        isLoggedIn: true, role: role, userName: userName, staffId: staffId);
   }
 
   void logout() {

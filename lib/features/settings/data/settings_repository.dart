@@ -101,6 +101,10 @@ class SettingsRepository extends StateNotifier<SettingsData> {
     state = update(state);
   }
 
+  /// Последняя запись сотрудника в базу — экраны, читающие сотрудников
+  /// из базы (роли, личные PIN), дожидаются её, чтобы не увидеть старое.
+  Future<void> pendingStaffWrite = Future.value();
+
   String? staffIdByName(String name) => _staffIdByName[name];
   void rememberStaffId(String name, String id) => _staffIdByName[name] = id;
   void forgetStaffName(String name) => _staffIdByName.remove(name);
@@ -143,6 +147,7 @@ class SettingsRepository extends StateNotifier<SettingsData> {
                 categoryId: p.categoryId ?? '',
                 minStock: p.minStock,
                 iikoProductId: p.iikoProductId,
+                unitFactor: p.unitFactor,
               ))
           .toList(),
       establishmentName:

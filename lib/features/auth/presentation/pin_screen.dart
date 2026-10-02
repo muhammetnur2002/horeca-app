@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/features/auth/data/auth_repository.dart';
+import 'package:horeca_app/features/auth/data/staff_pin_service.dart';
 import 'package:horeca_app/features/auth/presentation/pin_recovery_dialog.dart';
 import 'package:horeca_app/features/venue/data/venue_repository.dart';
 
@@ -29,6 +30,19 @@ class _PinScreenState extends ConsumerState<PinScreen> {
     setState(() => _pin = _pin.substring(0, _pin.length - 1));
   }
 
+  /// Личный PIN сотрудника (4 цифры). Проверяется раньше общих PIN:
+  /// при совпадении приложение знает, кто именно вошёл.
+  Future<bool> _tryPersonalPin(String pin, String typed) async {
+    final repo = ref.read(authRepositoryProvider.notifier);
+    if (repo.lockoutSecondsRemaining > 0) return false;
+    final staff = await ref.read(staffPinServiceProvider).match(pin);
+    if (staff == null || !mounted || _pin != typed) return false;
+    repo.resetFailedAttempts();
+    repo.login(staff.role == 'admin' ? UserRole.admin : UserRole.staff,
+        userName: staff.fullName, staffId: staff.id);
+    return true;
+  }
+
   /// Если заведение одно (обычный случай) — вводится просто PIN, как раньше.
   /// Если заведений несколько — первые 2 цифры это код заведения (например
   /// "02"), а следующие 4 — пароль администратора/сотрудника этого заведения.
@@ -40,6 +54,11 @@ class _PinScreenState extends ConsumerState<PinScreen> {
       if (currentPin.length < 4) return;
       final repo = ref.read(authRepositoryProvider.notifier);
       await repo.pinsReady;
+      if (!mounted || _pin != currentPin) return;
+      if (currentPin.length == 4 &&
+          await _tryPersonalPin(currentPin, currentPin)) {
+        return;
+      }
       if (!mounted || _pin != currentPin) return;
       // Сейчас PIN всегда 4 цифры, но в старых версиях можно было задать
       // 5-6. Пока набрано меньше цифр, чем в самом длинном сохранённом PIN,
@@ -82,6 +101,8 @@ class _PinScreenState extends ConsumerState<PinScreen> {
       return;
     }
     venueNotifier.setActiveVenue(code);
+    if (await _tryPersonalPin(password, currentPin)) return;
+    if (!mounted || _pin != currentPin) return;
     final repo = ref.read(authRepositoryProvider.notifier);
     final role = await repo.checkPinReady(password);
     if (!mounted || _pin != currentPin) return;

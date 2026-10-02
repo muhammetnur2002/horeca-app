@@ -309,9 +309,6 @@ class CatalogDao {
     required String venueId,
     String? id,
     required String fullName,
-    String role = 'staff',
-    String? pinHash,
-    String? pinSalt,
     bool isActive = true,
   }) async {
     final now = _now();
@@ -322,16 +319,31 @@ class CatalogDao {
       updatedAt: now,
       venueId: venueId,
       fullName: fullName,
-      role: Value(role),
-      pinHash: Value(pinHash),
-      pinSalt: Value(pinSalt),
       isActive: Value(isActive),
     );
-    // При обновлении дата создания остаётся прежней.
+    // При обновлении дата создания, роль и личный PIN остаются прежними:
+    // переименование сотрудника не должно сбрасывать его PIN.
     await _db.into(_db.staffMembers).insert(row,
         onConflict:
             DoUpdate((_) => row.copyWith(createdAt: const Value.absent())));
     return rowId;
+  }
+
+  /// Личный PIN и роль сотрудника. [pinHash] = null снимает PIN.
+  Future<void> setStaffPin(
+    String id, {
+    required String role,
+    String? pinHash,
+    String? pinSalt,
+  }) async {
+    await (_db.update(_db.staffMembers)..where((t) => t.id.equals(id))).write(
+      StaffMembersCompanion(
+        role: Value(role),
+        pinHash: Value(pinHash),
+        pinSalt: Value(pinSalt),
+        updatedAt: Value(_now()),
+      ),
+    );
   }
 
   Future<void> deleteStaffMember(String id) async {

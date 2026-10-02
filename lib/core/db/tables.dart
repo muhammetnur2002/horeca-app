@@ -130,11 +130,46 @@ class StaffMembers extends Table with _Syncable {
 class HistoryEntries extends Table with _Syncable {
   TextColumn get venueId => text()();
 
-  /// 'request' или 'inventory'.
+  /// 'request', 'inventory' или 'receipt' (приёмка поставки).
   TextColumn get kind => text().withLength(min: 1, max: 32)();
   TextColumn get title => text()();
   TextColumn get body => text()();
   TextColumn get staffId => text().nullable()();
+
+  /// Связанный документ: для приёмки — заявка, по которой пришла поставка.
+  TextColumn get refId => text().nullable()();
+
+  /// Путь к файлу-вложению на устройстве (фото накладной).
+  TextColumn get attachmentPath => text().nullable()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// Строки документа из истории: что заказали в заявке, что пришло
+/// в приёмке, что насчитали в инвентаризации. Хранятся структурно,
+/// чтобы сверять поставку с заявкой, а не разбирать готовый текст.
+@DataClassName('DocumentLineRow')
+class DocumentLines extends Table {
+  TextColumn get id => text()();
+  TextColumn get venueId => text()();
+
+  /// id записи HistoryEntries.
+  TextColumn get documentId => text()();
+  TextColumn get productId => text().nullable()();
+
+  /// Название на момент документа.
+  TextColumn get productName => text().withLength(min: 1, max: 200)();
+  TextColumn get unit => text().withDefault(const Constant('шт'))();
+
+  /// Сколько заказали (для приёмки — по заявке; у строк вне заявки пусто).
+  RealColumn get ordered => real().nullable()();
+
+  /// Основное количество: в заявке — заказ, в приёмке — сколько пришло,
+  /// в инвентаризации — остаток.
+  RealColumn get quantity => real()();
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+  DateTimeColumn get createdAt => dateTime()();
 
   @override
   Set<Column<Object>> get primaryKey => {id};

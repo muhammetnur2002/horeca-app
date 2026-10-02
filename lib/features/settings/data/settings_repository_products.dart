@@ -25,6 +25,7 @@ extension SettingsRepositoryProducts on SettingsRepository {
       categoryId: p.categoryId.isEmpty ? null : p.categoryId,
       minStock: p.minStock,
       iikoProductId: p.iikoProductId,
+      unitFactor: p.unitFactor,
       sortOrder: sortOrder,
     );
   }
@@ -62,7 +63,8 @@ extension SettingsRepositoryProducts on SettingsRepository {
                 inventoryUnit: newInventoryUnit ?? p.inventoryUnit,
                 categoryId: newCategoryId ?? p.categoryId,
                 minStock: p.minStock,
-                iikoProductId: p.iikoProductId);
+                iikoProductId: p.iikoProductId,
+                unitFactor: p.unitFactor);
           }
           return p;
         }).toList()));
@@ -88,6 +90,31 @@ extension SettingsRepositoryProducts on SettingsRepository {
                 categoryId: p.categoryId,
                 minStock: minStock,
                 iikoProductId: p.iikoProductId,
+                unitFactor: p.unitFactor,
+              );
+            }
+            return p;
+          }).toList(),
+        ));
+    if (updated != null) _save(updated!);
+  }
+
+  /// «1 единица заявки = [factor] единиц инвентаризации».
+  void setProductUnitFactor(String id, double factor) {
+    if (factor <= 0) return;
+    ProductModel? updated;
+    applyUpdate((s) => s.copyWith(
+          products: s.products.map((p) {
+            if (p.id == id) {
+              return updated = ProductModel(
+                id: p.id,
+                name: p.name,
+                unit: p.unit,
+                inventoryUnit: p.inventoryUnit,
+                categoryId: p.categoryId,
+                minStock: p.minStock,
+                iikoProductId: p.iikoProductId,
+                unitFactor: factor,
               );
             }
             return p;

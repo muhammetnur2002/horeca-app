@@ -18,6 +18,7 @@ part 'app_database.g.dart';
     Products,
     StaffMembers,
     HistoryEntries,
+    DocumentLines,
     ShiftRecords,
     ShiftWriteoffs,
     StockLevels,
@@ -34,7 +35,7 @@ class AppDatabase extends _$AppDatabase {
   static const _databaseName = 'akyl';
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   /// Даты хранятся текстом ISO-8601: сохраняются миллисекунды (нужны
   /// курсорам синхронизации), значение сортируемо и читаемо глазами.
@@ -49,6 +50,17 @@ class AppDatabase extends _$AppDatabase {
           await customStatement(
               'CREATE INDEX idx_movements_product ON stock_movements '
               '(venue_id, product_id, occurred_at)');
+          await _createDocumentLinesIndex();
+        },
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            // v2: строки документов (сверка поставки с заявкой) и
+            // вложения/ссылки в истории.
+            await m.addColumn(historyEntries, historyEntries.refId);
+            await m.addColumn(historyEntries, historyEntries.attachmentPath);
+            await m.createTable(documentLines);
+            await _createDocumentLinesIndex();
+          }
         },
         beforeOpen: (details) async {
           // Внешних ключей в схеме нет намеренно: при синхронизации
@@ -56,6 +68,10 @@ class AppDatabase extends _$AppDatabase {
           await customStatement('PRAGMA foreign_keys = OFF');
         },
       );
+
+  Future<void> _createDocumentLinesIndex() => customStatement(
+      'CREATE INDEX IF NOT EXISTS idx_document_lines_doc ON document_lines '
+      '(document_id)');
 }
 
 /// Единственный экземпляр базы на всё приложение.

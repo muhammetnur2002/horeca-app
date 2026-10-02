@@ -29,30 +29,69 @@ class OperationsDao {
     return query.get();
   }
 
+  /// Записывает документ истории вместе с его строками одной транзакцией.
   Future<String> addHistoryEntry({
     required String venueId,
+    String? id,
     required String kind,
     required String title,
     required String body,
     String? staffId,
+    String? refId,
+    String? attachmentPath,
     DateTime? createdAt,
+    List<DocumentLineInput> lines = const [],
   }) async {
     final now = _now();
-    final id = Ids.newId();
-    await _db.into(_db.historyEntries).insert(
-          HistoryEntriesCompanion.insert(
-            id: id,
-            createdAt: createdAt?.toUtc() ?? now,
-            updatedAt: now,
-            venueId: venueId,
-            kind: kind,
-            title: title,
-            body: body,
-            staffId: Value(staffId),
-          ),
-        );
+    final docId = id ?? Ids.newId();
+    final created = createdAt?.toUtc() ?? now;
+    await _db.transaction(() async {
+      await _db.into(_db.historyEntries).insert(
+            HistoryEntriesCompanion.insert(
+              id: docId,
+              createdAt: created,
+              updatedAt: now,
+              venueId: venueId,
+              kind: kind,
+              title: title,
+              body: body,
+              staffId: Value(staffId),
+              refId: Value(refId),
+              attachmentPath: Value(attachmentPath),
+            ),
+            mode: InsertMode.insertOrIgnore,
+          );
+      if (lines.isNotEmpty) {
+        await _db.batch((batch) => batch.insertAll(
+              _db.documentLines,
+              [
+                for (final (i, l) in lines.indexed)
+                  DocumentLinesCompanion.insert(
+                    id: Ids.newId(),
+                    venueId: venueId,
+                    documentId: docId,
+                    productId: Value(l.productId),
+                    productName: l.productName,
+                    unit: Value(l.unit),
+                    ordered: Value(l.ordered),
+                    quantity: l.quantity,
+                    sortOrder: Value(i),
+                    createdAt: created,
+                  ),
+              ],
+            ));
+      }
+    });
     await _trimHistory(venueId);
-    return id;
+    return docId;
+  }
+
+  /// Строки документа в исходном порядке.
+  Future<List<DocumentLineRow>> loadDocumentLines(String documentId) {
+    final query = _db.select(_db.documentLines)
+      ..where((t) => t.documentId.equals(documentId))
+      ..orderBy([(t) => OrderingTerm(expression: t.sortOrder)]);
+    return query.get();
   }
 
   /// Оставляет только последние [historyLimit] записей, остальные
@@ -334,6 +373,23 @@ class OperationsDao {
       ..limit(1);
     return query.getSingleOrNull();
   }
+}
+
+/// Строка документа (заявки, приёмки, инвентаризации).
+class DocumentLineInput {
+  final String? productId;
+  final String productName;
+  final String unit;
+  final double? ordered;
+  final double quantity;
+
+  const DocumentLineInput({
+    this.productId,
+    required this.productName,
+    this.unit = 'шт',
+    this.ordered,
+    required this.quantity,
+  });
 }
 
 /// Строка списания при закрытии смены.

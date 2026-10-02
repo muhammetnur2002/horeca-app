@@ -16,7 +16,8 @@ extension SettingsRepositoryStaff on SettingsRepository {
     final id = Ids.newId();
     rememberStaffId(name, id);
     applyUpdate((s) => s.copyWith(staff: [...s.staff, name]));
-    dao.upsertStaffMember(venueId: venueId, id: id, fullName: name);
+    pendingStaffWrite =
+        dao.upsertStaffMember(venueId: venueId, id: id, fullName: name);
   }
 
   void deleteStaff(String name) {
@@ -24,7 +25,7 @@ extension SettingsRepositoryStaff on SettingsRepository {
     forgetStaffName(name);
     applyUpdate(
         (s) => s.copyWith(staff: s.staff.where((x) => x != name).toList()));
-    if (id != null) dao.deleteStaffMember(id);
+    if (id != null) pendingStaffWrite = dao.deleteStaffMember(id);
   }
 
   void updateStaff(String oldName, String newName) {
@@ -33,7 +34,8 @@ extension SettingsRepositoryStaff on SettingsRepository {
     forgetStaffName(oldName);
     if (id != null) {
       rememberStaffId(newName, id);
-      dao.upsertStaffMember(venueId: venueId, id: id, fullName: newName);
+      pendingStaffWrite =
+          dao.upsertStaffMember(venueId: venueId, id: id, fullName: newName);
     }
     applyUpdate((s) => s.copyWith(
         staff: s.staff.map((x) => x == oldName ? newName : x).toList()));
