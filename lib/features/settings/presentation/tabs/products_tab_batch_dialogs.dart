@@ -102,7 +102,7 @@ Future<void> changeProductsDepartmentAndCategory({
   }
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
     content: Text('Изменено у ${selectedIds.length} товаров'),
-    backgroundColor: const Color(0xFF2E3352),
+    backgroundColor: AppColors.darkCard2,
     behavior: SnackBarBehavior.floating,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
   ));
@@ -130,7 +130,7 @@ Future<void> showBatchChangeProductsDialog({
     }
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text('$title изменено у ${ids.length} товаров'),
-      backgroundColor: const Color(0xFF2E3352),
+      backgroundColor: AppColors.darkCard2,
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     ));
@@ -265,7 +265,7 @@ void showBulkAddProductsDialog({
                       defaultInventoryUnit: sInvUnit);
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                     content: Text('Добавлено ${names.length} товаров'),
-                    backgroundColor: const Color(0xFF2E3352),
+                    backgroundColor: AppColors.darkCard2,
                     behavior: SnackBarBehavior.floating,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),

@@ -35,7 +35,7 @@ class AmountField extends StatelessWidget {
                     fontSize: 13,
                     color: isDark
                         ? Colors.white.withOpacity(0.8)
-                        : const Color(0xFF1A1A2E)))),
+                        : AppColors.ink))),
         SizedBox(
             width: 120,
             child: TextField(
@@ -47,14 +47,14 @@ class AmountField extends StatelessWidget {
                 style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : const Color(0xFF1A1A2E)),
+                    color: isDark ? Colors.white : AppColors.ink),
                 decoration: InputDecoration(
                     hintText: hint ?? '0',
                     hintStyle:
-                        const TextStyle(color: AppColors.muted, fontSize: 13),
+                        TextStyle(color: AppColors.muted, fontSize: 13),
                     suffixText: currency,
                     suffixStyle:
-                        const TextStyle(fontSize: 13, color: AppColors.muted),
+                        TextStyle(fontSize: 13, color: AppColors.muted),
                     border: InputBorder.none,
                     enabledBorder: InputBorder.none,
                     focusedBorder: InputBorder.none,
@@ -88,7 +88,7 @@ class CashField extends StatelessWidget {
               Border.all(color: Colors.white.withOpacity(isDark ? 0.1 : 0.4))),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(label,
-            style: const TextStyle(fontSize: 10, color: AppColors.muted)),
+            style: TextStyle(fontSize: 10, color: AppColors.muted)),
         const SizedBox(height: 4),
         TextField(
             controller: controller,
@@ -98,7 +98,7 @@ class CashField extends StatelessWidget {
             style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white : const Color(0xFF1A1A2E)),
+                color: isDark ? Colors.white : AppColors.ink),
             decoration: InputDecoration(
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
@@ -108,9 +108,9 @@ class CashField extends StatelessWidget {
                 suffixText: currency,
                 hintText: '0',
                 hintStyle:
-                    const TextStyle(fontSize: 15, color: AppColors.muted),
+                    TextStyle(fontSize: 15, color: AppColors.muted),
                 suffixStyle:
-                    const TextStyle(color: AppColors.muted, fontSize: 13))),
+                    TextStyle(color: AppColors.muted, fontSize: 13))),
       ]));
 }
 
@@ -134,7 +134,7 @@ class SummaryRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
         Text(label,
-            style: const TextStyle(fontSize: 13, color: AppColors.muted)),
+            style: TextStyle(fontSize: 13, color: AppColors.muted)),
         Flexible(
             child: Text(value,
                 textAlign: TextAlign.right,
@@ -147,7 +147,7 @@ class SummaryRow extends StatelessWidget {
                             ? AppColors.orange
                             : isDark
                                 ? Colors.white
-                                : const Color(0xFF1A1A2E)))),
+                                : AppColors.ink))),
       ]));
 }
 
@@ -209,14 +209,14 @@ class ConfirmCloseShiftDialog extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Закрыть смену?',
             style: TextStyle(fontWeight: FontWeight.w600)),
-        content: const Text(
+        content: Text(
             'Будет сформирован PDF-отчёт. Вы сможете отправить его через WhatsApp или Telegram.',
             style: TextStyle(color: AppColors.muted, fontSize: 14)),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
               child: Text(l10n.cancel,
-                  style: const TextStyle(color: AppColors.muted))),
+                  style: TextStyle(color: AppColors.muted))),
           ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
               style: ElevatedButton.styleFrom(

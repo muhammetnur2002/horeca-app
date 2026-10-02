@@ -98,7 +98,7 @@ Widget buildShiftStep1({
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   if (sel)
-                                    const Padding(
+                                    Padding(
                                         padding: EdgeInsets.only(right: 4),
                                         child: Icon(Icons.check_rounded,
                                             size: 14,
@@ -131,15 +131,15 @@ Widget buildShiftStep1({
           controller: dessertSearchController,
           style: TextStyle(
               fontSize: 14,
-              color: isDark ? Colors.white : const Color(0xFF1A1A2E)),
+              color: isDark ? Colors.white : AppColors.ink),
           decoration: InputDecoration(
               hintText: 'Поиск десерта...',
-              hintStyle: const TextStyle(color: AppColors.muted, fontSize: 13),
-              prefixIcon: const Icon(Icons.search_rounded,
+              hintStyle: TextStyle(color: AppColors.muted, fontSize: 13),
+              prefixIcon: Icon(Icons.search_rounded,
                   color: AppColors.muted, size: 20),
               suffixIcon: dessertSearch.isNotEmpty
                   ? IconButton(
-                      icon: const Icon(Icons.close_rounded,
+                      icon: Icon(Icons.close_rounded,
                           color: AppColors.muted, size: 18),
                       onPressed: () => setState(() {
                             dessertSearchController.clear();
@@ -247,10 +247,10 @@ Widget buildShiftStep1({
                         border:
                             Border.all(color: AppColors.orange.withOpacity(0.3))),
                     child: Row(mainAxisSize: MainAxisSize.min, children: [
-                      const Icon(Icons.add_rounded, size: 16, color: AppColors.orange),
+                      Icon(Icons.add_rounded, size: 16, color: AppColors.orange),
                       const SizedBox(width: 4),
                       Text(l10n.add,
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 12,
                               color: AppColors.orange,
                               fontWeight: FontWeight.w600)),
@@ -280,7 +280,7 @@ Widget buildShiftStep1({
                             fontWeight: FontWeight.w500,
                             color: isDark
                                 ? Colors.white
-                                : const Color(0xFF1A1A2E)))),
+                                : AppColors.ink))),
                 QtyBtn(
                     icon: Icons.remove,
                     isDark: isDark,
@@ -296,7 +296,7 @@ Widget buildShiftStep1({
                             fontWeight: FontWeight.w600,
                             color: isDark
                                 ? Colors.white
-                                : const Color(0xFF1A1A2E)))),
+                                : AppColors.ink))),
                 QtyBtn(
                     icon: Icons.add,
                     isDark: isDark,
@@ -304,7 +304,7 @@ Widget buildShiftStep1({
                 const SizedBox(width: 8),
                 Text(m.unit,
                     style:
-                        const TextStyle(fontSize: 12, color: AppColors.muted)),
+                        TextStyle(fontSize: 12, color: AppColors.muted)),
                 const SizedBox(width: 8),
                 // 44×44 — тап-таргет, а не размер самой иконки (18px).
                 GestureDetector(

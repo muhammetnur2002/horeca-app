@@ -131,7 +131,7 @@ class _IikoImportScreenState extends ConsumerState<IikoImportScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final textColor = isDark ? Colors.white : AppColors.ink;
     final departments = ref.watch(settingsRepositoryProvider).departments;
 
     return Scaffold(
@@ -186,7 +186,7 @@ class _IikoImportScreenState extends ConsumerState<IikoImportScreen> {
                                   title: Text(g.name,
                                       style: TextStyle(color: textColor, fontSize: 14)),
                                   subtitle: Text('$count товар${count == 1 ? '' : count < 5 ? 'а' : 'ов'}',
-                                      style: const TextStyle(color: AppColors.muted, fontSize: 12)),
+                                      style: TextStyle(color: AppColors.muted, fontSize: 12)),
                                 );
                               }).toList(),
                             ),
@@ -241,7 +241,7 @@ class _DepartmentPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final textColor = isDark ? Colors.white : AppColors.ink;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

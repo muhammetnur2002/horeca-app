@@ -143,7 +143,7 @@ class _ProductsTabState extends ConsumerState<ProductsTab> {
         title: Text(
           title,
           style: TextStyle(
-            color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+            color: isDark ? Colors.white : AppColors.ink,
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
@@ -158,7 +158,7 @@ class _ProductsTabState extends ConsumerState<ProductsTab> {
             },
             child: Text(
               _selectMode ? l10n.cancel : 'Выбрать',
-              style: const TextStyle(color: AppColors.orange),
+              style: TextStyle(color: AppColors.orange),
             ),
           ),
         ],
@@ -189,15 +189,15 @@ class _ProductsTabState extends ConsumerState<ProductsTab> {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: isDark
-                            ? const [
-                                Color(0xFF0F1629),
-                                Color(0xFF1A1040),
-                                Color(0xFF0D1F35)
+                            ? [
+                                AppColors.darkBg,
+                                AppColors.darkGrad2,
+                                AppColors.darkGrad3
                               ]
-                            : const [
-                                Color(0xFFEEF2FF),
-                                Color(0xFFF5F7FF),
-                                Color(0xFFEEF2FF)
+                            : [
+                                AppColors.lightBg,
+                                AppColors.lightSurface,
+                                AppColors.lightBg
                               ])))),
         SafeArea(
           child: Column(

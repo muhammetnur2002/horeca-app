@@ -1,8 +1,8 @@
-﻿import 'dart:math';
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:horeca_app/app/app.dart';
+import 'package:horeca_app/features/home/presentation/home_logo_title.dart';
 import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
 import 'package:horeca_app/features/auth/data/auth_repository.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
@@ -34,14 +34,14 @@ class HomeScreen extends ConsumerWidget {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: _AkylLogoTitle(isDark: isDark),
+        title: AkylLogoTitle(isDark: isDark),
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
           if (pinsEnabled)
             IconButton(
               icon: Icon(Icons.lock_outline_rounded,
-                  color: isDark ? Colors.white70 : const Color(0xFF1A1A2E)),
+                  color: isDark ? Colors.white70 : AppColors.ink),
               tooltip: 'Заблокировать',
               // Возвращает на экран ввода PIN, не закрывая приложение —
               // например, чтобы передать телефон другому сотруднику или
@@ -134,129 +134,6 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
-// ── Лого в AppBar ────────────────────────────────────────────────────────────
-class _AkylLogoTitle extends StatefulWidget {
-  final bool isDark;
-  const _AkylLogoTitle({required this.isDark});
-  @override
-  State<_AkylLogoTitle> createState() => _AkylLogoTitleState();
-}
-
-class _AkylLogoTitleState extends State<_AkylLogoTitle>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _ctrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl =
-        AnimationController(vsync: this, duration: const Duration(seconds: 8))
-          ..repeat();
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        AnimatedBuilder(
-          animation: _ctrl,
-          builder: (_, __) => CustomPaint(
-            size: const Size(36, 36),
-            painter:
-                _MiniLogoPainter(t: _ctrl.value * 8, isDark: widget.isDark),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _MiniLogoPainter extends CustomPainter {
-  final double t;
-  final bool isDark;
-  const _MiniLogoPainter({required this.t, required this.isDark});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final W = size.width, H = size.height;
-    final cx = W / 2, cy = H / 2;
-
-    // фон
-    final rrect = RRect.fromRectAndRadius(
-        Rect.fromLTWH(0, 0, W, H), Radius.circular(W * 0.22));
-    canvas.clipRRect(rrect);
-    canvas.drawRect(
-        Rect.fromLTWH(0, 0, W, H),
-        Paint()
-          ..shader = RadialGradient(
-                  colors: isDark
-                      ? [const Color(0xFF1A1E2E), const Color(0xFF060A18)]
-                      : [const Color(0xFFEEF2FF), const Color(0xFFC8D8FF)])
-              .createShader(Rect.fromLTWH(0, 0, W, H)));
-
-    // орбиты
-    final orbitPaint = Paint()
-      ..color = (isDark ? const Color(0xFF8C5020) : const Color(0xFFB05A10))
-          .withOpacity(0.6)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
-    for (final rot in [-0.52, 0.52]) {
-      canvas.save();
-      canvas.translate(cx, cy);
-      canvas.rotate(rot);
-      canvas.drawOval(
-          Rect.fromCenter(
-              center: Offset.zero, width: W * 0.88, height: H * 0.28),
-          orbitPaint);
-      canvas.restore();
-    }
-
-    // планеты
-    for (int i = 0; i < 2; i++) {
-      final rot = i == 0 ? -0.52 : 0.52;
-      final ang = i == 0 ? t * 0.75 - pi * 0.5 : -t * 0.6 + pi;
-      final r = i == 0 ? W * 0.11 : W * 0.09;
-      final px = cos(ang) * W * 0.44;
-      final py = sin(ang) * H * 0.14;
-      final wx = cx + px * cos(rot) - py * sin(rot);
-      final wy = cy + px * sin(rot) + py * cos(rot);
-      canvas.drawCircle(
-          Offset(wx, wy),
-          r,
-          Paint()
-            ..shader = RadialGradient(
-                    colors: const [Color(0xFFFFB067), Color(0xFFF5862E)])
-                .createShader(
-                    Rect.fromCircle(center: Offset(wx, wy), radius: r)));
-    }
-
-    // буква A
-    final tp = TextPainter(
-      text: TextSpan(
-          text: 'A',
-          style: TextStyle(
-            fontSize: W * 0.5,
-            fontWeight: FontWeight.w900,
-            color: isDark ? Colors.white : const Color(0xFF1A1A2E),
-          )),
-      textDirection: TextDirection.ltr,
-    );
-    tp.layout();
-    tp.paint(canvas, Offset(cx - tp.width / 2, cy - tp.height / 2 + W * 0.02));
-  }
-
-  @override
-  bool shouldRepaint(_MiniLogoPainter old) =>
-      old.t != t || old.isDark != isDark;
-}
-
 // ── Фон ─────────────────────────────────────────────────────────────────────
 class _Background extends StatelessWidget {
   final bool isDark;
@@ -270,7 +147,7 @@ class _Background extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: isDark
-              ? const [Color(0xFF0F1629), Color(0xFF1A1040), Color(0xFF0D1F35)]
+              ? [AppColors.darkBg, AppColors.darkGrad2, AppColors.darkGrad3]
               : const [Color(0xFFE8F4FD), Color(0xFFF0F8FF), Color(0xFFE8EAF6)],
         ),
       ),
@@ -330,7 +207,7 @@ class _LowStockBanner extends StatelessWidget {
                     fontSize: 12,
                     color: isDark
                         ? Colors.white.withOpacity(0.85)
-                        : const Color(0xFF1A1A2E)))),
+                        : AppColors.ink))),
       ]),
     );
   }
@@ -370,7 +247,7 @@ class _GreetingHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final textColor = isDark ? Colors.white : AppColors.ink;
     final subColor = isDark ? AppColors.muted : const Color(0xFF6B7280);
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text(_greeting(),
@@ -461,7 +338,7 @@ class _GlassButton extends StatelessWidget {
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                           color:
-                              isDark ? Colors.white : const Color(0xFF1A1A2E))),
+                              isDark ? Colors.white : AppColors.ink)),
                   const SizedBox(height: 2),
                   Text(sublabel,
                       style: TextStyle(

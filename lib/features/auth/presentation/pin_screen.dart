@@ -103,7 +103,7 @@ class _PinScreenState extends ConsumerState<PinScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final textColor = isDark ? Colors.white : AppColors.ink;
     final isMultiVenue = ref.watch(venueRepositoryProvider).isMultiVenue;
 
     return Scaffold(
@@ -111,14 +111,14 @@ class _PinScreenState extends ConsumerState<PinScreen> {
         decoration: BoxDecoration(
           gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight,
             colors: isDark
-                ? const [Color(0xFF0F1629), Color(0xFF1A1040), Color(0xFF0D1F35)]
-                : const [Color(0xFFEEF2FF), Color(0xFFF5F7FF), Color(0xFFEEF2FF)])),
+                ? [AppColors.darkBg, AppColors.darkGrad2, AppColors.darkGrad3]
+                : [AppColors.lightBg, AppColors.lightSurface, AppColors.lightBg])),
         child: SafeArea(
           child: Column(children: [
             const SizedBox(height: 60),
             Container(width: 64, height: 64,
                 decoration: BoxDecoration(color: AppColors.orange.withOpacity(0.12), borderRadius: BorderRadius.circular(18)),
-                child: const Icon(Icons.lock_outline_rounded, color: AppColors.orange, size: 32)),
+                child: Icon(Icons.lock_outline_rounded, color: AppColors.orange, size: 32)),
             const SizedBox(height: 20),
             Text('Введите PIN-код', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: textColor)),
             if (isMultiVenue) ...[
@@ -202,9 +202,9 @@ class _NumPad extends StatelessWidget {
                     border: Border.all(color: Colors.white.withOpacity(isDark ? 0.1 : 0.4))),
                 child: Center(
                   child: isBackspace
-                      ? Icon(Icons.backspace_outlined, color: isDark ? Colors.white70 : const Color(0xFF1A1A2E), size: 22)
+                      ? Icon(Icons.backspace_outlined, color: isDark ? Colors.white70 : AppColors.ink, size: 22)
                       : Text(key, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600,
-                          color: isDark ? Colors.white : const Color(0xFF1A1A2E))),
+                          color: isDark ? Colors.white : AppColors.ink)),
                 ),
               ),
             );

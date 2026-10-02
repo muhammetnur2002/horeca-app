@@ -63,7 +63,7 @@ void showLogoOptions(
                     borderRadius: BorderRadius.circular(2))),
             const SizedBox(height: 12),
             ListTile(
-              leading: const Icon(Icons.photo_library_outlined,
+              leading: Icon(Icons.photo_library_outlined,
                   color: AppColors.orange),
               title: const Text('Выбрать из галереи'),
               onTap: () {
@@ -105,14 +105,14 @@ void showEditEstablishmentNameDialog(BuildContext context, String currentName,
         decoration: InputDecoration(
           hintText: l10n.establishmentName,
           prefixIcon:
-              const Icon(Icons.storefront_outlined, color: AppColors.orange),
+              Icon(Icons.storefront_outlined, color: AppColors.orange),
         ),
       ),
       actions: [
         TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text(l10n.cancel,
-                style: const TextStyle(color: AppColors.muted))),
+                style: TextStyle(color: AppColors.muted))),
         ElevatedButton(
             onPressed: () {
               if (ctrl.text.isNotEmpty) {
@@ -156,14 +156,14 @@ Future<void> restoreAppBackup(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       title: const Text('Восстановить из бэкапа?',
           style: TextStyle(fontWeight: FontWeight.w600)),
-      content: const Text(
+      content: Text(
           'Текущие данные будут заменены данными из файла резервной копии.',
           style: TextStyle(color: AppColors.muted, fontSize: 14)),
       actions: [
         TextButton(
             onPressed: () => Navigator.pop(ctx, false),
             child:
-                Text(l10n.cancel, style: const TextStyle(color: AppColors.muted))),
+                Text(l10n.cancel, style: TextStyle(color: AppColors.muted))),
         ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(

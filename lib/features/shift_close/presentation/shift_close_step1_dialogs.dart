@@ -30,7 +30,7 @@ void showAddManualWriteOffDialog({
                 TextField(
                     controller: nameCtrl,
                     autofocus: true,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                         hintText: 'Продукт, заготовка...',
                         prefixIcon:
                             Icon(Icons.edit_outlined, color: AppColors.orange))),
@@ -42,7 +42,7 @@ void showAddManualWriteOffDialog({
                       .map((u) => DropdownMenuItem(value: u, child: Text(u)))
                       .toList(),
                   onChanged: (v) => setS(() => selectedUnit = v!),
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                       labelText: 'Единица измерения',
                       prefixIcon: Icon(Icons.straighten_rounded,
                           color: AppColors.orange)),
@@ -52,7 +52,7 @@ void showAddManualWriteOffDialog({
                 TextButton(
                     onPressed: () => Navigator.pop(ctx),
                     child: Text(l10n.cancel,
-                        style: const TextStyle(color: AppColors.muted))),
+                        style: TextStyle(color: AppColors.muted))),
                 ElevatedButton(
                     onPressed: () {
                       if (nameCtrl.text.isNotEmpty) {

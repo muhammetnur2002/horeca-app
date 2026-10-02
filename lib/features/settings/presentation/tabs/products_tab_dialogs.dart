@@ -36,7 +36,7 @@ void showMinStockDialog(
           hintText: 'Например: 5',
           suffixText: p.inventoryUnit,
           prefixIcon:
-              const Icon(Icons.notifications_outlined, color: AppColors.orange),
+              Icon(Icons.notifications_outlined, color: AppColors.orange),
         ),
       ),
       actions: [
@@ -51,7 +51,7 @@ void showMinStockDialog(
           ),
         TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text(l10n.cancel, style: const TextStyle(color: AppColors.muted))),
+            child: Text(l10n.cancel, style: TextStyle(color: AppColors.muted))),
         ElevatedButton(
             onPressed: () {
               final value = double.tryParse(ctrl.text.replaceAll(',', '.'));
@@ -92,7 +92,7 @@ void confirmDeleteProduct(BuildContext context, SettingsRepository repo,
             repo.deleteProduct(p.id);
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
               content: Text('«${p.name}» удалён'),
-              backgroundColor: const Color(0xFF2E3352),
+              backgroundColor: AppColors.darkCard2,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ));
@@ -170,7 +170,7 @@ AlertDialog buildProductEditDialog({
             decoration: InputDecoration(
               hintText: 'Название товара',
               prefixIcon:
-                  const Icon(Icons.inventory_2_outlined, color: AppColors.orange),
+                  Icon(Icons.inventory_2_outlined, color: AppColors.orange),
             ),
           ),
           const SizedBox(height: 12),
@@ -264,7 +264,7 @@ void showEditProductDialog({
                 newCategoryId: selectedCatId, newInventoryUnit: sInvUnit);
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
               content: Text('«${ctrl.text}» обновлён'),
-              backgroundColor: const Color(0xFF2E3352),
+              backgroundColor: AppColors.darkCard2,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ));

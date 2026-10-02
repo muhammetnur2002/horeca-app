@@ -38,7 +38,7 @@ class YesterdayCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final textColor = isDark ? Colors.white : AppColors.ink;
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
@@ -52,7 +52,7 @@ class YesterdayCard extends StatelessWidget {
             Row(children: [
               Container(width: 40, height: 40,
                   decoration: BoxDecoration(color: AppColors.orange.withOpacity(0.12), borderRadius: BorderRadius.circular(12)),
-                  child: const Icon(Icons.event_note_rounded, color: AppColors.orange, size: 20)),
+                  child: Icon(Icons.event_note_rounded, color: AppColors.orange, size: 20)),
               const SizedBox(width: 12),
               Text('Вчерашняя смена', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: textColor)),
             ]),
@@ -79,11 +79,11 @@ class YesterdayCard extends StatelessWidget {
                   color: AppColors.orange.withOpacity(isDark ? 0.1 : 0.08),
                   borderRadius: BorderRadius.circular(10)),
               child: Row(children: [
-                const Icon(Icons.info_outline_rounded, color: AppColors.orange, size: 16),
+                Icon(Icons.info_outline_rounded, color: AppColors.orange, size: 16),
                 const SizedBox(width: 8),
                 Expanded(child: Text(
                     'Касса на начало сегодняшней смены: ${shift.eveningCash.toStringAsFixed(0)} $currency',
-                    style: const TextStyle(fontSize: 12, color: AppColors.orange))),
+                    style: TextStyle(fontSize: 12, color: AppColors.orange))),
               ]),
             ),
           ]),
@@ -106,9 +106,9 @@ class PaymentLine extends StatelessWidget {
     return Row(children: [
       Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
       const SizedBox(width: 10),
-      Expanded(child: Text(label, style: TextStyle(fontSize: 13, color: isDark ? Colors.white.withOpacity(0.8) : const Color(0xFF1A1A2E)))),
+      Expanded(child: Text(label, style: TextStyle(fontSize: 13, color: isDark ? Colors.white.withOpacity(0.8) : AppColors.ink))),
       Text('${amount.toStringAsFixed(0)} $currency',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF1A1A2E))),
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: isDark ? Colors.white : AppColors.ink)),
     ]);
   }
 }
@@ -139,7 +139,7 @@ class ChangeCard extends StatelessWidget {
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('Сегодня выручка ${isUp ? "выше" : "ниже"} на ${percent.abs().toStringAsFixed(0)}%',
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700,
-                      color: isDark ? Colors.white : const Color(0xFF1A1A2E))),
+                      color: isDark ? Colors.white : AppColors.ink)),
               const SizedBox(height: 2),
               Text('по сравнению с предыдущей сменой', style: TextStyle(fontSize: 12, color: AppColors.muted)),
             ])),
@@ -184,7 +184,7 @@ class RevenueChart extends StatelessWidget {
   Widget build(BuildContext context) {
     if (records.isEmpty) {
       return SizedBox(height: 200, child: Center(
-          child: Text('Нет данных за этот период', style: const TextStyle(color: AppColors.muted))));
+          child: Text('Нет данных за этот период', style: TextStyle(color: AppColors.muted))));
     }
     final maxY = records.map((r) => r.revenue).reduce((a, b) => a > b ? a : b) * 1.2;
     return ClipRRect(
@@ -229,7 +229,7 @@ class RevenueChart extends StatelessWidget {
                   barWidth: 3,
                   dotData: FlDotData(show: true, getDotPainter: (spot, percent, bar, index) =>
                       FlDotCirclePainter(radius: 4, color: AppColors.orange, strokeWidth: 2,
-                          strokeColor: isDark ? const Color(0xFF1A1E2E) : Colors.white)),
+                          strokeColor: isDark ? AppColors.darkSurface : Colors.white)),
                   belowBarData: BarAreaData(show: true,
                       gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter,
                           colors: [AppColors.orange.withOpacity(0.25), AppColors.orange.withOpacity(0.0)])),
@@ -268,7 +268,7 @@ class WriteOffRow extends StatelessWidget {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           Expanded(child: Text(name, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
-              color: isDark ? Colors.white : const Color(0xFF1A1A2E)))),
+              color: isDark ? Colors.white : AppColors.ink))),
           Text('$count шт', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.redAccent)),
         ]),
         const SizedBox(height: 8),

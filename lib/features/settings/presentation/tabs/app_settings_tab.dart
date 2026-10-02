@@ -32,10 +32,11 @@ class AppSettingsTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final textColor = isDark ? Colors.white : AppColors.ink;
     final settings = ref.watch(settingsRepositoryProvider);
     final repo = ref.read(settingsRepositoryProvider.notifier);
     final themeMode = ref.watch(themeModeProvider);
+    final palette = ref.watch(paletteProvider);
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 130, 16, 24),
@@ -46,6 +47,9 @@ class AppSettingsTab extends ConsumerWidget {
           isDark: isDark,
           onSetThemeMode: (mode) =>
               ref.read(themeModeProvider.notifier).setThemeMode(mode),
+          palette: palette,
+          onSetPalette: (p) =>
+              ref.read(paletteProvider.notifier).setPalette(p),
         ),
         const SizedBox(height: 16),
         AccountSection(isDark: isDark),

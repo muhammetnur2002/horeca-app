@@ -21,7 +21,7 @@ class CatalogCategoriesScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final textColor = isDark ? Colors.white : AppColors.ink;
     final repo = ref.read(settingsRepositoryProvider.notifier);
 
     final categories = ref
@@ -59,15 +59,15 @@ class CatalogCategoriesScreen extends ConsumerWidget {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: isDark
-                            ? const [
-                                Color(0xFF0F1629),
-                                Color(0xFF1A1040),
-                                Color(0xFF0D1F35)
+                            ? [
+                                AppColors.darkBg,
+                                AppColors.darkGrad2,
+                                AppColors.darkGrad3
                               ]
-                            : const [
-                                Color(0xFFEEF2FF),
-                                Color(0xFFF5F7FF),
-                                Color(0xFFEEF2FF)
+                            : [
+                                AppColors.lightBg,
+                                AppColors.lightSurface,
+                                AppColors.lightBg
                               ])))),
         SafeArea(
           child: categories.isEmpty
@@ -142,7 +142,7 @@ class CatalogCategoriesScreen extends ConsumerWidget {
               repo.deleteCategory(cat.id);
               ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                 content: Text('Категория «${cat.name}» удалена'),
-                backgroundColor: const Color(0xFF2E3352),
+                backgroundColor: AppColors.darkCard2,
                 behavior: SnackBarBehavior.floating,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
@@ -185,7 +185,7 @@ class CatalogCategoriesScreen extends ConsumerWidget {
                   autofocus: true,
                   decoration: InputDecoration(
                     hintText: 'Название категории',
-                    prefixIcon: const Icon(Icons.folder_outlined,
+                    prefixIcon: Icon(Icons.folder_outlined,
                         color: AppColors.orange),
                   ),
                 ),
@@ -210,7 +210,7 @@ class CatalogCategoriesScreen extends ConsumerWidget {
                         isDessertCategory: isDessert);
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                       content: Text('Категория «${nameCtrl.text}» добавлена'),
-                      backgroundColor: const Color(0xFF2E3352),
+                      backgroundColor: AppColors.darkCard2,
                       behavior: SnackBarBehavior.floating,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
@@ -256,7 +256,7 @@ class CatalogCategoriesScreen extends ConsumerWidget {
                   autofocus: true,
                   decoration: InputDecoration(
                     hintText: 'Название категории',
-                    prefixIcon: const Icon(Icons.folder_outlined,
+                    prefixIcon: Icon(Icons.folder_outlined,
                         color: AppColors.orange),
                   ),
                 ),
@@ -285,7 +285,7 @@ class CatalogCategoriesScreen extends ConsumerWidget {
                     if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                       content: Text('Категория «${nameCtrl.text}» обновлена'),
-                      backgroundColor: const Color(0xFF2E3352),
+                      backgroundColor: AppColors.darkCard2,
                       behavior: SnackBarBehavior.floating,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
@@ -339,7 +339,7 @@ class _DessertSwitch extends StatelessWidget {
                 fontSize: 13,
                 color: isDark
                     ? Colors.white.withOpacity(0.85)
-                    : const Color(0xFF1A1A2E),
+                    : AppColors.ink,
               ),
             ),
           ),
@@ -399,7 +399,7 @@ class _CatRow extends StatelessWidget {
                         color: AppColors.orange.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(Icons.folder_outlined,
+                      child: Icon(Icons.folder_outlined,
                           color: AppColors.orange, size: 20),
                     ),
                     Positioned(
@@ -437,14 +437,14 @@ class _CatRow extends StatelessWidget {
                             fontSize: 15,
                             fontWeight: FontWeight.w500,
                             color:
-                                isDark ? Colors.white : const Color(0xFF1A1A2E),
+                                isDark ? Colors.white : AppColors.ink,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       if (cat.isDessertCategory) ...[
                         const SizedBox(width: 6),
-                        const Icon(Icons.icecream_outlined,
+                        Icon(Icons.icecream_outlined,
                             size: 14, color: AppColors.orange),
                       ],
                     ]),

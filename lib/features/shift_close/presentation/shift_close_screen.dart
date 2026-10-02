@@ -255,13 +255,13 @@ class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_rounded,
-              color: isDark ? Colors.white : const Color(0xFF1A1A2E), size: 20),
+              color: isDark ? Colors.white : AppColors.ink, size: 20),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
           'Закрытие смены',
           style: TextStyle(
-            color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+            color: isDark ? Colors.white : AppColors.ink,
             fontSize: 18,
             fontWeight: FontWeight.w600,
           ),
@@ -272,7 +272,7 @@ class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
             child: Center(
               child: Text(
                 shiftCloseFormattedDate(),
-                style: const TextStyle(fontSize: 12, color: AppColors.muted),
+                style: TextStyle(fontSize: 12, color: AppColors.muted),
               ),
             ),
           ),
@@ -286,15 +286,15 @@ class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: isDark
-                    ? const [
-                        Color(0xFF0F1629),
-                        Color(0xFF1A1040),
-                        Color(0xFF0D1F35)
+                    ? [
+                        AppColors.darkBg,
+                        AppColors.darkGrad2,
+                        AppColors.darkGrad3
                       ]
-                    : const [
-                        Color(0xFFEEF2FF),
-                        Color(0xFFF5F7FF),
-                        Color(0xFFEEF2FF)
+                    : [
+                        AppColors.lightBg,
+                        AppColors.lightSurface,
+                        AppColors.lightBg
                       ],
               ),
             ),

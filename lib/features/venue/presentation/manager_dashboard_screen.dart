@@ -43,7 +43,7 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final textColor = isDark ? Colors.white : AppColors.ink;
     final accountState = ref.watch(accountRepositoryProvider);
 
     return Scaffold(
@@ -72,8 +72,8 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: isDark
-                            ? const [Color(0xFF0F1629), Color(0xFF1A1040), Color(0xFF0D1F35)]
-                            : const [Color(0xFFEEF2FF), Color(0xFFF5F7FF), Color(0xFFEEF2FF)])))),
+                            ? [AppColors.darkBg, AppColors.darkGrad2, AppColors.darkGrad3]
+                            : [AppColors.lightBg, AppColors.lightSurface, AppColors.lightBg])))),
         SafeArea(
           child: !accountState.isLoggedIn
               ? _buildNotLoggedIn(textColor)
@@ -81,7 +81,7 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
                   future: _future,
                   builder: (context, snap) {
                     if (snap.connectionState != ConnectionState.done) {
-                      return const Center(
+                      return Center(
                           child: CircularProgressIndicator(color: AppColors.orange));
                     }
                     final data = snap.data ?? const <VenueSnapshot>[];
@@ -99,7 +99,7 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          const Icon(Icons.cloud_off_outlined, color: AppColors.muted, size: 48),
+          Icon(Icons.cloud_off_outlined, color: AppColors.muted, size: 48),
           const SizedBox(height: 16),
           Text('Нужен вход в облачный аккаунт',
               textAlign: TextAlign.center,
@@ -121,7 +121,7 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          const Icon(Icons.wifi_off_rounded, color: AppColors.muted, size: 48),
+          Icon(Icons.wifi_off_rounded, color: AppColors.muted, size: 48),
           const SizedBox(height: 16),
           Text('Не удалось загрузить данные',
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: textColor)),
@@ -184,7 +184,7 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('ВЫРУЧКА СЕГОДНЯ — ВСЕ ЗАВЕДЕНИЯ',
+                Text('ВЫРУЧКА СЕГОДНЯ — ВСЕ ЗАВЕДЕНИЯ',
                     style: TextStyle(
                         fontSize: 10,
                         color: AppColors.green,
@@ -192,14 +192,14 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
                         letterSpacing: 0.6)),
                 const SizedBox(height: 6),
                 Text(formatDashboardMoney(totalToday),
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 32, fontWeight: FontWeight.w700, color: AppColors.green)),
                 if (totalYesterday > 0) ...[
                   const SizedBox(height: 4),
                   Text(
                     '${totalToday >= totalYesterday ? '+' : ''}'
                     '${(((totalToday - totalYesterday) / totalYesterday) * 100).toStringAsFixed(0)}% к вчера',
-                    style: const TextStyle(fontSize: 12, color: AppColors.muted),
+                    style: TextStyle(fontSize: 12, color: AppColors.muted),
                   ),
                 ],
               ],
@@ -257,7 +257,7 @@ class _ManagerDashboardScreenState extends ConsumerState<ManagerDashboardScreen>
                         Text(e.key,
                             style: TextStyle(
                                 fontSize: 13,
-                                color: isDark ? Colors.white : const Color(0xFF1A1A2E))),
+                                color: isDark ? Colors.white : AppColors.ink)),
                         Text('${e.value} шт',
                             style: const TextStyle(
                                 fontSize: 13,

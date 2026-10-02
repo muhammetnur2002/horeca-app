@@ -38,7 +38,7 @@ class DessertsToggleCard extends StatelessWidget {
               color: AppColors.orange.withOpacity(0.12),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.icecream_outlined,
+            child: Icon(Icons.icecream_outlined,
                 color: AppColors.orange, size: 18),
           ),
           const SizedBox(width: 10),
@@ -50,7 +50,7 @@ class DessertsToggleCard extends StatelessWidget {
                     style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
-                        color: isDark ? Colors.white : const Color(0xFF1A1A2E))),
+                        color: isDark ? Colors.white : AppColors.ink)),
                 const SizedBox(height: 2),
                 Text(
                   value
@@ -94,7 +94,7 @@ class AboutRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final textColor = isDark ? Colors.white : AppColors.ink;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -126,7 +126,7 @@ class AboutRow extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(subtitle,
                     style:
-                        const TextStyle(fontSize: 12, color: AppColors.muted)),
+                        TextStyle(fontSize: 12, color: AppColors.muted)),
               ])),
           Icon(Icons.chevron_right_rounded,
               color: AppColors.muted.withOpacity(0.5)),
@@ -159,7 +159,7 @@ class SettingsNavCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final textColor = isDark ? Colors.white : AppColors.ink;
     return GestureDetector(
       onTap: onTap,
       child: ClipRRect(
@@ -194,7 +194,7 @@ class SettingsNavCard extends StatelessWidget {
                           fontWeight: FontWeight.w600,
                           color: textColor)),
                   Text(subtitle,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 12, color: AppColors.muted)),
                 ],
               )),
@@ -229,12 +229,12 @@ class SettingsInfoBanner extends StatelessWidget {
             border: Border.all(color: AppColors.green.withOpacity(0.2)),
           ),
           child: Row(children: [
-            const Icon(Icons.info_outline_rounded,
+            Icon(Icons.info_outline_rounded,
                 color: AppColors.green, size: 20),
             const SizedBox(width: 10),
             Expanded(
                 child: Text(text,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 13, color: AppColors.green))),
           ]),
         ),

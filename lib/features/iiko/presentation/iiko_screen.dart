@@ -44,7 +44,7 @@ class _IikoScreenState extends ConsumerState<IikoScreen> {
       _loading = false;
       _error = null;
     });
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text('Демо-режим: показаны тестовые остатки', style: TextStyle(color: Colors.white)),
       backgroundColor: AppColors.muted,
       behavior: SnackBarBehavior.floating,
@@ -220,7 +220,7 @@ class _IikoScreenState extends ConsumerState<IikoScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final config = ref.watch(iikoRepositoryProvider);
-    final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final textColor = isDark ? Colors.white : AppColors.ink;
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -252,8 +252,8 @@ class _IikoScreenState extends ConsumerState<IikoScreen> {
         Positioned.fill(child: Container(decoration: BoxDecoration(
           gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight,
             colors: isDark
-                ? const [Color(0xFF0F1629), Color(0xFF1A1040), Color(0xFF0D1F35)]
-                : const [Color(0xFFEEF2FF), Color(0xFFF5F7FF), Color(0xFFEEF2FF)])))),
+                ? [AppColors.darkBg, AppColors.darkGrad2, AppColors.darkGrad3]
+                : [AppColors.lightBg, AppColors.lightSurface, AppColors.lightBg])))),
         SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(20, 80, 20, 20),
@@ -283,9 +283,9 @@ class _IikoScreenState extends ConsumerState<IikoScreen> {
                       color: AppColors.muted.withOpacity(0.08),
                       border: Border.all(color: AppColors.muted.withOpacity(0.25))),
                     child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                      const Icon(Icons.science_outlined, color: AppColors.muted, size: 18),
+                      Icon(Icons.science_outlined, color: AppColors.muted, size: 18),
                       const SizedBox(width: 8),
-                      const Text('Демо-режим (без iiko)',
+                      Text('Демо-режим (без iiko)',
                           style: TextStyle(color: AppColors.muted, fontSize: 13, fontWeight: FontWeight.w500)),
                     ]),
                   ),

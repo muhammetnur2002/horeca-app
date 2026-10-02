@@ -11,7 +11,7 @@ class NotificationsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final textColor = isDark ? Colors.white : AppColors.ink;
     final data = ref.watch(notificationRepositoryProvider);
     final repo = ref.read(notificationRepositoryProvider.notifier);
     final l10n = AppLocalizations.of(context);
@@ -32,8 +32,8 @@ class NotificationsScreen extends ConsumerWidget {
         Positioned.fill(child: Container(decoration: BoxDecoration(
           gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight,
             colors: isDark
-                ? const [Color(0xFF0F1629), Color(0xFF1A1040), Color(0xFF0D1F35)]
-                : const [Color(0xFFEEF2FF), Color(0xFFF5F7FF), Color(0xFFEEF2FF)])))),
+                ? [AppColors.darkBg, AppColors.darkGrad2, AppColors.darkGrad3]
+                : [AppColors.lightBg, AppColors.lightSurface, AppColors.lightBg])))),
         SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(20, 80, 20, 30),
@@ -59,9 +59,9 @@ class NotificationsScreen extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: AppColors.orange.withOpacity(0.3))),
                     child: Row(mainAxisSize: MainAxisSize.min, children: [
-                      const Icon(Icons.add_rounded, size: 14, color: AppColors.orange),
+                      Icon(Icons.add_rounded, size: 14, color: AppColors.orange),
                       const SizedBox(width: 4),
-                      Text(l10n.add, style: const TextStyle(fontSize: 11, color: AppColors.orange, fontWeight: FontWeight.w600)),
+                      Text(l10n.add, style: TextStyle(fontSize: 11, color: AppColors.orange, fontWeight: FontWeight.w600)),
                     ]),
                   ),
                 ),
@@ -99,7 +99,7 @@ class NotificationsScreen extends ConsumerWidget {
           content: SingleChildScrollView(
             child: Column(mainAxisSize: MainAxisSize.min, children: [
               TextField(controller: nameCtrl, autofocus: true,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     hintText: 'Название товара',
                     prefixIcon: Icon(Icons.inventory_2_outlined, color: AppColors.orange))),
               const SizedBox(height: 16),
@@ -111,7 +111,7 @@ class NotificationsScreen extends ConsumerWidget {
                     decoration: BoxDecoration(borderRadius: BorderRadius.circular(12),
                       color: frequency == ReminderFrequency.daily ? AppColors.orange.withOpacity(0.15) : Colors.transparent,
                       border: Border.all(color: frequency == ReminderFrequency.daily ? AppColors.orange : AppColors.muted.withOpacity(0.3))),
-                    child: const Text('Каждый день', textAlign: TextAlign.center,
+                    child: Text('Каждый день', textAlign: TextAlign.center,
                         style: TextStyle(fontSize: 13, color: AppColors.orange))))),
                 const SizedBox(width: 10),
                 Expanded(child: GestureDetector(
@@ -121,7 +121,7 @@ class NotificationsScreen extends ConsumerWidget {
                     decoration: BoxDecoration(borderRadius: BorderRadius.circular(12),
                       color: frequency == ReminderFrequency.weekly ? AppColors.green.withOpacity(0.15) : Colors.transparent,
                       border: Border.all(color: frequency == ReminderFrequency.weekly ? AppColors.green : AppColors.muted.withOpacity(0.3))),
-                    child: const Text('Раз в неделю', textAlign: TextAlign.center,
+                    child: Text('Раз в неделю', textAlign: TextAlign.center,
                         style: TextStyle(fontSize: 13, color: AppColors.green))))),
               ]),
               if (frequency == ReminderFrequency.weekly) ...[
@@ -153,7 +153,7 @@ class NotificationsScreen extends ConsumerWidget {
                   decoration: BoxDecoration(borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: AppColors.muted.withOpacity(0.3))),
                   child: Row(children: [
-                    const Icon(Icons.access_time_rounded, color: AppColors.orange, size: 18),
+                    Icon(Icons.access_time_rounded, color: AppColors.orange, size: 18),
                     const SizedBox(width: 8),
                     Text('Время: ${time.format(ctx)}', style: const TextStyle(fontSize: 14)),
                   ]),
@@ -163,7 +163,7 @@ class NotificationsScreen extends ConsumerWidget {
           ),
           actions: [
             TextButton(onPressed: () => Navigator.pop(ctx),
-                child: Text(l10n.cancel, style: const TextStyle(color: AppColors.muted))),
+                child: Text(l10n.cancel, style: TextStyle(color: AppColors.muted))),
             ElevatedButton(
               onPressed: () async {
                 if (nameCtrl.text.isNotEmpty) {
@@ -195,7 +195,7 @@ class _InventoryReminderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final textColor = isDark ? Colors.white : AppColors.ink;
     return ClipRRect(
       borderRadius: BorderRadius.circular(18),
       child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
@@ -227,7 +227,7 @@ class _InventoryReminderCard extends StatelessWidget {
                     decoration: BoxDecoration(borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: AppColors.muted.withOpacity(0.3))),
                     child: Row(children: [
-                      const Icon(Icons.calendar_today_rounded, size: 16, color: AppColors.orange),
+                      Icon(Icons.calendar_today_rounded, size: 16, color: AppColors.orange),
                       const SizedBox(width: 8),
                       Text('День: ${reminder.dayOfMonth}', style: const TextStyle(fontSize: 13)),
                     ]),
@@ -245,7 +245,7 @@ class _InventoryReminderCard extends StatelessWidget {
                     decoration: BoxDecoration(borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: AppColors.muted.withOpacity(0.3))),
                     child: Row(children: [
-                      const Icon(Icons.access_time_rounded, size: 16, color: AppColors.orange),
+                      Icon(Icons.access_time_rounded, size: 16, color: AppColors.orange),
                       const SizedBox(width: 8),
                       Text('${reminder.hour.toString().padLeft(2, '0')}:${reminder.minute.toString().padLeft(2, '0')}',
                           style: const TextStyle(fontSize: 13)),
@@ -309,7 +309,7 @@ class _ReminderRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final textColor = isDark ? Colors.white : AppColors.ink;
     final weekdayNames = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
     final freqText = reminder.frequency == ReminderFrequency.daily
         ? 'Каждый день'
@@ -323,12 +323,12 @@ class _ReminderRow extends StatelessWidget {
       child: Row(children: [
         Container(width: 40, height: 40,
             decoration: BoxDecoration(color: AppColors.orange.withOpacity(0.12), borderRadius: BorderRadius.circular(12)),
-            child: const Icon(Icons.notifications_active_outlined, color: AppColors.orange, size: 20)),
+            child: Icon(Icons.notifications_active_outlined, color: AppColors.orange, size: 20)),
         const SizedBox(width: 12),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(reminder.productName, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textColor)),
           Text('$freqText в ${reminder.hour.toString().padLeft(2, '0')}:${reminder.minute.toString().padLeft(2, '0')}',
-              style: const TextStyle(fontSize: 12, color: AppColors.muted)),
+              style: TextStyle(fontSize: 12, color: AppColors.muted)),
         ])),
         IconButton(icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20), onPressed: onDelete),
       ]),

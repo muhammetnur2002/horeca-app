@@ -97,7 +97,7 @@ class _TemplateScreenState extends ConsumerState<TemplateScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final textColor = isDark ? Colors.white : AppColors.ink;
     final currentTemplate = ref.watch(templateRepositoryProvider);
     final l10n = AppLocalizations.of(context);
 
@@ -127,8 +127,8 @@ class _TemplateScreenState extends ConsumerState<TemplateScreen> {
         Positioned.fill(child: Container(decoration: BoxDecoration(
           gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight,
             colors: isDark
-                ? const [Color(0xFF0F1629), Color(0xFF1A1040), Color(0xFF0D1F35)]
-                : const [Color(0xFFEEF2FF), Color(0xFFF5F7FF), Color(0xFFEEF2FF)])))),
+                ? [AppColors.darkBg, AppColors.darkGrad2, AppColors.darkGrad3]
+                : [AppColors.lightBg, AppColors.lightSurface, AppColors.lightBg])))),
         SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(20, 80, 20, 30),
@@ -156,11 +156,11 @@ class _TemplateScreenState extends ConsumerState<TemplateScreen> {
                       border: Border.all(color: AppColors.orange.withOpacity(0.3), style: BorderStyle.solid)),
                     child: Column(children: [
                       _loading
-                          ? const CircularProgressIndicator(color: AppColors.orange)
-                          : const Icon(Icons.upload_file_rounded, color: AppColors.orange, size: 36),
+                          ? CircularProgressIndicator(color: AppColors.orange)
+                          : Icon(Icons.upload_file_rounded, color: AppColors.orange, size: 36),
                       const SizedBox(height: 10),
                       Text(_loading ? 'Загрузка...' : 'Выбрать Excel-файл',
-                          style: const TextStyle(color: AppColors.orange, fontWeight: FontWeight.w600)),
+                          style: TextStyle(color: AppColors.orange, fontWeight: FontWeight.w600)),
                     ]),
                   ),
                 ),
@@ -193,7 +193,7 @@ class _TemplateScreenState extends ConsumerState<TemplateScreen> {
       ),
   ]),
   const SizedBox(height: 6),
-  Text('Лист: ${_parsed!.sheetName}', style: const TextStyle(fontSize: 12, color: AppColors.muted)),
+  Text('Лист: ${_parsed!.sheetName}', style: TextStyle(fontSize: 12, color: AppColors.muted)),
   const SizedBox(height: 16),
                 ..._mappings.map((m) => _MappingRow(
                   mapping: m, isDark: isDark,
@@ -207,7 +207,7 @@ class _TemplateScreenState extends ConsumerState<TemplateScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         side: BorderSide(color: AppColors.muted.withOpacity(0.3)),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
-                    child: Text(l10n.cancel, style: const TextStyle(color: AppColors.muted)),
+                    child: Text(l10n.cancel, style: TextStyle(color: AppColors.muted)),
                   )),
                   const SizedBox(width: 12),
                   Expanded(flex: 2, child: ElevatedButton(
@@ -244,14 +244,14 @@ class _ActiveTemplateCard extends StatelessWidget {
             color: AppColors.green.withOpacity(isDark ? 0.1 : 0.06),
             border: Border.all(color: AppColors.green.withOpacity(0.3))),
           child: Row(children: [
-            const Icon(Icons.check_circle_rounded, color: AppColors.green, size: 22),
+            Icon(Icons.check_circle_rounded, color: AppColors.green, size: 22),
             const SizedBox(width: 10),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('Активный шаблон: ${template.name}',
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white : const Color(0xFF1A1A2E))),
+                      color: isDark ? Colors.white : AppColors.ink)),
               Text('${template.columns.length} колонок настроено',
-                  style: const TextStyle(fontSize: 12, color: AppColors.muted)),
+                  style: TextStyle(fontSize: 12, color: AppColors.muted)),
             ])),
           ]),
         ),
@@ -268,7 +268,7 @@ class _MappingRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final textColor = isDark ? Colors.white : AppColors.ink;
     final autoMatched = mapping.confidence > 0;
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -285,7 +285,7 @@ class _MappingRow extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(color: AppColors.green.withOpacity(0.15), borderRadius: BorderRadius.circular(8)),
-              child: const Text('авто', style: TextStyle(fontSize: 10, color: AppColors.green, fontWeight: FontWeight.w600)),
+              child: Text('авто', style: TextStyle(fontSize: 10, color: AppColors.green, fontWeight: FontWeight.w600)),
             ),
         ]),
         const SizedBox(height: 8),

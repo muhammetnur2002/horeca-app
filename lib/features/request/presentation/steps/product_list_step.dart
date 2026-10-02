@@ -39,8 +39,8 @@ class _ProductListStepState extends ConsumerState<ProductListStep> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: isDark
-                ? const [Color(0xFF0F1629), Color(0xFF1A1040)]
-                : const [Color(0xFFEEF2FF), Color(0xFFF5F7FF)],
+                ? [AppColors.darkBg, AppColors.darkGrad2]
+                : [AppColors.lightBg, AppColors.lightSurface],
           ),
         ),
         child: Center(
@@ -62,8 +62,8 @@ class _ProductListStepState extends ConsumerState<ProductListStep> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: isDark
-              ? const [Color(0xFF0F1629), Color(0xFF1A1040), Color(0xFF0D1F35)]
-              : const [Color(0xFFEEF2FF), Color(0xFFF5F7FF), Color(0xFFEEF2FF)],
+              ? [AppColors.darkBg, AppColors.darkGrad2, AppColors.darkGrad3]
+              : [AppColors.lightBg, AppColors.lightSurface, AppColors.lightBg],
         ),
       ),
       child: Column(
@@ -88,7 +88,7 @@ class _ProductListStepState extends ConsumerState<ProductListStep> {
                   child: TextField(
                     controller: _searchController,
                     style: TextStyle(
-                      color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+                      color: isDark ? Colors.white : AppColors.ink,
                       fontSize: 14,
                     ),
                     decoration: InputDecoration(
@@ -97,7 +97,7 @@ class _ProductListStepState extends ConsumerState<ProductListStep> {
                       prefixIcon: Icon(Icons.search_rounded, color: AppColors.muted),
                       suffixIcon: _searchQuery.isNotEmpty
                           ? IconButton(
-                              icon: const Icon(Icons.close_rounded, color: AppColors.muted, size: 18),
+                              icon: Icon(Icons.close_rounded, color: AppColors.muted, size: 18),
                               onPressed: () => setState(() {
                                 _searchController.clear();
                                 _searchQuery = '';
@@ -202,7 +202,7 @@ class _ProductListStepState extends ConsumerState<ProductListStep> {
                                           fontWeight: FontWeight.w500,
                                           color: isDark
                                               ? Colors.white
-                                              : const Color(0xFF1A1A2E),
+                                              : AppColors.ink,
                                         ),
                                       ),
                                       const SizedBox(height: 2),

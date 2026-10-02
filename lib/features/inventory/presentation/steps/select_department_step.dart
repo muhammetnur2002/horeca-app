@@ -23,8 +23,8 @@ class SelectDepartmentStep extends ConsumerWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: isDark
-              ? const [Color(0xFF0F1629), Color(0xFF1A1040), Color(0xFF0D1F35)]
-              : const [Color(0xFFEEF2FF), Color(0xFFF5F7FF), Color(0xFFEEF2FF)],
+              ? [AppColors.darkBg, AppColors.darkGrad2, AppColors.darkGrad3]
+              : [AppColors.lightBg, AppColors.lightSurface, AppColors.lightBg],
         ),
       ),
       child: GridView.builder(
@@ -184,7 +184,7 @@ class _DeptCardState extends State<_DeptCard>
                         fontWeight: FontWeight.w500,
                         color: widget.isDark
                             ? Colors.white
-                            : const Color(0xFF1A1A2E),
+                            : AppColors.ink,
                       ),
                     ),
                   ),

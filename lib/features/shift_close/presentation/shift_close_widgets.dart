@@ -46,7 +46,7 @@ class CardLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Text(text.toUpperCase(),
-      style: const TextStyle(
+      style: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w600,
           color: AppColors.muted,
@@ -64,7 +64,7 @@ class StepHeader extends StatelessWidget {
   Widget build(BuildContext context) =>
       Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('Шаг $step из $total',
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 12,
                 color: AppColors.orange,
                 fontWeight: FontWeight.w500)),
@@ -75,7 +75,7 @@ class StepHeader extends StatelessWidget {
                 fontWeight: FontWeight.w600,
                 color: Theme.of(context).brightness == Brightness.dark
                     ? Colors.white
-                    : const Color(0xFF1A1A2E))),
+                    : AppColors.ink)),
       ]);
 }
 
@@ -104,7 +104,7 @@ class DessertRow extends StatelessWidget {
                     fontSize: 13,
                     color: isDark
                         ? Colors.white.withOpacity(0.85)
-                        : const Color(0xFF1A1A2E)))),
+                        : AppColors.ink))),
         QuantityStepper(
           value: value.toDouble(),
           unit: '',
@@ -137,7 +137,7 @@ class QtyBtn extends StatelessWidget {
                   color: Colors.white.withOpacity(isDark ? 0.1 : 0.3))),
           child: Icon(icon,
               size: 18,
-              color: isDark ? Colors.white : const Color(0xFF1A1A2E))));
+              color: isDark ? Colors.white : AppColors.ink)));
 }
 
 class PaymentRow extends StatelessWidget {
@@ -191,9 +191,9 @@ class PaymentRow extends StatelessWidget {
                               fontSize: 13,
                               color: isDark
                                   ? Colors.white
-                                  : const Color(0xFF1A1A2E))),
+                                  : AppColors.ink)),
                       Text(hint,
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 11, color: AppColors.muted)),
                     ])),
                 SizedBox(
@@ -211,13 +211,13 @@ class PaymentRow extends StatelessWidget {
                             fontWeight: FontWeight.w600,
                             color: isDark
                                 ? Colors.white
-                                : const Color(0xFF1A1A2E)),
+                                : AppColors.ink),
                         decoration: InputDecoration(
                             suffixText: currency,
                             hintText: '0',
-                            hintStyle: const TextStyle(
+                            hintStyle: TextStyle(
                                 fontSize: 15, color: AppColors.muted),
-                            suffixStyle: const TextStyle(
+                            suffixStyle: TextStyle(
                                 fontSize: 13, color: AppColors.muted),
                             border: InputBorder.none,
                             enabledBorder: InputBorder.none,

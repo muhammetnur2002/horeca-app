@@ -56,7 +56,7 @@ class VenueRow extends StatelessWidget {
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(venue.code,
-                style: const TextStyle(
+                style: TextStyle(
                     fontWeight: FontWeight.w700, color: AppColors.orange, fontSize: 13)),
           ),
         ),
@@ -71,10 +71,10 @@ class VenueRow extends StatelessWidget {
                     style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: isDark ? Colors.white : const Color(0xFF1A1A2E))),
+                        color: isDark ? Colors.white : AppColors.ink)),
                 if (isActive) ...[
                   const SizedBox(height: 2),
-                  const Text('Сейчас открыто',
+                  Text('Сейчас открыто',
                       style: TextStyle(fontSize: 11, color: AppColors.orange)),
                 ],
               ],
@@ -83,12 +83,12 @@ class VenueRow extends StatelessWidget {
         ),
         if (onOpen != null)
           IconButton(
-            icon: const Icon(Icons.login_rounded, color: AppColors.green, size: 20),
+            icon: Icon(Icons.login_rounded, color: AppColors.green, size: 20),
             tooltip: 'Открыть это заведение',
             onPressed: onOpen,
           ),
         IconButton(
-          icon: const Icon(Icons.pin_outlined, color: AppColors.orange, size: 20),
+          icon: Icon(Icons.pin_outlined, color: AppColors.orange, size: 20),
           tooltip: 'Задать PIN-коды',
           onPressed: onSetupPin,
         ),

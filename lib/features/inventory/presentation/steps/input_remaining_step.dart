@@ -66,8 +66,8 @@ class _InputRemainingStepState extends ConsumerState<InputRemainingStep> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: isDark
-              ? const [Color(0xFF0F1629), Color(0xFF1A1040), Color(0xFF0D1F35)]
-              : const [Color(0xFFEEF2FF), Color(0xFFF5F7FF), Color(0xFFEEF2FF)],
+              ? [AppColors.darkBg, AppColors.darkGrad2, AppColors.darkGrad3]
+              : [AppColors.lightBg, AppColors.lightSurface, AppColors.lightBg],
         ),
       ),
       child: Column(
@@ -88,16 +88,16 @@ class _InputRemainingStepState extends ConsumerState<InputRemainingStep> {
                   controller: _searchCtrl,
                   style: TextStyle(
                       fontSize: 14,
-                      color: isDark ? Colors.white : const Color(0xFF1A1A2E)),
+                      color: isDark ? Colors.white : AppColors.ink),
                   decoration: InputDecoration(
                     hintText: 'Поиск товара...',
                     hintStyle:
-                        const TextStyle(color: AppColors.muted, fontSize: 13),
-                    prefixIcon: const Icon(Icons.search_rounded,
+                        TextStyle(color: AppColors.muted, fontSize: 13),
+                    prefixIcon: Icon(Icons.search_rounded,
                         color: AppColors.muted, size: 20),
                     suffixIcon: _searchQuery.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(Icons.close_rounded,
+                            icon: Icon(Icons.close_rounded,
                                 color: AppColors.muted, size: 18),
                             onPressed: () => setState(() {
                                   _searchCtrl.clear();
@@ -126,7 +126,7 @@ class _InputRemainingStepState extends ConsumerState<InputRemainingStep> {
                           ? 'Ничего не найдено'
                           : 'Нет товаров',
                       style:
-                          const TextStyle(color: AppColors.muted, fontSize: 14),
+                          TextStyle(color: AppColors.muted, fontSize: 14),
                     ),
                   )
                 : ListView(
@@ -139,7 +139,7 @@ class _InputRemainingStepState extends ConsumerState<InputRemainingStep> {
                             padding: const EdgeInsets.symmetric(vertical: 8),
                             child: Text(
                               entry.key.toUpperCase(),
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.muted,
@@ -261,9 +261,9 @@ class _ProductRow extends StatelessWidget {
                             fontWeight: FontWeight.w500,
                             color: isDark
                                 ? Colors.white
-                                : const Color(0xFF1A1A2E))),
+                                : AppColors.ink)),
                     Text(product.inventoryUnit,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 11, color: AppColors.muted)),
                   ]),
             ),

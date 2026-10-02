@@ -8,7 +8,6 @@
         Brightness,
         BuildContext,
         ClipRRect,
-        Color,
         Colors,
         Container,
         DefaultTabController,
@@ -59,7 +58,7 @@ class SettingsScreen extends ConsumerWidget {
           title: Text(
             l10n.settings,
             style: TextStyle(
-              color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+              color: isDark ? Colors.white : AppColors.ink,
               fontSize: 18,
               fontWeight: FontWeight.w600,
             ),
@@ -114,15 +113,15 @@ class SettingsScreen extends ConsumerWidget {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: isDark
-                  ? const [
-                      Color(0xFF0F1629),
-                      Color(0xFF1A1040),
-                      Color(0xFF0D1F35)
+                  ? [
+                      AppColors.darkBg,
+                      AppColors.darkGrad2,
+                      AppColors.darkGrad3
                     ]
-                  : const [
-                      Color(0xFFEEF2FF),
-                      Color(0xFFF5F7FF),
-                      Color(0xFFEEF2FF)
+                  : [
+                      AppColors.lightBg,
+                      AppColors.lightSurface,
+                      AppColors.lightBg
                     ],
             ),
           ),

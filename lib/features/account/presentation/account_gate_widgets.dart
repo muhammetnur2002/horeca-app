@@ -25,8 +25,8 @@ class TermsAgreementCheckbox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textColor = isDark ? Colors.white70 : const Color(0xFF4A4A6A);
-    final linkStyle = const TextStyle(
+    final textColor = isDark ? Colors.white70 : AppColors.inkSoft;
+    final linkStyle = TextStyle(
         color: AppColors.orange, fontSize: 12, fontWeight: FontWeight.w600);
     final plainStyle = TextStyle(color: textColor, fontSize: 12);
 
@@ -110,10 +110,10 @@ class GlassField extends StatelessWidget {
             keyboardType: keyboardType,
             validator: validator,
             style: TextStyle(
-                fontSize: 14, color: isDark ? Colors.white : const Color(0xFF1A1A2E)),
+                fontSize: 14, color: isDark ? Colors.white : AppColors.ink),
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: const TextStyle(color: AppColors.muted, fontSize: 13),
+              hintStyle: TextStyle(color: AppColors.muted, fontSize: 13),
               border: InputBorder.none,
               enabledBorder: InputBorder.none,
               focusedBorder: InputBorder.none,

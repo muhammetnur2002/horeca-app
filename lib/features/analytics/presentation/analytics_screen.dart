@@ -34,7 +34,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final textColor = isDark ? Colors.white : AppColors.ink;
     // watch — экран перестраивается, когда смены догрузятся из базы.
     ref.watch(analyticsRepositoryProvider);
     final repo = ref.read(analyticsRepositoryProvider.notifier);
@@ -60,8 +60,8 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
         Positioned.fill(child: Container(decoration: BoxDecoration(
           gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight,
             colors: isDark
-                ? const [Color(0xFF0F1629), Color(0xFF1A1040), Color(0xFF0D1F35)]
-                : const [Color(0xFFEEF2FF), Color(0xFFF5F7FF), Color(0xFFEEF2FF)])))),
+                ? [AppColors.darkBg, AppColors.darkGrad2, AppColors.darkGrad3]
+                : [AppColors.lightBg, AppColors.lightSurface, AppColors.lightBg])))),
         SafeArea(
           child: records.isEmpty
               ? EmptyState(isDark: isDark)
@@ -111,7 +111,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
                       Text('Топ списываемых товаров', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: textColor)),
                       const SizedBox(height: 12),
                       if (topWriteOffs.isEmpty)
-                        Text('Нет данных о списаниях', style: const TextStyle(fontSize: 13, color: AppColors.muted))
+                        Text('Нет данных о списаниях', style: TextStyle(fontSize: 13, color: AppColors.muted))
                       else
                         ...topWriteOffs.entries.map((e) => WriteOffRow(
                           name: e.key, count: e.value, isDark: isDark,

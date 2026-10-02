@@ -17,7 +17,7 @@ class Background extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: isDark
-              ? const [Color(0xFF0F1629), Color(0xFF1A1040), Color(0xFF0D1F35)]
+              ? [AppColors.darkBg, AppColors.darkGrad2, AppColors.darkGrad3]
               : const [Color(0xFFE8F4FD), Color(0xFFF0F8FF), Color(0xFFE8EAF6)],
         ),
       ),
@@ -80,7 +80,7 @@ class LowStockBanner extends StatelessWidget {
               label,
               style: TextStyle(
                 fontSize: 12,
-                color: isDark ? Colors.white.withOpacity(0.85) : const Color(0xFF1A1A2E),
+                color: isDark ? Colors.white.withOpacity(0.85) : AppColors.ink,
               ),
             )),
       ]),
@@ -122,7 +122,7 @@ class GreetingHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final textColor = isDark ? Colors.white : AppColors.ink;
     final subColor = isDark ? AppColors.muted : const Color(0xFF6B7280);
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text(_greeting(),
@@ -207,7 +207,7 @@ class GlassButton extends StatelessWidget {
                       style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: isDark ? Colors.white : const Color(0xFF1A1A2E))),
+                          color: isDark ? Colors.white : AppColors.ink)),
                   const SizedBox(height: 2),
                   Text(sublabel,
                       style: TextStyle(

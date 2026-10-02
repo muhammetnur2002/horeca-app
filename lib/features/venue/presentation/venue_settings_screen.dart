@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
-import 'package:horeca_app/app/di.dart';
-import 'package:horeca_app/features/account/data/account_repository.dart';
-import 'package:horeca_app/features/account/data/cloud_sync_service.dart';
 import 'package:horeca_app/features/venue/data/venue_repository.dart';
 import 'package:horeca_app/features/auth/presentation/pin_settings_screen.dart';
 import 'package:horeca_app/features/venue/presentation/venue_settings_dialogs.dart';
@@ -20,7 +17,7 @@ class VenueSettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final textColor = isDark ? Colors.white : AppColors.ink;
     final venueState = ref.watch(venueRepositoryProvider);
 
     return Scaffold(
@@ -51,8 +48,8 @@ class VenueSettingsScreen extends ConsumerWidget {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: isDark
-                            ? const [Color(0xFF0F1629), Color(0xFF1A1040), Color(0xFF0D1F35)]
-                            : const [Color(0xFFEEF2FF), Color(0xFFF5F7FF), Color(0xFFEEF2FF)])))),
+                            ? [AppColors.darkBg, AppColors.darkGrad2, AppColors.darkGrad3]
+                            : [AppColors.lightBg, AppColors.lightSurface, AppColors.lightBg])))),
         SafeArea(
           child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 80, 20, 30),
@@ -85,21 +82,7 @@ class VenueSettingsScreen extends ConsumerWidget {
                     // покажет экран ввода PIN этого заведения.
                     onOpen: v.code == venueState.activeVenueCode
                         ? null
-                        : () async {
-                            // Как и на экране PIN: если данных этого заведения
-                            // на устройстве ещё нет — сначала подтягиваем их
-                            // из облака, иначе откроются пустые заготовки.
-                            final account = ref.read(accountRepositoryProvider);
-                            final prefs = ref.read(sharedPreferencesProvider);
-                            if (account.isLoggedIn &&
-                                account.uid != null &&
-                                prefs.getString(
-                                        'settings_data${venueKeySuffix(v.code)}') ==
-                                    null) {
-                              await CloudSyncService.pullToLocal(
-                                  account.uid!, prefs, v.code);
-                            }
-                            if (!context.mounted) return;
+                        : () {
                             Navigator.of(context).popUntil((r) => r.isFirst);
                             ref
                                 .read(venueRepositoryProvider.notifier)

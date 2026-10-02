@@ -54,7 +54,7 @@ class ProductFilterChip extends StatelessWidget {
                 ? Colors.white
                 : isDark
                     ? Colors.white70
-                    : const Color(0xFF1A1A2E),
+                    : AppColors.ink,
           ),
         ),
       ),
@@ -129,7 +129,7 @@ class ProductItemCard extends StatelessWidget {
                       color: AppColors.orange.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.inventory_2_outlined,
+                    child: Icon(Icons.inventory_2_outlined,
                         color: AppColors.orange, size: 18),
                   ),
                 const SizedBox(width: 10),
@@ -143,7 +143,7 @@ class ProductItemCard extends StatelessWidget {
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                           color:
-                              isDark ? Colors.white : const Color(0xFF1A1A2E),
+                              isDark ? Colors.white : AppColors.ink,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -158,7 +158,7 @@ class ProductItemCard extends StatelessWidget {
                 ),
                 if (!selectMode) ...[
                   IconButton(
-                    icon: const Icon(Icons.notifications_outlined,
+                    icon: Icon(Icons.notifications_outlined,
                         color: AppColors.orange, size: 20),
                     onPressed: onSetMinStock,
                   ),
@@ -208,7 +208,7 @@ class BatchEditButton extends StatelessWidget {
             const SizedBox(width: 6),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 color: AppColors.orange,
                 fontWeight: FontWeight.w500,

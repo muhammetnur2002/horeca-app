@@ -106,8 +106,8 @@ class ReportStep extends ConsumerWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: isDark
-              ? const [Color(0xFF0F1629), Color(0xFF1A1040), Color(0xFF0D1F35)]
-              : const [Color(0xFFEEF2FF), Color(0xFFF5F7FF), Color(0xFFEEF2FF)],
+              ? [AppColors.darkBg, AppColors.darkGrad2, AppColors.darkGrad3]
+              : [AppColors.lightBg, AppColors.lightSurface, AppColors.lightBg],
         ),
       ),
       child: Padding(
@@ -120,7 +120,7 @@ class ReportStep extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Шаг 4',
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 12,
                         color: AppColors.orange,
                         fontWeight: FontWeight.w500)),
@@ -130,7 +130,7 @@ class ReportStep extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+                    color: isDark ? Colors.white : AppColors.ink,
                   ),
                 ),
               ],
@@ -162,7 +162,7 @@ class ReportStep extends ConsumerWidget {
                           height: 1.6,
                           color: isDark
                               ? Colors.white.withOpacity(0.85)
-                              : const Color(0xFF1A1A2E),
+                              : AppColors.ink,
                         ),
                       ),
                     ),
@@ -187,7 +187,7 @@ class ReportStep extends ConsumerWidget {
                       Clipboard.setData(ClipboardData(text: text)).then((_) {
                         messenger.showSnackBar(SnackBar(
                           content: Text(l10n.copySuccess),
-                          backgroundColor: const Color(0xFF2E3352),
+                          backgroundColor: AppColors.darkCard2,
                           behavior: SnackBarBehavior.floating,
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12)),
@@ -222,7 +222,7 @@ class ReportStep extends ConsumerWidget {
                 if (state.items.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                     content: Text(l10n.noData),
-                    backgroundColor: const Color(0xFF2E3352),
+                    backgroundColor: AppColors.darkCard2,
                     behavior: SnackBarBehavior.floating,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
@@ -343,7 +343,7 @@ class ReportStep extends ConsumerWidget {
                       child: Text(
                         l10n.newInventory,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 14, color: AppColors.green),
                       ),
                     ),

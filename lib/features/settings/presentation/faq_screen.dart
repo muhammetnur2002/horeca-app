@@ -106,7 +106,7 @@ class FaqScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final textColor = isDark ? Colors.white : AppColors.ink;
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -128,8 +128,8 @@ class FaqScreen extends StatelessWidget {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: isDark
-                            ? const [Color(0xFF0F1629), Color(0xFF1A1040), Color(0xFF0D1F35)]
-                            : const [Color(0xFFEEF2FF), Color(0xFFF5F7FF), Color(0xFFEEF2FF)])))),
+                            ? [AppColors.darkBg, AppColors.darkGrad2, AppColors.darkGrad3]
+                            : [AppColors.lightBg, AppColors.lightSurface, AppColors.lightBg])))),
         SafeArea(
           child: ListView.separated(
             padding: const EdgeInsets.fromLTRB(20, 90, 20, 30),
@@ -150,7 +150,7 @@ class _FaqCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final textColor = isDark ? Colors.white : AppColors.ink;
     return ClipRRect(
       borderRadius: BorderRadius.circular(14),
       child: Container(
@@ -176,7 +176,7 @@ class _FaqCard extends StatelessWidget {
                       height: 1.5,
                       color: isDark
                           ? Colors.white.withOpacity(0.75)
-                          : const Color(0xFF4A4A6A))),
+                          : AppColors.inkSoft)),
             ],
           ),
         ),

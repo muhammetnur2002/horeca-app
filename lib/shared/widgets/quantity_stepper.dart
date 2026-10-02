@@ -57,7 +57,7 @@ class QuantityStepper extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text(l10n.cancel, style: const TextStyle(color: AppColors.muted)),
+            child: Text(l10n.cancel, style: TextStyle(color: AppColors.muted)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -83,7 +83,7 @@ class QuantityStepper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasQty = value > 0;
-    final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final textColor = isDark ? Colors.white : AppColors.ink;
     return Row(mainAxisSize: MainAxisSize.min, children: [
       _QtyBtn(
         icon: Icons.remove,
@@ -141,7 +141,7 @@ class _QtyBtn extends StatelessWidget {
             borderRadius: BorderRadius.circular(10),
             border: Border.all(color: Colors.white.withOpacity(isDark ? 0.1 : 0.3)),
           ),
-          child: Icon(icon, size: 18, color: isDark ? Colors.white : const Color(0xFF1A1A2E)),
+          child: Icon(icon, size: 18, color: isDark ? Colors.white : AppColors.ink),
         ),
       );
 }

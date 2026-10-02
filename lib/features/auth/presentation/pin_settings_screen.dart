@@ -86,7 +86,7 @@ class _PinSettingsScreenState extends ConsumerState<PinSettingsScreen> {
 
     if (!mounted) return;
     setState(() => _pinsEnabled = true);
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content:
           Text('PIN-коды сохранены', style: TextStyle(color: Colors.white)),
       backgroundColor: AppColors.green,
@@ -104,7 +104,7 @@ class _PinSettingsScreenState extends ConsumerState<PinSettingsScreen> {
     ref.invalidate(authRepositoryProvider);
 
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text('Защита PIN-кодом отключена',
           style: TextStyle(color: Colors.white)),
       backgroundColor: AppColors.muted,
@@ -120,7 +120,7 @@ class _PinSettingsScreenState extends ConsumerState<PinSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final textColor = isDark ? Colors.white : AppColors.ink;
     final isMultiVenue = ref.watch(venueRepositoryProvider).isMultiVenue;
 
     return Scaffold(
@@ -139,8 +139,8 @@ class _PinSettingsScreenState extends ConsumerState<PinSettingsScreen> {
         Positioned.fill(child: Container(decoration: BoxDecoration(
           gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight,
             colors: isDark
-                ? const [Color(0xFF0F1629), Color(0xFF1A1040), Color(0xFF0D1F35)]
-                : const [Color(0xFFEEF2FF), Color(0xFFF5F7FF), Color(0xFFEEF2FF)])))),
+                ? [AppColors.darkBg, AppColors.darkGrad2, AppColors.darkGrad3]
+                : [AppColors.lightBg, AppColors.lightSurface, AppColors.lightBg])))),
         SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(20, 80, 20, 30),
@@ -162,7 +162,7 @@ class _PinSettingsScreenState extends ConsumerState<PinSettingsScreen> {
                   child: Text(
                     'Настраивается для заведения «${widget.venue.name}» (код ${widget.venue.code}). '
                     'Полный вход: код + этот пароль, например ${widget.venue.code}1234.',
-                    style: const TextStyle(fontSize: 12, color: AppColors.orange),
+                    style: TextStyle(fontSize: 12, color: AppColors.orange),
                   ),
                 ),
               ],
@@ -175,7 +175,7 @@ class _PinSettingsScreenState extends ConsumerState<PinSettingsScreen> {
                 keyboardType: TextInputType.number,
                 maxLength: 4,
                 style: TextStyle(color: textColor, letterSpacing: 4),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: '1234',
                   counterText: '',
                   prefixIcon: Icon(Icons.admin_panel_settings_outlined, color: AppColors.orange),
@@ -190,7 +190,7 @@ class _PinSettingsScreenState extends ConsumerState<PinSettingsScreen> {
                 keyboardType: TextInputType.number,
                 maxLength: 4,
                 style: TextStyle(color: textColor, letterSpacing: 4),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: '5678',
                   counterText: '',
                   prefixIcon: Icon(Icons.person_outline_rounded, color: AppColors.green),

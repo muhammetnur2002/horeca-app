@@ -56,7 +56,7 @@ class _AccountSectionState extends ConsumerState<AccountSection> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Выйти из аккаунта?',
             style: TextStyle(fontWeight: FontWeight.w600)),
-        content: const Text(
+        content: Text(
             'Локальные данные на этом устройстве останутся, но перестанут '
             'синхронизироваться, пока вы не войдёте снова.',
             style: TextStyle(color: AppColors.muted, fontSize: 14)),
@@ -64,7 +64,7 @@ class _AccountSectionState extends ConsumerState<AccountSection> {
           TextButton(
               onPressed: () => Navigator.pop(ctx),
               child:
-                  Text(l10n.cancel, style: const TextStyle(color: AppColors.muted))),
+                  Text(l10n.cancel, style: TextStyle(color: AppColors.muted))),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx);
@@ -85,7 +85,7 @@ class _AccountSectionState extends ConsumerState<AccountSection> {
   @override
   Widget build(BuildContext context) {
     final accountState = ref.watch(accountRepositoryProvider);
-    final textColor = widget.isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final textColor = widget.isDark ? Colors.white : AppColors.ink;
 
     if (!accountState.isLoggedIn) {
       return AboutRow(
@@ -122,7 +122,7 @@ class _AccountSectionState extends ConsumerState<AccountSection> {
                   decoration: BoxDecoration(
                       color: AppColors.green.withOpacity(0.12),
                       borderRadius: BorderRadius.circular(12)),
-                  child: const Icon(Icons.cloud_done_outlined,
+                  child: Icon(Icons.cloud_done_outlined,
                       color: AppColors.green, size: 20)),
               const SizedBox(width: 12),
               Expanded(
@@ -135,7 +135,7 @@ class _AccountSectionState extends ConsumerState<AccountSection> {
                             fontWeight: FontWeight.w600,
                             color: textColor)),
                     const SizedBox(height: 2),
-                    const Text('Синхронизация включена',
+                    Text('Синхронизация включена',
                         style: TextStyle(fontSize: 12, color: AppColors.muted)),
                   ])),
             ]),

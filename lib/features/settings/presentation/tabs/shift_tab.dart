@@ -99,7 +99,7 @@ class ShiftTab extends ConsumerWidget {
           controller: ctrl,
           autofocus: true,
           textCapitalization: TextCapitalization.words,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             hintText: 'Имя сотрудника',
             prefixIcon: Icon(Icons.person_outline, color: AppColors.orange),
           ),
@@ -108,7 +108,7 @@ class ShiftTab extends ConsumerWidget {
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child:
-                Text(l10n.cancel, style: const TextStyle(color: AppColors.muted)),
+                Text(l10n.cancel, style: TextStyle(color: AppColors.muted)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -145,7 +145,7 @@ class ShiftTab extends ConsumerWidget {
           controller: ctrl,
           autofocus: true,
           textCapitalization: TextCapitalization.words,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             hintText: 'Имя сотрудника',
             prefixIcon: Icon(Icons.person_outline, color: AppColors.orange),
           ),
@@ -154,7 +154,7 @@ class ShiftTab extends ConsumerWidget {
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child:
-                Text(l10n.cancel, style: const TextStyle(color: AppColors.muted)),
+                Text(l10n.cancel, style: TextStyle(color: AppColors.muted)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -187,12 +187,12 @@ class ShiftTab extends ConsumerWidget {
         title: const Text('Удалить сотрудника?',
             style: TextStyle(fontWeight: FontWeight.w600)),
         content: Text('«$name» будет удалён из списка.',
-            style: const TextStyle(color: AppColors.muted)),
+            style: TextStyle(color: AppColors.muted)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child:
-                Text(l10n.cancel, style: const TextStyle(color: AppColors.muted)),
+                Text(l10n.cancel, style: TextStyle(color: AppColors.muted)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -200,7 +200,7 @@ class ShiftTab extends ConsumerWidget {
               repo.deleteStaff(name);
               ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                 content: Text('«$name» удалён'),
-                backgroundColor: const Color(0xFF2E3352),
+                backgroundColor: AppColors.darkCard2,
                 behavior: SnackBarBehavior.floating,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
@@ -263,7 +263,7 @@ class _StaffItem extends StatelessWidget {
                   child: Center(
                     child: Text(
                       name.isNotEmpty ? name[0].toUpperCase() : '?',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                         color: AppColors.orange,
@@ -278,7 +278,7 @@ class _StaffItem extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
-                      color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+                      color: isDark ? Colors.white : AppColors.ink,
                     ),
                   ),
                 ),

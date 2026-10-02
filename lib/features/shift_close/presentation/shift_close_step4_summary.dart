@@ -34,7 +34,7 @@ Widget buildShiftStep4({
         isDark: isDark,
         accentColor: AppColors.green,
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('ИТОГОВАЯ ВЫРУЧКА',
+          Text('ИТОГОВАЯ ВЫРУЧКА',
               style: TextStyle(
                   fontSize: 10,
                   color: AppColors.green,
@@ -42,13 +42,13 @@ Widget buildShiftStep4({
                   letterSpacing: 0.8)),
           const SizedBox(height: 6),
           Text('${shiftCloseFormatMoney(finalTotal)} $currency',
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 36,
                   fontWeight: FontWeight.w700,
                   color: AppColors.green,
                   letterSpacing: -1)),
           Text(shiftCloseFormattedDate(),
-              style: const TextStyle(fontSize: 11, color: AppColors.muted)),
+              style: TextStyle(fontSize: 11, color: AppColors.muted)),
         ])),
     const SizedBox(height: 10),
     GlassCard(

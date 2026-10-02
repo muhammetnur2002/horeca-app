@@ -20,8 +20,8 @@ class CategoryStep extends ConsumerWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: isDark
-                ? const [Color(0xFF0F1629), Color(0xFF1A1040)]
-                : const [Color(0xFFEEF2FF), Color(0xFFF5F7FF)],
+                ? [AppColors.darkBg, AppColors.darkGrad2]
+                : [AppColors.lightBg, AppColors.lightSurface],
           ),
         ),
         child: Center(
@@ -42,8 +42,8 @@ class CategoryStep extends ConsumerWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: isDark
-                ? const [Color(0xFF0F1629), Color(0xFF1A1040)]
-                : const [Color(0xFFEEF2FF), Color(0xFFF5F7FF)],
+                ? [AppColors.darkBg, AppColors.darkGrad2]
+                : [AppColors.lightBg, AppColors.lightSurface],
           ),
         ),
         child: Center(
@@ -86,8 +86,8 @@ class CategoryStep extends ConsumerWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: isDark
-              ? const [Color(0xFF0F1629), Color(0xFF1A1040), Color(0xFF0D1F35)]
-              : const [Color(0xFFEEF2FF), Color(0xFFF5F7FF), Color(0xFFEEF2FF)],
+              ? [AppColors.darkBg, AppColors.darkGrad2, AppColors.darkGrad3]
+              : [AppColors.lightBg, AppColors.lightSurface, AppColors.lightBg],
         ),
       ),
       child: GridView.builder(
@@ -203,7 +203,7 @@ class _CatCardState extends State<_CatCard>
                           .withOpacity(widget.isDark ? 0.15 : 0.1),
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.folder_outlined,
                       size: 26,
                       color: AppColors.orange,
@@ -222,7 +222,7 @@ class _CatCardState extends State<_CatCard>
                         fontWeight: FontWeight.w500,
                         color: widget.isDark
                             ? Colors.white
-                            : const Color(0xFF1A1A2E),
+                            : AppColors.ink,
                       ),
                     ),
                   ),

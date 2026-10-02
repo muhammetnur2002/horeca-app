@@ -87,7 +87,7 @@ Future<void> showForgotPinDialog(BuildContext context, WidgetRef ref) async {
               autofocus: true,
               decoration: InputDecoration(
                 hintText: 'Пароль аккаунта',
-                prefixIcon: const Icon(Icons.lock_outline, color: AppColors.orange),
+                prefixIcon: Icon(Icons.lock_outline, color: AppColors.orange),
                 suffixIcon: IconButton(
                   icon: Icon(
                       obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
@@ -105,7 +105,7 @@ Future<void> showForgotPinDialog(BuildContext context, WidgetRef ref) async {
         actions: [
           TextButton(
             onPressed: isChecking ? null : () => Navigator.pop(ctx),
-            child: Text(l10n.cancel, style: const TextStyle(color: AppColors.muted)),
+            child: Text(l10n.cancel, style: TextStyle(color: AppColors.muted)),
           ),
           ElevatedButton(
             onPressed: isChecking || selectedCode == null

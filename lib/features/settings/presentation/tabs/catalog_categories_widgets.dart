@@ -45,7 +45,7 @@ class DessertSwitch extends StatelessWidget {
                 fontSize: 13,
                 color: isDark
                     ? Colors.white.withOpacity(0.85)
-                    : const Color(0xFF1A1A2E),
+                    : AppColors.ink,
               ),
             ),
           ),
@@ -108,7 +108,7 @@ class CatRow extends StatelessWidget {
                         color: AppColors.orange.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(Icons.folder_outlined,
+                      child: Icon(Icons.folder_outlined,
                           color: AppColors.orange, size: 20),
                     ),
                     Positioned(
@@ -145,14 +145,14 @@ class CatRow extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w500,
-                            color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+                            color: isDark ? Colors.white : AppColors.ink,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       if (cat.isDessertCategory) ...[
                         const SizedBox(width: 6),
-                        const Icon(Icons.icecream_outlined,
+                        Icon(Icons.icecream_outlined,
                             size: 14, color: AppColors.orange),
                       ],
                     ]),

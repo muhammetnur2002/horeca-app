@@ -92,6 +92,10 @@ class _HorecaAppState extends ConsumerState<HorecaApp> with WidgetsBindingObserv
   @override
   Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
+    // Палитра применяется к AppColors в PaletteNotifier; watch нужен, чтобы
+    // при смене темы перестроить MaterialApp с новыми цветами.
+    final palette = ref.watch(paletteProvider);
+    AppColors.applyPalette(palette);
 
     if (_showSplash) {
       return Directionality(
@@ -120,8 +124,8 @@ class _HorecaAppState extends ConsumerState<HorecaApp> with WidgetsBindingObserv
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: const [Locale('ru')],
-        theme: ThemeData(brightness: Brightness.light, useMaterial3: true),
-        darkTheme: ThemeData(brightness: Brightness.dark, useMaterial3: true),
+        theme: ThemeData(brightness: Brightness.light, useMaterial3: true, colorSchemeSeed: AppColors.orange),
+        darkTheme: ThemeData(brightness: Brightness.dark, useMaterial3: true, colorSchemeSeed: AppColors.orange),
         home: AccountGateScreen(
           onSkip: () {
             ref.read(sharedPreferencesProvider).setBool(_accountGateSkippedKey, true);
@@ -146,8 +150,8 @@ class _HorecaAppState extends ConsumerState<HorecaApp> with WidgetsBindingObserv
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: const [Locale('ru')],
-        theme: ThemeData(brightness: Brightness.light, useMaterial3: true),
-        darkTheme: ThemeData(brightness: Brightness.dark, useMaterial3: true),
+        theme: ThemeData(brightness: Brightness.light, useMaterial3: true, colorSchemeSeed: AppColors.orange),
+        darkTheme: ThemeData(brightness: Brightness.dark, useMaterial3: true, colorSchemeSeed: AppColors.orange),
         home: const PinScreen(),
       );
     }
