@@ -199,7 +199,8 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
       padding: const EdgeInsets.fromLTRB(16, 140, 16, 16),
       itemCount: entries.length,
       itemBuilder: (_, i) {
-        final e = entries[entries.length - 1 - i]; // новые сверху
+        // getAll() уже отдаёт записи от новых к старым.
+        final e = entries[i];
         return HistoryCard(
           entry: e,
           isDark: isDark,

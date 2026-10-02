@@ -8,6 +8,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
+import 'package:horeca_app/core/db/ids.dart';
 import 'package:horeca_app/features/analytics/data/analytics_repository.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
 import 'package:horeca_app/features/shift_close/data/shift_draft_provider.dart';
@@ -45,6 +46,12 @@ class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
   final _eveningCashCtrl = TextEditingController();
   final _inkassCtrl = TextEditingController();
   bool _hasInkass = false;
+  // Защита от дублей в аналитике: кнопки WhatsApp/Telegram/PDF и "Закрыть
+  // смену" вызывают одно и то же действие, а при сбое отправки PDF человек
+  // жмёт ещё раз — запись о смене должна сохраниться только один раз.
+  bool _submitting = false;
+  bool _shiftSaved = false;
+  final String _shiftId = Ids.newId();
 
   double get _autoTotal =>
       (double.tryParse(_qrCtrl.text) ?? 0) +
@@ -173,9 +180,17 @@ class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
       context: context,
       builder: (_) => const ConfirmCloseShiftDialog(),
     );
-    if (confirm != true || !mounted) return;
+    if (confirm != true || !mounted || _submitting) return;
+    _submitting = true;
+    try {
+      await _saveAndShare();
+    } finally {
+      _submitting = false;
+    }
+  }
 
-    // Сохраняем запись для аналитики.
+  Future<void> _saveAndShare() async {
+    // Сохраняем запись для аналитики (один раз за этот экран).
     final writeOffsMap = <String, int>{};
     for (final d in _desserts.where((d) => d.writeOff > 0)) {
       writeOffsMap[d.name] = d.writeOff;
@@ -183,25 +198,31 @@ class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
     for (final m in _manualWriteOffs) {
       writeOffsMap[m.name] = (writeOffsMap[m.name] ?? 0) + m.quantity;
     }
-    final settings = ref.read(settingsRepositoryProvider);
-    final productIdByName = {for (final p in settings.products) p.name: p.id};
-    ref.read(analyticsRepositoryProvider.notifier).addShift(ShiftRecord(
-          date: DateTime.now(),
-          revenue: _finalTotal,
-          qr: double.tryParse(_qrCtrl.text) ?? 0,
-          card: double.tryParse(_cardCtrl.text) ?? 0,
-          cash: double.tryParse(_cashCtrl.text) ?? 0,
-          morningCash: double.tryParse(_morningCashCtrl.text) ?? 0,
-          eveningCash: double.tryParse(_eveningCashCtrl.text) ?? 0,
-          writeOffs: writeOffsMap,
-        ),
-        staffNames: _selectedStaff.toList(),
-        inkass: _hasInkass ? (double.tryParse(_inkassCtrl.text) ?? 0) : 0,
-        writeoffProductIds: {
-          for (final d in _desserts.where((d) => d.writeOff > 0))
-            if (productIdByName[d.name] != null) d.name: productIdByName[d.name]!,
-        },
-        writeoffUnits: {for (final m in _manualWriteOffs) m.name: m.unit});
+    // Запись о смене сохраняется один раз за этот экран (защита от дублей
+    // при повторной отправке), с id — повтор в базе тоже гасится.
+    if (!_shiftSaved) {
+      _shiftSaved = true;
+      final settings = ref.read(settingsRepositoryProvider);
+      final productIdByName = {for (final p in settings.products) p.name: p.id};
+      ref.read(analyticsRepositoryProvider.notifier).addShift(ShiftRecord(
+            date: DateTime.now(),
+            revenue: _finalTotal,
+            qr: double.tryParse(_qrCtrl.text) ?? 0,
+            card: double.tryParse(_cardCtrl.text) ?? 0,
+            cash: double.tryParse(_cashCtrl.text) ?? 0,
+            morningCash: double.tryParse(_morningCashCtrl.text) ?? 0,
+            eveningCash: double.tryParse(_eveningCashCtrl.text) ?? 0,
+            writeOffs: writeOffsMap,
+          ),
+          shiftId: _shiftId,
+          staffNames: _selectedStaff.toList(),
+          inkass: _hasInkass ? (double.tryParse(_inkassCtrl.text) ?? 0) : 0,
+          writeoffProductIds: {
+            for (final d in _desserts.where((d) => d.writeOff > 0))
+              if (productIdByName[d.name] != null) d.name: productIdByName[d.name]!,
+          },
+          writeoffUnits: {for (final m in _manualWriteOffs) m.name: m.unit});
+    }
 
     await ShiftClosePdf.generateAndShare(
       currency: ref.read(settingsRepositoryProvider).currency,

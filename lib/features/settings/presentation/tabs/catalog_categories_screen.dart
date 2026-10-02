@@ -290,7 +290,6 @@ class CatalogCategoriesScreen extends ConsumerWidget {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
                     ));
-                    navigator.pop();
                   }
                 },
                 style: ElevatedButton.styleFrom(

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
+import 'package:horeca_app/app/di.dart';
+import 'package:horeca_app/features/account/data/account_repository.dart';
+import 'package:horeca_app/features/account/data/cloud_sync_service.dart';
 import 'package:horeca_app/features/venue/data/venue_repository.dart';
 import 'package:horeca_app/features/auth/presentation/pin_settings_screen.dart';
 import 'package:horeca_app/features/venue/presentation/venue_settings_dialogs.dart';
@@ -76,6 +79,32 @@ class VenueSettingsScreen extends ConsumerWidget {
                           MaterialPageRoute(builder: (_) => PinSettingsScreen(venue: v)));
                     },
                     onDelete: () => showDeleteVenueDialog(context, ref, v, isDark),
+                    // Раньше переключиться на другое заведение можно было только
+                    // с экрана PIN, поэтому заведение без PIN-кода было недоступно.
+                    // Если у выбранного заведения включён PIN, приложение само
+                    // покажет экран ввода PIN этого заведения.
+                    onOpen: v.code == venueState.activeVenueCode
+                        ? null
+                        : () async {
+                            // Как и на экране PIN: если данных этого заведения
+                            // на устройстве ещё нет — сначала подтягиваем их
+                            // из облака, иначе откроются пустые заготовки.
+                            final account = ref.read(accountRepositoryProvider);
+                            final prefs = ref.read(sharedPreferencesProvider);
+                            if (account.isLoggedIn &&
+                                account.uid != null &&
+                                prefs.getString(
+                                        'settings_data${venueKeySuffix(v.code)}') ==
+                                    null) {
+                              await CloudSyncService.pullToLocal(
+                                  account.uid!, prefs, v.code);
+                            }
+                            if (!context.mounted) return;
+                            Navigator.of(context).popUntil((r) => r.isFirst);
+                            ref
+                                .read(venueRepositoryProvider.notifier)
+                                .setActiveVenue(v.code);
+                          },
                   )),
               if (venueState.venues.length >= VenueRepository.maxVenues) ...[
                 const SizedBox(height: 12),

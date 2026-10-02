@@ -39,8 +39,20 @@ class _PinScreenState extends ConsumerState<PinScreen> {
     if (!venueState.isMultiVenue) {
       if (currentPin.length < 4) return;
       final repo = ref.read(authRepositoryProvider.notifier);
-      final role = await repo.checkPinReady(currentPin);
+      await repo.pinsReady;
       if (!mounted || _pin != currentPin) return;
+      // Сейчас PIN всегда 4 цифры, но в старых версиях можно было задать
+      // 5-6. Пока набрано меньше цифр, чем в самом длинном сохранённом PIN,
+      // и совпадения нет — просто ждём следующую цифру, не засчитывая
+      // неудачную попытку (раньше одна ошибка в 6-значном вводе считалась
+      // за три попытки, и блокировка срабатывала уже после двух ошибок).
+      final maxLen = [repo.adminPin, repo.staffPin]
+          .whereType<String>()
+          .fold<int>(4, (m, p) => p.length > m ? p.length : m);
+      final isExactMatch =
+          currentPin == repo.adminPin || currentPin == repo.staffPin;
+      if (!isExactMatch && currentPin.length < maxLen) return;
+      final role = repo.checkPin(currentPin);
       if (role != null) {
         repo.login(role);
       } else if (repo.lockoutSecondsRemaining > 0) {
@@ -48,7 +60,7 @@ class _PinScreenState extends ConsumerState<PinScreen> {
           _error = 'Слишком много попыток. Подождите ${repo.lockoutSecondsRemaining} сек.';
           _pin = '';
         });
-      } else if (currentPin.length >= 6) {
+      } else {
         setState(() {
           _error = 'Неверный PIN-код';
           _pin = '';

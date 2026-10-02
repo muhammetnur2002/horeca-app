@@ -50,6 +50,16 @@ class AppSettingsTab extends ConsumerWidget {
         const SizedBox(height: 16),
         AccountSection(isDark: isDark),
         const SizedBox(height: 16),
+        SettingsNavCard(
+          icon: Icons.storefront_outlined,
+          title: settings.establishmentName,
+          subtitle: 'Название заведения в заявках и отчётах',
+          color: AppColors.orange,
+          isDark: isDark,
+          onTap: () => showEditEstablishmentNameDialog(context,
+              settings.establishmentName, repo, AppLocalizations.of(context), isDark),
+        ),
+        const SizedBox(height: 16),
         AppCurrencyCard(
           currency: settings.currency,
           isDark: isDark,
