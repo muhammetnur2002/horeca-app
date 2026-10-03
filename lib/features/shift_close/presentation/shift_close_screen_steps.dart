@@ -5,6 +5,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:horeca_app/features/analytics/data/analytics_repository.dart';
 import 'package:horeca_app/features/shift_close/presentation/shift_close_models.dart';
 import 'package:horeca_app/features/shift_close/presentation/shift_close_step1_shift.dart';
 import 'package:horeca_app/features/shift_close/presentation/shift_close_step2_payment.dart';
@@ -110,8 +111,22 @@ Widget buildShiftCurrentStep({
         finalTotal: finalTotal,
         tomorrowCash: tomorrowCash,
         onSubmit: onSubmit,
+        previousRevenue: _previousRevenue(ref),
       );
     default:
       return const SizedBox();
   }
+}
+
+/// Выручка прошлой смены — для «+N% к прошлой смене» на кольце. Смены,
+/// закрытые в последние полчаса, не считаем: это может быть текущая,
+/// уже сохранённая при отправке отчёта.
+double? _previousRevenue(WidgetRef ref) {
+  final cutoff = DateTime.now().subtract(const Duration(minutes: 30));
+  final older = ref
+      .read(analyticsRepositoryProvider)
+      .where((s) => s.date.isBefore(cutoff))
+      .toList()
+    ..sort((a, b) => b.date.compareTo(a.date));
+  return older.isEmpty ? null : older.first.revenue;
 }

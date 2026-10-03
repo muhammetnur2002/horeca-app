@@ -120,6 +120,9 @@ class SummaryRow extends StatelessWidget {
   final bool isDark;
   final bool highlight;
   final bool isWarning;
+
+  /// Цветная точка перед подписью (способ оплаты, как на кольце выручки).
+  final Color? dotColor;
   const SummaryRow({
     super.key,
     required this.label,
@@ -127,18 +130,36 @@ class SummaryRow extends StatelessWidget {
     required this.isDark,
     this.highlight = false,
     this.isWarning = false,
+    this.dotColor,
   });
 
   @override
   Widget build(BuildContext context) => Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        Text(label,
-            style: TextStyle(fontSize: 13, color: AppColors.muted)),
+        Row(mainAxisSize: MainAxisSize.min, children: [
+          if (dotColor != null)
+            Container(
+              width: 8,
+              height: 8,
+              margin: const EdgeInsets.only(right: 8),
+              decoration:
+                  BoxDecoration(shape: BoxShape.circle, color: dotColor),
+            ),
+          Text(label,
+              style: TextStyle(
+                  fontSize: 13,
+                  color: dotColor != null
+                      ? (isDark ? Colors.white : AppColors.ink)
+                      : AppColors.muted)),
+        ]),
+        const SizedBox(width: 12),
         Flexible(
             child: Text(value,
                 textAlign: TextAlign.right,
                 style: TextStyle(
+                    fontFamily: AppFonts.mono,
+                    fontFamilyFallback: AppFonts.fallback,
                     fontSize: 13,
                     fontWeight: highlight ? FontWeight.w600 : FontWeight.normal,
                     color: isWarning
