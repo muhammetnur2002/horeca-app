@@ -137,6 +137,9 @@ abstract final class AppFonts {
 
   /// Количества и суммы — цифры одной ширины, столбцы ровные.
   static const mono = 'JetBrainsMono';
+
+  /// Знаки, которых нет в основных шрифтах (₸ и другие валюты).
+  static const fallback = ['NotoSans'];
 }
 
 // ─── Цвета приложения ──────────────────────────────────────────────────────
@@ -196,6 +199,7 @@ class AppColors {
 ThemeData buildAppLightTheme() {
   return ThemeData(
     fontFamily: AppFonts.text,
+    fontFamilyFallback: AppFonts.fallback,
     // Экраны рисуют свой фон-туманность; под ними — цвет низа фона.
     brightness: Brightness.light,
     useMaterial3: true,
@@ -298,6 +302,7 @@ ThemeData buildAppLightTheme() {
 ThemeData buildAppDarkTheme() {
   return ThemeData(
     fontFamily: AppFonts.text,
+    fontFamilyFallback: AppFonts.fallback,
     // Экраны рисуют свой фон-туманность; под ними — цвет низа фона.
     brightness: Brightness.dark,
     useMaterial3: true,

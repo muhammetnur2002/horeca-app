@@ -25,7 +25,8 @@ import 'package:horeca_app/features/stock/presentation/stock_screen.dart';
 /// сворачивания, диплинк и т.п.) и получить доступ к PIN администратора,
 /// удалению заведений и финансовым показателям.
 String? _adminOnlyRedirect(BuildContext context, GoRouterState state) {
-  final authState = ProviderScope.containerOf(context).read(authRepositoryProvider);
+  final authState =
+      ProviderScope.containerOf(context).read(authRepositoryProvider);
   if (authState.role == UserRole.staff) return '/';
   return null;
 }
@@ -38,7 +39,8 @@ final router = GoRouter(
       routes: [
         GoRoute(path: '/', builder: (_, __) => const HomeScreen()),
         GoRoute(path: '/request', builder: (_, __) => const RequestScreen()),
-        GoRoute(path: '/inventory', builder: (_, __) => const InventoryScreen()),
+        GoRoute(
+            path: '/inventory', builder: (_, __) => const InventoryScreen()),
         GoRoute(path: '/history', builder: (_, __) => const HistoryScreen()),
         GoRoute(
           path: '/settings',
@@ -88,64 +90,69 @@ class MainShell extends ConsumerWidget {
     final authState = ref.watch(authRepositoryProvider);
     final isAdmin = authState.role != UserRole.staff;
 
-    return Scaffold(
-      body: child,
-      backgroundColor: AkylBackdrop.bottomColor(isDark),
-      // Нижняя панель — плавающая стеклянная «капсула» на цвете низа фона.
-      bottomNavigationBar: Container(
-        color: AkylBackdrop.bottomColor(isDark),
-        padding: EdgeInsets.fromLTRB(
-            16, 6, 16, 10 + MediaQuery.paddingOf(context).bottom),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(26),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(26),
-                color: isDark
-                    ? Colors.white.withOpacity(0.07)
-                    : Colors.white.withOpacity(0.75),
-                border: Border.all(
+    // Фон-туманность рисуется под всей оболочкой: экраны рисуют тот же
+    // фон от верхнего края, поэтому под нижней панелью он продолжается
+    // без шва.
+    return DecoratedBox(
+      decoration: BoxDecoration(gradient: BackdropGradient(isDark)),
+      child: Scaffold(
+        body: child,
+        backgroundColor: Colors.transparent,
+        // Нижняя панель — плавающая стеклянная «капсула».
+        bottomNavigationBar: Container(
+          padding: EdgeInsets.fromLTRB(
+              16, 6, 16, 10 + MediaQuery.paddingOf(context).bottom),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(26),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(26),
                   color: isDark
-                      ? Colors.white.withOpacity(0.12)
-                      : AppColors.orange.withOpacity(0.12),
-                ),
-              ),
-              child: MediaQuery.removePadding(
-                context: context,
-                removeBottom: true,
-                child: BottomNavigationBar(
-                  currentIndex: _calculateIndex(context),
-                  onTap: (index) => _onTap(context, index),
-                  type: BottomNavigationBarType.fixed,
-                  backgroundColor: Colors.transparent,
-                  elevation: 0,
-                  selectedItemColor: AppColors.orange,
-                  unselectedItemColor: AppColors.muted,
-                  selectedLabelStyle: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
+                      ? Colors.white.withOpacity(0.07)
+                      : Colors.white.withOpacity(0.75),
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white.withOpacity(0.12)
+                        : AppColors.orange.withOpacity(0.12),
                   ),
-                  unselectedLabelStyle: const TextStyle(fontSize: 11),
-                  items: [
-                    BottomNavigationBarItem(
-                      icon: const Icon(Icons.home_outlined),
-                      activeIcon: const Icon(Icons.home_rounded),
-                      label: l10n.appTitle,
+                ),
+                child: MediaQuery.removePadding(
+                  context: context,
+                  removeBottom: true,
+                  child: BottomNavigationBar(
+                    currentIndex: _calculateIndex(context),
+                    onTap: (index) => _onTap(context, index),
+                    type: BottomNavigationBarType.fixed,
+                    backgroundColor: Colors.transparent,
+                    elevation: 0,
+                    selectedItemColor: AppColors.orange,
+                    unselectedItemColor: AppColors.muted,
+                    selectedLabelStyle: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
                     ),
-                    BottomNavigationBarItem(
-                      icon: const Icon(Icons.history_outlined),
-                      activeIcon: const Icon(Icons.history_rounded),
-                      label: l10n.history,
-                    ),
-                    if (isAdmin)
+                    unselectedLabelStyle: const TextStyle(fontSize: 11),
+                    items: [
                       BottomNavigationBarItem(
-                        icon: const Icon(Icons.settings_outlined),
-                        activeIcon: const Icon(Icons.settings_rounded),
-                        label: l10n.settings,
+                        icon: const Icon(Icons.home_outlined),
+                        activeIcon: const Icon(Icons.home_rounded),
+                        label: l10n.appTitle,
                       ),
-                  ],
+                      BottomNavigationBarItem(
+                        icon: const Icon(Icons.history_outlined),
+                        activeIcon: const Icon(Icons.history_rounded),
+                        label: l10n.history,
+                      ),
+                      if (isAdmin)
+                        BottomNavigationBarItem(
+                          icon: const Icon(Icons.settings_outlined),
+                          activeIcon: const Icon(Icons.settings_rounded),
+                          label: l10n.settings,
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -164,9 +171,15 @@ class MainShell extends ConsumerWidget {
 
   void _onTap(BuildContext context, int index) {
     switch (index) {
-      case 0: context.go('/'); break;
-      case 1: context.go('/history'); break;
-      case 2: context.go('/settings'); break;
+      case 0:
+        context.go('/');
+        break;
+      case 1:
+        context.go('/history');
+        break;
+      case 2:
+        context.go('/settings');
+        break;
     }
   }
 }

@@ -72,6 +72,12 @@ flutter:
           weight: 600
         - asset: assets/fonts/Unbounded-700.ttf
           weight: 700
+    # Запасной шрифт: в Manrope и JetBrains Mono нет знаков валют (₸, ₼…).
+    - family: NotoSans
+      fonts:
+        - asset: assets/fonts/NotoSans-Regular.ttf
+        - asset: assets/fonts/NotoSans-Bold.ttf
+          weight: 700
     - family: JetBrainsMono
       fonts:
         - asset: assets/fonts/JetBrainsMono-500.ttf
