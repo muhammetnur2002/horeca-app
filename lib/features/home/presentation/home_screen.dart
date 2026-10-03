@@ -66,7 +66,7 @@ class HomeScreen extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 16),
-                    _GreetingHeader(isDark: isDark),
+                    _GreetingHeader(isDark: isDark, userName: authState.userName),
                     const SizedBox(height: 16),
                     if (lowStockItems.isNotEmpty) ...[
                       _LowStockBanner(items: lowStockItems, isDark: isDark),
@@ -230,7 +230,10 @@ class _LowStockBanner extends StatelessWidget {
 // ── Приветствие ──────────────────────────────────────────────────────────────
 class _GreetingHeader extends StatelessWidget {
   final bool isDark;
-  const _GreetingHeader({required this.isDark});
+
+  /// Имя сотрудника, вошедшего по личному PIN.
+  final String? userName;
+  const _GreetingHeader({required this.isDark, this.userName});
 
   String _greeting() {
     final h = DateTime.now().hour;
@@ -264,7 +267,7 @@ class _GreetingHeader extends StatelessWidget {
     final textColor = isDark ? Colors.white : AppColors.ink;
     final subColor = isDark ? AppColors.muted : const Color(0xFF6B7280);
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(_greeting(),
+      Text(userName == null ? _greeting() : '${_greeting()}, $userName',
           style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.w700,

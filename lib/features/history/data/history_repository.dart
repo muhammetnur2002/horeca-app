@@ -65,10 +65,19 @@ class HistoryRepository extends StateNotifier<List<HistoryEntry>> {
     _dao.clearHistory(_venueId);
   }
 
-  void clearByType(HistoryType type) {
+  void clearByType(HistoryType type, {String? staffId}) {
     state = state.where((e) => e.type != type).toList();
-    _dao.clearHistory(_venueId,
-        kind: type == HistoryType.inventory ? 'inventory' : 'request');
+    final kind = type == HistoryType.inventory ? 'inventory' : 'request';
+    _dao.clearHistory(_venueId, kind: kind);
+    // Очистка истории — заметное действие, оставляем след в журнале.
+    _dao.addAudit(
+      venueId: _venueId,
+      staffId: staffId,
+      entity: 'history',
+      entityId: kind,
+      action: 'delete',
+      afterJson: '{"kind":"${type == HistoryType.inventory ? 'инвентаризации' : 'заявки'}"}',
+    );
   }
 }
 

@@ -112,7 +112,7 @@ class AboutScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 24),
               Center(
-                child: Text('Akyl v1.1.0 — управляй с умом',
+                child: Text('Akyl v1.2.0 — управляй с умом',
                     style: TextStyle(
                         fontSize: 11, color: AppColors.muted.withOpacity(0.6))),
               ),

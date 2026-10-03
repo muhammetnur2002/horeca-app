@@ -1,4 +1,4 @@
-﻿# Сборка тестового APK (arm64) на Windows.
+﻿# Сборка тестового APK (arm и arm64) на Windows.
 # Обходит две проблемы окружения:
 #  1) кириллица в пути временной папки (C:\Users\<имя>\AppData\Local\Temp) —
 #     Java/Gradle не может открыть loopback-сокет, поэтому TEMP переносим в C:\dev\tmp;
@@ -13,17 +13,21 @@ New-Item -ItemType Directory -Force $sqliteDir | Out-Null
 $env:TEMP = $tmp; $env:TMP = $tmp
 $env:JAVA_TOOL_OPTIONS = "-Djava.io.tmpdir=$tmp -Djdk.net.unixdomain.tmpdir=$tmp"
 
-$so = Join-Path $sqliteDir 'libsqlite3.arm64.android.so'
-if (-not (Test-Path $so)) {
-  $url = 'https://github.com/simolus3/sqlite3.dart/releases/download/sqlite3-3.5.2/libsqlite3.arm64.android.so'
-  curl.exe -sSL --retry 8 --retry-all-errors -m 300 -o $so $url
-  if ($LASTEXITCODE -ne 0) { throw 'Не удалось скачать SQLite с GitHub — повторите позже.' }
+# arm64 — современные телефоны, arm — старые 32-битные.
+foreach ($abi in @('arm64', 'arm')) {
+  $name = "libsqlite3.$abi.android.so"
+  $so = Join-Path $sqliteDir $name
+  if (-not (Test-Path $so)) {
+    $url = "https://github.com/simolus3/sqlite3.dart/releases/download/sqlite3-3.5.2/$name"
+    curl.exe -sSL --retry 8 --retry-all-errors -m 300 -o $so $url
+    if ($LASTEXITCODE -ne 0) { throw 'Не удалось скачать SQLite с GitHub — повторите позже.' }
+  }
 }
 
 $backup = Get-Content pubspec.yaml -Raw
 try {
-  Add-Content pubspec.yaml "`nhooks:`n  user_defines:`n    sqlite3:`n      source: test-sqlite3`n      directory: C:/dev/tmp/sqlite3/`n"
-  flutter build apk --release --target-platform android-arm64
+  Add-Content pubspec.yaml "`nhooks:`n  user_defines:`n    sqlite3:`n      source: test-sqlite3`n      directory: /C:/dev/tmp/sqlite3/`n"
+  flutter build apk --release --target-platform android-arm,android-arm64
   if ($LASTEXITCODE -ne 0) { throw 'Сборка не удалась.' }
 } finally {
   Set-Content pubspec.yaml $backup -NoNewline

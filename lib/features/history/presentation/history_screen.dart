@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
+import 'package:horeca_app/features/auth/data/auth_repository.dart';
 import 'package:horeca_app/features/history/data/history_repository.dart';
 import 'package:horeca_app/features/history/domain/history_entry.dart';
 import 'package:horeca_app/features/history/presentation/history_dialogs.dart';
@@ -215,7 +216,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
       BuildContext context, dynamic repo, AppLocalizations l10n) {
     final type =
         _tabController.index == 0 ? HistoryType.request : HistoryType.inventory;
-    repo.clearByType(type);
+    repo.clearByType(type, staffId: ref.read(authRepositoryProvider).staffId);
     ref.invalidate(historyEntriesProvider);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
