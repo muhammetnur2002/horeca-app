@@ -24,7 +24,6 @@ class CategoryFilterStep extends ConsumerWidget {
 
     return Container(
       decoration: BoxDecoration(
-        gradient: BackdropGradient(isDark),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

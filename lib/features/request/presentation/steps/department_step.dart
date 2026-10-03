@@ -18,7 +18,6 @@ class DepartmentStep extends ConsumerWidget {
     if (departments.isEmpty) {
       return Container(
         decoration: BoxDecoration(
-          gradient: BackdropGradient(isDark),
         ),
         child: Center(
           child: Column(
@@ -42,7 +41,6 @@ class DepartmentStep extends ConsumerWidget {
 
     return Container(
       decoration: BoxDecoration(
-        gradient: BackdropGradient(isDark),
       ),
       child: GridView.builder(
         padding: const EdgeInsets.all(20),

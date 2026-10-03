@@ -14,6 +14,8 @@ class RequestScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(requestStateProvider);
     return Scaffold(
+      // Фон — общий фон оболочки (туманность) за экраном.
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text('Заявка'),
         leading: state.step > 0

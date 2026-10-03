@@ -106,7 +106,6 @@ class ReportStep extends ConsumerWidget {
 
     return Container(
       decoration: BoxDecoration(
-        gradient: BackdropGradient(isDark),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),

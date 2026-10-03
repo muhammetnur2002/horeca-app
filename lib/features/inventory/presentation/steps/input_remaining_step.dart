@@ -62,7 +62,6 @@ class _InputRemainingStepState extends ConsumerState<InputRemainingStep> {
 
     return Container(
       decoration: BoxDecoration(
-        gradient: BackdropGradient(isDark),
       ),
       child: Column(
         children: [

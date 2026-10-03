@@ -19,7 +19,6 @@ class SelectDepartmentStep extends ConsumerWidget {
 
     return Container(
       decoration: BoxDecoration(
-        gradient: BackdropGradient(isDark),
       ),
       child: GridView.builder(
         padding: const EdgeInsets.all(20),

@@ -105,11 +105,10 @@ class QuantityStepper extends StatelessWidget {
               _formatted,
               textAlign: TextAlign.center,
               style: TextStyle(
+                fontFamily: AppFonts.mono,
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
-                color: hasQty ? AppColors.orange : textColor,
-                decoration: TextDecoration.underline,
-                decorationColor: hasQty ? AppColors.orange : AppColors.muted,
+                color: hasQty ? AppColors.green : textColor,
               ),
             ),
           ),
@@ -133,15 +132,19 @@ class _QtyBtn extends StatelessWidget {
         // нажимают эту кнопку десятки раз подряд при инвентаризации, часто
         // мокрыми/жирными руками или в перчатках.
         child: Container(
-          width: 44,
-          height: 44,
+          width: 40,
+          height: 40,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(isDark ? 0.08 : 0.6),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.white.withOpacity(isDark ? 0.1 : 0.3)),
+            color: Colors.white.withOpacity(isDark ? 0.06 : 0.7),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+                color: isDark
+                    ? Colors.white.withOpacity(0.14)
+                    : AppColors.orange.withOpacity(0.15)),
           ),
-          child: Icon(icon, size: 18, color: isDark ? Colors.white : AppColors.ink),
+          child: Icon(icon,
+              size: 16, color: isDark ? Colors.white70 : AppColors.inkSoft),
         ),
       );
 }
