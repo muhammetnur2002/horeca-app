@@ -16,7 +16,9 @@ enum RestoreResult { success, invalidFile, error }
 /// прогоняются через тот же перенос, что и при обновлении.
 ///
 /// PIN-коды в бэкап сознательно не входят: файл пересылают через
-/// мессенджеры, и это была бы утечка кода доступа.
+/// мессенджеры, и это была бы утечка кода доступа. Это касается и личных
+/// PIN сотрудников: их хеши вырезаются — 4-значный PIN по хешу
+/// подбирается перебором за секунды.
 class BackupService {
   static const _formatVersion = 2;
 
@@ -27,7 +29,10 @@ class BackupService {
       final rows = await db
           .customSelect('SELECT * FROM "${table.actualTableName}"')
           .get();
-      tables[table.actualTableName] = rows.map((r) => r.data).toList();
+      tables[table.actualTableName] = rows.map((r) {
+        if (table.actualTableName != 'staff_members') return r.data;
+        return {...r.data, 'pin_hash': null, 'pin_salt': null};
+      }).toList();
     }
 
     return <String, dynamic>{

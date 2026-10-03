@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:horeca_app/core/db/app_database.dart';
 import 'package:horeca_app/core/db/dao/catalog_dao.dart';
 import 'package:horeca_app/features/auth/data/staff_pin_service.dart';
+import 'package:horeca_app/features/backup/data/backup_service.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
 import 'package:horeca_app/features/settings/data/settings_repository_staff.dart';
 
@@ -70,5 +71,17 @@ void main() {
     await service.clearPin(id, role: 'admin');
     expect(await service.match('4821'), isNull);
     expect((await service.loadStaff()).single.role, 'admin');
+  });
+
+  test('хеши личных PIN не попадают в файл бэкапа', () async {
+    final id = await addStaff('Айгуль');
+    await service.setPin(staffId: id, pin: '4821', role: 'admin');
+    final backup = await BackupService.exportData(db);
+    final staff = (backup['tables'] as Map)['staff_members'] as List;
+    final row = staff.single as Map;
+    expect(row['full_name'], 'Айгуль');
+    expect(row['role'], 'admin');
+    expect(row['pin_hash'], isNull);
+    expect(row['pin_salt'], isNull);
   });
 }
