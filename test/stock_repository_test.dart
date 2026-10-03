@@ -1,6 +1,6 @@
+import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'dart:io';
 
-import 'package:drift/drift.dart' hide isNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:horeca_app/core/db/app_database.dart';
@@ -12,6 +12,7 @@ import 'package:horeca_app/features/stock/data/stock_repository.dart';
 import 'package:horeca_app/features/stock/domain/receipt_report.dart';
 
 void main() {
+  driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
   late AppDatabase db;
   late OperationsDao ops;
   late String venueId;
