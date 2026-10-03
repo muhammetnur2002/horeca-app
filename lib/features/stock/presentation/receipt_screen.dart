@@ -12,6 +12,7 @@ import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/core/db/app_database.dart';
 import 'package:horeca_app/core/db/ids.dart';
 import 'package:horeca_app/features/auth/data/auth_repository.dart';
+import 'package:horeca_app/features/inventory/data/stock_levels_repository.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
 import 'package:horeca_app/features/settings/data/settings_repository_products.dart';
 import 'package:horeca_app/features/stock/data/stock_repository.dart';
@@ -184,6 +185,10 @@ class _ReceiptScreenState extends ConsumerState<ReceiptScreen> {
           actor: Actor.of(auth),
           at: now,
         );
+    ref.read(stockLevelsRepositoryProvider.notifier).applyDeltas({
+      for (final l in lines)
+        if (l.received > 0) l.productId: l.received * l.unitFactor,
+    });
     ref.read(stockRevisionProvider.notifier).state++;
     if (!mounted) return;
     await showDialog<void>(

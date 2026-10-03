@@ -12,6 +12,7 @@ import 'package:horeca_app/core/db/ids.dart';
 import 'package:horeca_app/features/analytics/data/analytics_repository.dart';
 import 'package:horeca_app/features/auth/data/auth_repository.dart';
 import 'package:horeca_app/features/stock/data/stock_repository.dart';
+import 'package:horeca_app/features/inventory/data/stock_levels_repository.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
 import 'package:horeca_app/features/shift_close/data/shift_draft_provider.dart';
 import 'package:horeca_app/features/shift_close/presentation/shift_close_format.dart';
@@ -235,6 +236,11 @@ class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
         shiftId: _shiftId,
         actor: Actor.of(ref.read(authRepositoryProvider)),
       );
+      ref.read(stockLevelsRepositoryProvider.notifier).applyDeltas({
+        for (final d in _desserts.where((d) => d.writeOff > 0))
+          if (productIdByName[d.name] != null)
+            productIdByName[d.name]!: -d.writeOff.toDouble(),
+      });
       ref.read(stockRevisionProvider.notifier).state++;
     }
 

@@ -8,6 +8,7 @@ import 'package:horeca_app/core/db/dao/catalog_dao.dart';
 import 'package:horeca_app/core/db/dao/operations_dao.dart';
 import 'package:horeca_app/features/history/data/history_repository.dart';
 import 'package:horeca_app/features/history/domain/history_entry.dart';
+import 'package:horeca_app/features/inventory/data/stock_levels_repository.dart';
 import 'package:horeca_app/features/stock/data/stock_repository.dart';
 import 'package:horeca_app/features/stock/domain/receipt_report.dart';
 
@@ -155,5 +156,18 @@ void main() {
     expect(version.read<int>('user_version'), 2);
     await v2.close();
     await dir.delete(recursive: true);
+  });
+
+  test('приход сдвигает только измеренные остатки (баннер «заканчивается»)',
+      () async {
+    final levels = StockLevelsRepository(ops, venueId);
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+    levels.updateLevels({'milk': 1});
+    levels.applyDeltas({'milk': 12, 'eggs': 30});
+    expect(levels.state, {'milk': 13});
+    levels.applyDeltas({'milk': -20});
+    expect(levels.state['milk'], 0);
+    // Запись в базу идёт в фоне — даём ей завершиться до закрытия базы.
+    await Future<void>.delayed(const Duration(milliseconds: 50));
   });
 }

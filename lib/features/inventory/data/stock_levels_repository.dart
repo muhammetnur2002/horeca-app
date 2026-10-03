@@ -24,6 +24,18 @@ class StockLevelsRepository extends StateNotifier<Map<String, double>> {
     _dao.saveStockLevels(venueId: _venueId, levels: levels);
   }
 
+  /// Сдвигает известные остатки на [deltas] (приход +, списание −),
+  /// чтобы баннер «заканчивается» учитывал поставку без новой
+  /// инвентаризации. Товары, остаток которых ещё не измеряли, не трогаем.
+  void applyDeltas(Map<String, double> deltas) {
+    final changed = <String, double>{
+      for (final e in deltas.entries)
+        if (state[e.key] != null)
+          e.key: (state[e.key]! + e.value).clamp(0, double.infinity).toDouble(),
+    };
+    if (changed.isNotEmpty) updateLevels(changed);
+  }
+
   double? getLevel(String productId) => state[productId];
 }
 
