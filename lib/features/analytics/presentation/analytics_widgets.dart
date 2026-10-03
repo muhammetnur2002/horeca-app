@@ -1,14 +1,15 @@
 /// Мелкие виджеты экрана "Аналитика": пустое состояние, карточки
-/// сравнения/вчерашней смены, чипы периода, график выручки, строка
+/// вчерашней смены, чипы периода, строка
 /// списания. Вынесены из analytics_screen.dart, чтобы не раздувать его
 /// build().
 library;
 
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/features/analytics/data/analytics_repository.dart';
+import 'package:horeca_app/core/money.dart';
+import 'package:horeca_app/features/shift_close/presentation/shift_close_revenue_ring.dart';
 
 class EmptyState extends StatelessWidget {
   final bool isDark;
@@ -59,15 +60,15 @@ class YesterdayCard extends StatelessWidget {
             const SizedBox(height: 16),
             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
               Text('Итого', style: TextStyle(fontSize: 13, color: AppColors.muted)),
-              Text('${shift.revenue.toStringAsFixed(0)} $currency',
+              Text('${formatMoney(shift.revenue)} $currency',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.green)),
             ]),
             const Padding(padding: EdgeInsets.symmetric(vertical: 8), child: Divider(height: 1)),
-            PaymentLine(label: 'QR-код', amount: shift.qr, currency: currency, isDark: isDark, color: AppColors.green),
+            PaymentLine(label: 'QR-код', amount: shift.qr, currency: currency, isDark: isDark, color: PaymentColors.qr),
             const SizedBox(height: 8),
-            PaymentLine(label: 'Банк. карта', amount: shift.card, currency: currency, isDark: isDark, color: const Color(0xFF378ADD)),
+            PaymentLine(label: 'Банк. карта', amount: shift.card, currency: currency, isDark: isDark, color: PaymentColors.card),
             const SizedBox(height: 8),
-            PaymentLine(label: 'Наличные', amount: shift.cash, currency: currency, isDark: isDark, color: AppColors.orange),
+            PaymentLine(label: 'Наличные', amount: shift.cash, currency: currency, isDark: isDark, color: PaymentColors.cash),
             const Padding(padding: EdgeInsets.symmetric(vertical: 8), child: Divider(height: 1)),
             PaymentLine(label: 'Касса: начало смены', amount: shift.morningCash, currency: currency, isDark: isDark, color: AppColors.muted),
             const SizedBox(height: 8),
@@ -82,7 +83,7 @@ class YesterdayCard extends StatelessWidget {
                 Icon(Icons.info_outline_rounded, color: AppColors.orange, size: 16),
                 const SizedBox(width: 8),
                 Expanded(child: Text(
-                    'Касса на начало сегодняшней смены: ${shift.eveningCash.toStringAsFixed(0)} $currency',
+                    'Касса на начало сегодняшней смены: ${formatMoney(shift.eveningCash)} $currency',
                     style: TextStyle(fontSize: 12, color: AppColors.orange))),
               ]),
             ),
@@ -107,46 +108,14 @@ class PaymentLine extends StatelessWidget {
       Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
       const SizedBox(width: 10),
       Expanded(child: Text(label, style: TextStyle(fontSize: 13, color: isDark ? Colors.white.withOpacity(0.8) : AppColors.ink))),
-      Text('${amount.toStringAsFixed(0)} $currency',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: isDark ? Colors.white : AppColors.ink)),
+      Text('${formatMoney(amount)} $currency',
+          style: TextStyle(
+              fontFamily: AppFonts.mono,
+              fontFamilyFallback: AppFonts.fallback,
+              fontSize: 13.5,
+              fontWeight: FontWeight.w700,
+              color: isDark ? Colors.white : AppColors.ink)),
     ]);
-  }
-}
-
-class ChangeCard extends StatelessWidget {
-  final double percent;
-  final bool isDark;
-  final String currency;
-  const ChangeCard({super.key, required this.percent, required this.isDark, required this.currency});
-  @override
-  Widget build(BuildContext context) {
-    final isUp = percent >= 0;
-    final color = isUp ? AppColors.green : Colors.redAccent;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            color: color.withOpacity(isDark ? 0.1 : 0.06),
-            border: Border.all(color: color.withOpacity(0.3))),
-          child: Row(children: [
-            Container(width: 48, height: 48,
-                decoration: BoxDecoration(color: color.withOpacity(0.15), borderRadius: BorderRadius.circular(14)),
-                child: Icon(isUp ? Icons.trending_up_rounded : Icons.trending_down_rounded, color: color, size: 26)),
-            const SizedBox(width: 14),
-            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Сегодня выручка ${isUp ? "выше" : "ниже"} на ${percent.abs().toStringAsFixed(0)}%',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700,
-                      color: isDark ? Colors.white : AppColors.ink)),
-              const SizedBox(height: 2),
-              Text('по сравнению с предыдущей сменой', style: TextStyle(fontSize: 12, color: AppColors.muted)),
-            ])),
-          ]),
-        ),
-      ),
-    );
   }
 }
 
@@ -169,82 +138,6 @@ class PeriodChip extends StatelessWidget {
         child: Text(label, style: TextStyle(fontSize: 13,
             fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
             color: selected ? AppColors.orange : AppColors.muted)),
-      ),
-    );
-  }
-}
-
-class RevenueChart extends StatelessWidget {
-  final List<ShiftRecord> records;
-  final bool isDark;
-  final String currency;
-  const RevenueChart({super.key, required this.records, required this.isDark, required this.currency});
-
-  @override
-  Widget build(BuildContext context) {
-    if (records.isEmpty) {
-      return SizedBox(height: 200, child: Center(
-          child: Text('Нет данных за этот период', style: TextStyle(color: AppColors.muted))));
-    }
-    final maxY = records.map((r) => r.revenue).reduce((a, b) => a > b ? a : b) * 1.2;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          height: 220,
-          padding: const EdgeInsets.fromLTRB(8, 20, 16, 12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            color: Colors.white.withOpacity(isDark ? 0.06 : 0.55),
-            border: Border.all(color: Colors.white.withOpacity(isDark ? 0.1 : 0.8))),
-          child: LineChart(
-            LineChartData(
-              minY: 0,
-              maxY: maxY <= 0 ? 100 : maxY,
-              gridData: FlGridData(show: true, drawVerticalLine: false,
-                  horizontalInterval: maxY / 4,
-                  getDrawingHorizontalLine: (v) => FlLine(color: Colors.white.withOpacity(0.06), strokeWidth: 1)),
-              titlesData: FlTitlesData(
-                leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                bottomTitles: AxisTitles(sideTitles: SideTitles(
-                  showTitles: true, reservedSize: 28,
-                  getTitlesWidget: (value, meta) {
-                    final i = value.toInt();
-                    if (i < 0 || i >= records.length) return const SizedBox();
-                    final d = records[i].date;
-                    return Padding(padding: const EdgeInsets.only(top: 6),
-                        child: Text('${d.day}.${d.month.toString().padLeft(2, '0')}',
-                            style: TextStyle(fontSize: 10, color: AppColors.muted)));
-                  },
-                )),
-              ),
-              borderData: FlBorderData(show: false),
-              lineBarsData: [
-                LineChartBarData(
-                  spots: List.generate(records.length, (i) => FlSpot(i.toDouble(), records[i].revenue)),
-                  isCurved: true,
-                  color: AppColors.orange,
-                  barWidth: 3,
-                  dotData: FlDotData(show: true, getDotPainter: (spot, percent, bar, index) =>
-                      FlDotCirclePainter(radius: 4, color: AppColors.orange, strokeWidth: 2,
-                          strokeColor: isDark ? AppColors.darkSurface : Colors.white)),
-                  belowBarData: BarAreaData(show: true,
-                      gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter,
-                          colors: [AppColors.orange.withOpacity(0.25), AppColors.orange.withOpacity(0.0)])),
-                ),
-              ],
-              lineTouchData: LineTouchData(
-                touchTooltipData: LineTouchTooltipData(
-                  getTooltipItems: (spots) => spots.map((s) =>
-                      LineTooltipItem('${s.y.toStringAsFixed(0)} $currency',
-                          const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 12))).toList(),
-                ),
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }

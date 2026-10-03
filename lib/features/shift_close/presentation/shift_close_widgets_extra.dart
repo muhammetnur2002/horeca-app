@@ -158,7 +158,10 @@ class SummaryRow extends StatelessWidget {
             child: Text(value,
                 textAlign: TextAlign.right,
                 style: TextStyle(
-                    fontFamily: AppFonts.mono,
+                    // Моноширинный — только для сумм: столбец цифр ровный.
+                    fontFamily: RegExp(r'^[\d−-]').hasMatch(value)
+                        ? AppFonts.mono
+                        : null,
                     fontFamilyFallback: AppFonts.fallback,
                     fontSize: 13,
                     fontWeight: highlight ? FontWeight.w600 : FontWeight.normal,

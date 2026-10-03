@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
+import 'package:horeca_app/core/money.dart';
 import 'package:horeca_app/features/analytics/data/analytics_repository.dart';
 import 'package:horeca_app/features/auth/data/auth_repository.dart';
 import 'package:horeca_app/features/inventory/data/stock_levels_repository.dart';
@@ -169,17 +170,6 @@ class HomeScreen extends ConsumerWidget {
     if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return 'позиции';
     return 'позиций';
   }
-}
-
-/// «184300.5» → «184 300».
-String formatMoney(double v) {
-  final s = v.round().abs().toString();
-  final b = StringBuffer(v < 0 ? '−' : '');
-  for (var i = 0; i < s.length; i++) {
-    if (i > 0 && (s.length - i) % 3 == 0) b.write(' ');
-    b.write(s[i]);
-  }
-  return b.toString();
 }
 
 // ── Шапка ──────────────────────────────────────────────────────────────────
