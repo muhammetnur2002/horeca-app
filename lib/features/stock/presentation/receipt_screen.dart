@@ -84,6 +84,9 @@ class _ReceiptScreenState extends ConsumerState<ReceiptScreen> {
   }
 
   Future<void> _selectRequest(HistoryEntryRow? request) async {
+    // Каталог нужен для единиц и коэффициентов — дожидаемся его загрузки,
+    // иначе коэффициент «коробка → шт» молча стал бы 1.
+    await ref.read(settingsRepositoryProvider.notifier).ready;
     final lines = request == null
         ? <DocumentLineRow>[]
         : await ref.read(stockRepositoryProvider).lines(request.id);
@@ -213,6 +216,8 @@ class _ReceiptScreenState extends ConsumerState<ReceiptScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Держим каталог загруженным, пока открыт экран.
+    ref.watch(settingsRepositoryProvider);
     return StockScaffold(
       title: 'Приёмка поставки',
       bottom: _requestId == null
@@ -463,7 +468,7 @@ class _LineCard extends StatelessWidget {
           const SizedBox(height: 8),
           Row(children: [
             SizedBox(
-              width: 110,
+              width: 136,
               child: TextField(
                 controller: line.ctrl,
                 keyboardType:

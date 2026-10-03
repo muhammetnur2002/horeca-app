@@ -59,6 +59,8 @@ class StockScaffold extends StatelessWidget {
         actions: actions,
       ),
       extendBodyBehindAppBar: true,
+      // Фон экрана продолжается под нижней панелью с кнопкой.
+      extendBody: true,
       bottomNavigationBar: bottom,
       body: Container(
         decoration: BoxDecoration(
@@ -68,7 +70,7 @@ class StockScaffold extends StatelessWidget {
             colors: AppColors.bgGradient(isDark),
           ),
         ),
-        child: SafeArea(bottom: bottom == null, child: body),
+        child: SafeArea(child: body),
       ),
     );
   }

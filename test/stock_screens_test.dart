@@ -118,4 +118,33 @@ void main() {
     expect(find.text('Пока пусто'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('Приёмка по заявке: строки подставляются, виден коэффициент',
+      (tester) async {
+    await tester.runAsync(() => OperationsDao(db).addHistoryEntry(
+          venueId: venueId,
+          kind: 'request',
+          title: 'Заявка: Кухня',
+          body: 'x',
+          lines: [
+            DocumentLineInput(
+                productId: productId,
+                productName: 'Молоко',
+                unit: 'коробка',
+                ordered: 2,
+                quantity: 2),
+          ],
+        ));
+    await pumpScreen(tester, const ReceiptScreen());
+    await tester.tap(find.text('Заявка: Кухня'));
+    for (var i = 0; i < 4; i++) {
+      await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 30)));
+      await tester.pump();
+    }
+    expect(find.text('Заказано: 2 коробка'), findsOneWidget);
+    // Заказ в коробках, учёт в литрах — спрашиваем, сколько литров в коробке.
+    expect(find.text('1 коробка = '), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }
