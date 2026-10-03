@@ -44,12 +44,7 @@ class VenueSettingsScreen extends ConsumerWidget {
         Positioned.fill(
             child: Container(
                 decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: isDark
-                            ? [AppColors.darkBg, AppColors.darkGrad2, AppColors.darkGrad3]
-                            : [AppColors.lightBg, AppColors.lightSurface, AppColors.lightBg])))),
+                    gradient: BackdropGradient(isDark)))),
         SafeArea(
           child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 80, 20, 30),

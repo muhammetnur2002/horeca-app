@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:horeca_app/app/app_theme.dart';
+import 'package:horeca_app/app/backdrop.dart';
 
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
   throw UnimplementedError('Must be initialized in main');
@@ -27,7 +28,9 @@ class PaletteNotifier extends StateNotifier<AkylPalette> {
     AppColors.applyPalette(state);
   }
 
-  void setPalette(AkylPalette p) {
+  Future<void> setPalette(AkylPalette p) async {
+    // Сначала рисуем фон новой темы, затем переключаем — без мигания.
+    await AkylBackdrop.prepare(p);
     AppColors.applyPalette(p);
     state = p;
     _prefs.setString(_key, p.key);

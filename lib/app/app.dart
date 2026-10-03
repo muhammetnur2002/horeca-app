@@ -16,6 +16,7 @@ import 'package:horeca_app/features/account/presentation/account_gate_screen.dar
 import 'package:horeca_app/features/venue/data/venue_repository.dart';
 
 export 'app_theme.dart';
+export 'backdrop.dart';
 
 /// Корневой виджет приложения: заставка, гейт входа/PIN и MaterialApp.router
 /// с темами. Цвета и ThemeData вынесены в app_theme.dart (и реэкспортированы

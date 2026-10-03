@@ -13,34 +13,8 @@ class Background extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isDark
-              ? [AppColors.darkBg, AppColors.darkGrad2, AppColors.darkGrad3]
-              : const [Color(0xFFE8F4FD), Color(0xFFF0F8FF), Color(0xFFE8EAF6)],
-        ),
+        gradient: BackdropGradient(isDark),
       ),
-      child: Stack(children: [
-        Positioned(
-            top: -60,
-            right: -60,
-            child: Container(
-                width: 220,
-                height: 220,
-                decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AppColors.orange.withOpacity(isDark ? 0.08 : 0.06)))),
-        Positioned(
-            bottom: 80,
-            left: -40,
-            child: Container(
-                width: 160,
-                height: 160,
-                decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AppColors.green.withOpacity(isDark ? 0.06 : 0.05)))),
-      ]),
     );
   }
 }

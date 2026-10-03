@@ -127,6 +127,18 @@ class AkylColors {
       };
 }
 
+/// Шрифты оформления (встроены в приложение, работают без интернета).
+abstract final class AppFonts {
+  /// Основной текст.
+  static const text = 'Manrope';
+
+  /// Крупные заголовки.
+  static const display = 'Unbounded';
+
+  /// Количества и суммы — цифры одной ширины, столбцы ровные.
+  static const mono = 'JetBrainsMono';
+}
+
 // ─── Цвета приложения ──────────────────────────────────────────────────────
 /// Цвета текущей темы. Раньше это были константы; теперь значения берутся
 /// из выбранной палитры (меняется в Настройках → Приложение), имена прежние,
@@ -183,6 +195,8 @@ class AppColors {
 
 ThemeData buildAppLightTheme() {
   return ThemeData(
+    fontFamily: AppFonts.text,
+    // Экраны рисуют свой фон-туманность; под ними — цвет низа фона.
     brightness: Brightness.light,
     useMaterial3: true,
     dialogTheme: DialogThemeData(
@@ -201,10 +215,12 @@ ThemeData buildAppLightTheme() {
     ),
     textTheme: TextTheme(
       headlineLarge: TextStyle(
+        fontFamily: AppFonts.display,
         fontSize: 26, fontWeight: FontWeight.w600,
         color: AppColors.ink, letterSpacing: -0.5,
       ),
       headlineMedium: TextStyle(
+        fontFamily: AppFonts.display,
         fontSize: 20, fontWeight: FontWeight.w600,
         color: AppColors.ink,
       ),
@@ -232,6 +248,8 @@ ThemeData buildAppLightTheme() {
       scrolledUnderElevation: 0,
       iconTheme: IconThemeData(color: AppColors.ink),
       titleTextStyle: TextStyle(
+        fontFamily: AppFonts.display,
+        letterSpacing: -0.2,
         color: AppColors.ink,
         fontSize: 18,
         fontWeight: FontWeight.w600,
@@ -279,6 +297,8 @@ ThemeData buildAppLightTheme() {
 
 ThemeData buildAppDarkTheme() {
   return ThemeData(
+    fontFamily: AppFonts.text,
+    // Экраны рисуют свой фон-туманность; под ними — цвет низа фона.
     brightness: Brightness.dark,
     useMaterial3: true,
     dialogTheme: DialogThemeData(
@@ -297,10 +317,12 @@ ThemeData buildAppDarkTheme() {
     ),
     textTheme: TextTheme(
       headlineLarge: TextStyle(
+        fontFamily: AppFonts.display,
         fontSize: 26, fontWeight: FontWeight.w600,
         color: Colors.white, letterSpacing: -0.5,
       ),
       headlineMedium: TextStyle(
+        fontFamily: AppFonts.display,
         fontSize: 20, fontWeight: FontWeight.w600,
         color: Colors.white,
       ),
@@ -328,6 +350,8 @@ ThemeData buildAppDarkTheme() {
       scrolledUnderElevation: 0,
       iconTheme: const IconThemeData(color: Colors.white),
       titleTextStyle: const TextStyle(
+        fontFamily: AppFonts.display,
+        letterSpacing: -0.2,
         color: Colors.white,
         fontSize: 18,
         fontWeight: FontWeight.w600,

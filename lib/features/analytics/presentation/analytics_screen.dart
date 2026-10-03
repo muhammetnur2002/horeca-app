@@ -58,10 +58,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
       ),
       body: Stack(children: [
         Positioned.fill(child: Container(decoration: BoxDecoration(
-          gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight,
-            colors: isDark
-                ? [AppColors.darkBg, AppColors.darkGrad2, AppColors.darkGrad3]
-                : [AppColors.lightBg, AppColors.lightSurface, AppColors.lightBg])))),
+          gradient: BackdropGradient(isDark)))),
         SafeArea(
           child: records.isEmpty
               ? EmptyState(isDark: isDark)

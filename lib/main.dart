@@ -72,6 +72,12 @@ void main() async {
 
     final prefs = await SharedPreferences.getInstance();
 
+    // Фон-туманность выбранной темы рисуется заранее, чтобы первый же
+    // экран открылся с ним, а не с простым градиентом.
+    final palette = AkylPalette.fromKey(prefs.getString('app_palette'));
+    AppColors.applyPalette(palette);
+    await AkylBackdrop.prepare(palette);
+
     // Локальная база: при первом запуске версии с базой однократно
     // переносим в неё данные из SharedPreferences (все заведения), затем
     // загружаем список заведений до показа интерфейса.

@@ -1,6 +1,5 @@
 ﻿import 'package:flutter/material.dart'
     show
-        Alignment,
         AppBar,
         Border,
         BorderRadius,
@@ -13,7 +12,6 @@
         DefaultTabController,
         EdgeInsets,
         FontWeight,
-        LinearGradient,
         Padding,
         PreferredSize,
         Scaffold,
@@ -109,21 +107,7 @@ class SettingsScreen extends ConsumerWidget {
         ),
         body: Container(
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: isDark
-                  ? [
-                      AppColors.darkBg,
-                      AppColors.darkGrad2,
-                      AppColors.darkGrad3
-                    ]
-                  : [
-                      AppColors.lightBg,
-                      AppColors.lightSurface,
-                      AppColors.lightBg
-                    ],
-            ),
+            gradient: BackdropGradient(isDark),
           ),
           child: const TabBarView(
             children: [

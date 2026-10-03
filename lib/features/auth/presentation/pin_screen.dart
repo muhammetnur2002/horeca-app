@@ -130,10 +130,7 @@ class _PinScreenState extends ConsumerState<PinScreen> {
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight,
-            colors: isDark
-                ? [AppColors.darkBg, AppColors.darkGrad2, AppColors.darkGrad3]
-                : [AppColors.lightBg, AppColors.lightSurface, AppColors.lightBg])),
+          gradient: BackdropGradient(isDark)),
         child: SafeArea(
           child: Column(children: [
             const SizedBox(height: 60),

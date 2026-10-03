@@ -35,13 +35,7 @@ class _ProductListStepState extends ConsumerState<ProductListStep> {
     if (state.categoryId == null) {
       return Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isDark
-                ? [AppColors.darkBg, AppColors.darkGrad2]
-                : [AppColors.lightBg, AppColors.lightSurface],
-          ),
+          gradient: BackdropGradient(isDark),
         ),
         child: Center(
           child: Text(l10n.selectCategory,
@@ -58,13 +52,7 @@ class _ProductListStepState extends ConsumerState<ProductListStep> {
 
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isDark
-              ? [AppColors.darkBg, AppColors.darkGrad2, AppColors.darkGrad3]
-              : [AppColors.lightBg, AppColors.lightSurface, AppColors.lightBg],
-        ),
+        gradient: BackdropGradient(isDark),
       ),
       child: Column(
         children: [

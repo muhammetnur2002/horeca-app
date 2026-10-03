@@ -110,21 +110,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
       ),
       body: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isDark
-                ? [
-                    AppColors.darkBg,
-                    AppColors.darkGrad2,
-                    AppColors.darkGrad3
-                  ]
-                : [
-                    AppColors.lightBg,
-                    AppColors.lightSurface,
-                    AppColors.lightBg
-                  ],
-          ),
+          gradient: BackdropGradient(isDark),
         ),
         child: TabBarView(
           controller: _tabController,

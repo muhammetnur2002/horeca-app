@@ -64,11 +64,7 @@ class StockScaffold extends StatelessWidget {
       bottomNavigationBar: bottom,
       body: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: AppColors.bgGradient(isDark),
-          ),
+          gradient: BackdropGradient(isDark),
         ),
         child: SafeArea(child: body),
       ),
@@ -185,17 +181,45 @@ class StockPrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton.icon(
-      onPressed: onPressed,
-      icon: Icon(icon, size: 20),
-      label: Text(label,
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-      style: ElevatedButton.styleFrom(
-        minimumSize: const Size(double.infinity, 52),
-        backgroundColor: AppColors.orange,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    final enabled = onPressed != null;
+    // Главное действие экрана — яркий градиент темы (как на главном).
+    return Opacity(
+      opacity: enabled ? 1 : 0.6,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [AppColors.orange, AppColors.green],
+          ),
+        ),
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: onPressed,
+            child: SizedBox(
+              height: 52,
+              width: double.infinity,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icon, size: 20, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(label,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700)),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

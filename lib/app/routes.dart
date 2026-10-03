@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -88,58 +90,66 @@ class MainShell extends ConsumerWidget {
 
     return Scaffold(
       body: child,
+      backgroundColor: AkylBackdrop.bottomColor(isDark),
+      // Нижняя панель — плавающая стеклянная «капсула» на цвете низа фона.
       bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: isDark
-              ? AppColors.darkSurface
-              : Colors.white,
-          border: Border(
-            top: BorderSide(
-              color: isDark
-                  ? Colors.white.withOpacity(0.06)
-                  : Colors.black.withOpacity(0.06),
-              width: 0.5,
-            ),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 16,
-              offset: const Offset(0, -4),
-            ),
-          ],
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _calculateIndex(context),
-          onTap: (index) => _onTap(context, index),
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          selectedItemColor: AppColors.orange,
-          unselectedItemColor: AppColors.muted,
-          selectedLabelStyle: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-          ),
-          unselectedLabelStyle: const TextStyle(fontSize: 11),
-          items: [
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.home_outlined),
-              activeIcon: const Icon(Icons.home_rounded),
-              label: l10n.appTitle,
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.history_outlined),
-              activeIcon: const Icon(Icons.history_rounded),
-              label: l10n.history,
-            ),
-            if (isAdmin)
-              BottomNavigationBarItem(
-                icon: const Icon(Icons.settings_outlined),
-                activeIcon: const Icon(Icons.settings_rounded),
-                label: l10n.settings,
+        color: AkylBackdrop.bottomColor(isDark),
+        padding: EdgeInsets.fromLTRB(
+            16, 6, 16, 10 + MediaQuery.paddingOf(context).bottom),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(26),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(26),
+                color: isDark
+                    ? Colors.white.withOpacity(0.07)
+                    : Colors.white.withOpacity(0.75),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withOpacity(0.12)
+                      : AppColors.orange.withOpacity(0.12),
+                ),
               ),
-          ],
+              child: MediaQuery.removePadding(
+                context: context,
+                removeBottom: true,
+                child: BottomNavigationBar(
+                  currentIndex: _calculateIndex(context),
+                  onTap: (index) => _onTap(context, index),
+                  type: BottomNavigationBarType.fixed,
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                  selectedItemColor: AppColors.orange,
+                  unselectedItemColor: AppColors.muted,
+                  selectedLabelStyle: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  unselectedLabelStyle: const TextStyle(fontSize: 11),
+                  items: [
+                    BottomNavigationBarItem(
+                      icon: const Icon(Icons.home_outlined),
+                      activeIcon: const Icon(Icons.home_rounded),
+                      label: l10n.appTitle,
+                    ),
+                    BottomNavigationBarItem(
+                      icon: const Icon(Icons.history_outlined),
+                      activeIcon: const Icon(Icons.history_rounded),
+                      label: l10n.history,
+                    ),
+                    if (isAdmin)
+                      BottomNavigationBarItem(
+                        icon: const Icon(Icons.settings_outlined),
+                        activeIcon: const Icon(Icons.settings_rounded),
+                        label: l10n.settings,
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );

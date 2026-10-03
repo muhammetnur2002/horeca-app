@@ -16,13 +16,7 @@ class CategoryStep extends ConsumerWidget {
     if (state.departmentId == null) {
       return Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isDark
-                ? [AppColors.darkBg, AppColors.darkGrad2]
-                : [AppColors.lightBg, AppColors.lightSurface],
-          ),
+          gradient: BackdropGradient(isDark),
         ),
         child: Center(
           child: Text(
@@ -38,13 +32,7 @@ class CategoryStep extends ConsumerWidget {
     if (categories.isEmpty) {
       return Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isDark
-                ? [AppColors.darkBg, AppColors.darkGrad2]
-                : [AppColors.lightBg, AppColors.lightSurface],
-          ),
+          gradient: BackdropGradient(isDark),
         ),
         child: Center(
           child: Column(
@@ -82,13 +70,7 @@ class CategoryStep extends ConsumerWidget {
 
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isDark
-              ? [AppColors.darkBg, AppColors.darkGrad2, AppColors.darkGrad3]
-              : [AppColors.lightBg, AppColors.lightSurface, AppColors.lightBg],
-        ),
+        gradient: BackdropGradient(isDark),
       ),
       child: GridView.builder(
         padding: const EdgeInsets.all(20),

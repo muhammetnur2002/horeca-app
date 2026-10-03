@@ -21,7 +21,7 @@ void main() {
     addTearDown(c.dispose);
 
     expect(c.read(paletteProvider), AkylPalette.orbit);
-    c.read(paletteProvider.notifier).setPalette(AkylPalette.mars);
+    await c.read(paletteProvider.notifier).setPalette(AkylPalette.mars);
     expect(prefs.getString('app_palette'), 'mars');
     expect(AppColors.orange, AkylColors.of(AkylPalette.mars).primary);
 

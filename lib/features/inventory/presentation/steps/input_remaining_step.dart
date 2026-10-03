@@ -62,13 +62,7 @@ class _InputRemainingStepState extends ConsumerState<InputRemainingStep> {
 
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isDark
-              ? [AppColors.darkBg, AppColors.darkGrad2, AppColors.darkGrad3]
-              : [AppColors.lightBg, AppColors.lightSurface, AppColors.lightBg],
-        ),
+        gradient: BackdropGradient(isDark),
       ),
       child: Column(
         children: [

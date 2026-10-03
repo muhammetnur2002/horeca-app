@@ -108,13 +108,7 @@ class _AccountGateScreenState extends ConsumerState<AccountGateScreen> {
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isDark
-                ? [AppColors.darkBg, AppColors.darkGrad2, AppColors.darkGrad3]
-                : [AppColors.lightBg, AppColors.lightSurface, AppColors.lightBg],
-          ),
+          gradient: BackdropGradient(isDark),
         ),
         child: SafeArea(
           child: SingleChildScrollView(

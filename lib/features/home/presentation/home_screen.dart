@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -157,35 +159,8 @@ class _Background extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isDark
-              ? [AppColors.darkBg, AppColors.darkGrad2, AppColors.darkGrad3]
-              : const [Color(0xFFE8F4FD), Color(0xFFF0F8FF), Color(0xFFE8EAF6)],
-        ),
+        gradient: BackdropGradient(isDark),
       ),
-      child: Stack(children: [
-        Positioned(
-            top: -60,
-            right: -60,
-            child: Container(
-                width: 220,
-                height: 220,
-                decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color:
-                        AppColors.orange.withOpacity(isDark ? 0.08 : 0.06)))),
-        Positioned(
-            bottom: 80,
-            left: -40,
-            child: Container(
-                width: 160,
-                height: 160,
-                decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AppColors.green.withOpacity(isDark ? 0.06 : 0.05)))),
-      ]),
     );
   }
 }
@@ -269,10 +244,11 @@ class _GreetingHeader extends StatelessWidget {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text(userName == null ? _greeting() : '${_greeting()}, $userName',
           style: TextStyle(
-              fontSize: 28,
+              fontFamily: AppFonts.display,
+              fontSize: 26,
               fontWeight: FontWeight.w700,
               color: textColor,
-              letterSpacing: -0.5)),
+              letterSpacing: -0.3)),
       const SizedBox(height: 4),
       Text(_formattedDate(), style: TextStyle(fontSize: 14, color: subColor)),
     ]);
@@ -302,49 +278,52 @@ class _GlassButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final accent = accentColor ?? AppColors.orange;
+    // Один яркий градиент на экран — у главного действия; остальные
+    // кнопки — матовое стекло поверх туманностей.
+    final onPrimary = isPrimary;
+    final titleColor =
+        onPrimary ? Colors.white : (isDark ? Colors.white : AppColors.ink);
+    final subColor = onPrimary
+        ? Colors.white.withOpacity(0.8)
+        : (isDark ? Colors.white.withOpacity(0.55) : AppColors.inkSoft);
     return GestureDetector(
       onTap: onTap,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(22),
+        child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(22),
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: isPrimary
-                  ? [
-                      accent.withOpacity(isDark ? 0.25 : 0.18),
-                      accent.withOpacity(isDark ? 0.10 : 0.08)
-                    ]
+                  ? [AppColors.orange, AppColors.green]
                   : [
-                      Colors.white.withOpacity(isDark ? 0.08 : 0.55),
-                      Colors.white.withOpacity(isDark ? 0.04 : 0.35)
+                      Colors.white.withOpacity(isDark ? 0.09 : 0.62),
+                      Colors.white.withOpacity(isDark ? 0.04 : 0.38)
                     ],
             ),
             border: Border.all(
               color: isPrimary
-                  ? accent.withOpacity(0.35)
-                  : Colors.white.withOpacity(isDark ? 0.12 : 0.80),
+                  ? Colors.white.withOpacity(0.25)
+                  : Colors.white.withOpacity(isDark ? 0.12 : 0.85),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: accent.withOpacity(isPrimary ? 0.12 : 0.04),
-                blurRadius: 20,
-                offset: const Offset(0, 4),
-              )
-            ],
           ),
           child: Row(children: [
             Container(
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                    color: accent.withOpacity(isDark ? 0.18 : 0.12),
+                    color: isPrimary
+                        ? Colors.white.withOpacity(0.2)
+                        : accent.withOpacity(isDark ? 0.18 : 0.12),
                     borderRadius: BorderRadius.circular(14)),
-                child: Icon(icon, color: accent, size: 24)),
+                child: Icon(icon,
+                    color: isPrimary ? Colors.white : accent, size: 24)),
             const SizedBox(width: 16),
             Expanded(
                 child: Column(
@@ -353,22 +332,21 @@ class _GlassButton extends StatelessWidget {
                   Text(label,
                       style: TextStyle(
                           fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: isDark ? Colors.white : AppColors.ink)),
+                          fontWeight: FontWeight.w700,
+                          color: titleColor)),
                   const SizedBox(height: 2),
                   Text(sublabel,
-                      style: TextStyle(
-                          fontSize: 13,
-                          color: isDark
-                              ? Colors.white.withOpacity(0.4)
-                              : const Color(0xFF6B7280))),
+                      style: TextStyle(fontSize: 13, color: subColor)),
                 ])),
             Icon(Icons.chevron_right_rounded,
-                color: isDark
-                    ? Colors.white.withOpacity(0.25)
-                    : Colors.black.withOpacity(0.2),
+                color: isPrimary
+                    ? Colors.white.withOpacity(0.8)
+                    : isDark
+                        ? Colors.white.withOpacity(0.25)
+                        : Colors.black.withOpacity(0.2),
                 size: 20),
           ]),
+        ),
         ),
       ),
     );
