@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:horeca_app/app/app.dart';
@@ -58,68 +58,82 @@ class HomeScreen extends ConsumerWidget {
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 16),
-                  _GreetingHeader(isDark: isDark),
-                  const SizedBox(height: 16),
-                  if (lowStockItems.isNotEmpty) ...[
-                    _LowStockBanner(items: lowStockItems, isDark: isDark),
-                    const SizedBox(height: 12),
-                  ],
-                  const SizedBox(height: 4),
-                  _GlassButton(
-                    icon: Icons.assignment_outlined,
-                    label: l10n.makeRequest,
-                    sublabel: 'Кухня, бар, склад, зал',
-                    isPrimary: true,
-                    isDark: isDark,
-                    onTap: () => context.push('/request'),
-                  ),
-                  const SizedBox(height: 12),
-                  _GlassButton(
-                    icon: Icons.nights_stay_outlined,
-                    label: 'Закрытие смены',
-                    sublabel: 'Отчёт и PDF',
-                    isPrimary: false,
-                    isDark: isDark,
-                    accentColor: AppColors.green,
-                    onTap: () => context.push('/shift-close'),
-                  ),
-                  const SizedBox(height: 12),
-                  _GlassButton(
-                    icon: Icons.inventory_2_outlined,
-                    label: l10n.inventory,
-                    sublabel: 'Подсчёт остатков',
-                    isPrimary: false,
-                    isDark: isDark,
-                    onTap: () => context.push('/inventory'),
-                  ),
-                  const SizedBox(height: 12),
-                  if (isAdmin) ...[
+              // Кнопок стало больше — на маленьких экранах список
+              // прокручивается, а не обрезается.
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.only(bottom: 110),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 16),
+                    _GreetingHeader(isDark: isDark),
+                    const SizedBox(height: 16),
+                    if (lowStockItems.isNotEmpty) ...[
+                      _LowStockBanner(items: lowStockItems, isDark: isDark),
+                      const SizedBox(height: 12),
+                    ],
+                    const SizedBox(height: 4),
+                    _GlassButton(
+                      icon: Icons.assignment_outlined,
+                      label: l10n.makeRequest,
+                      sublabel: 'Кухня, бар, склад, зал',
+                      isPrimary: true,
+                      isDark: isDark,
+                      onTap: () => context.push('/request'),
+                    ),
                     const SizedBox(height: 12),
                     _GlassButton(
-                      icon: Icons.insights_rounded,
-                      label: 'Аналитика и инсайты',
-                      sublabel: 'Графики, тренды, списания',
+                      icon: Icons.nights_stay_outlined,
+                      label: 'Закрытие смены',
+                      sublabel: 'Отчёт и PDF',
                       isPrimary: false,
                       isDark: isDark,
-                      accentColor: const Color(0xFF9966FF),
-                      onTap: () => context.push('/analytics'),
+                      accentColor: AppColors.green,
+                      onTap: () => context.push('/shift-close'),
+                    ),
+                    const SizedBox(height: 12),
+                    _GlassButton(
+                      icon: Icons.inventory_2_outlined,
+                      label: l10n.inventory,
+                      sublabel: 'Подсчёт остатков',
+                      isPrimary: false,
+                      isDark: isDark,
+                      onTap: () => context.push('/inventory'),
+                    ),
+                    const SizedBox(height: 12),
+                    _GlassButton(
+                      icon: Icons.local_shipping_outlined,
+                      label: 'Учёт товара',
+                      sublabel: 'Приёмка поставки, остатки, расход',
+                      isPrimary: false,
+                      isDark: isDark,
+                      accentColor: AppColors.accent3,
+                      onTap: () => context.push('/stock'),
+                    ),
+                    if (isAdmin) ...[
+                      const SizedBox(height: 12),
+                      _GlassButton(
+                        icon: Icons.insights_rounded,
+                        label: 'Аналитика и инсайты',
+                        sublabel: 'Графики, тренды, списания',
+                        isPrimary: false,
+                        isDark: isDark,
+                        accentColor: const Color(0xFF9966FF),
+                        onTap: () => context.push('/analytics'),
+                      ),
+                    ],
+                    const SizedBox(height: 12),
+                    _GlassButton(
+                      icon: Icons.store_rounded,
+                      label: 'iiko',
+                      sublabel: 'Остатки на складе',
+                      isPrimary: false,
+                      isDark: isDark,
+                      accentColor: const Color(0xFF378ADD),
+                      onTap: () => context.push('/iiko'),
                     ),
                   ],
-                  const SizedBox(height: 12),
-                  _GlassButton(
-                    icon: Icons.store_rounded,
-                    label: 'iiko',
-                    sublabel: 'Остатки на складе',
-                    isPrimary: false,
-                    isDark: isDark,
-                    accentColor: const Color(0xFF378ADD),
-                    onTap: () => context.push('/iiko'),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
@@ -337,8 +351,7 @@ class _GlassButton extends StatelessWidget {
                       style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color:
-                              isDark ? Colors.white : AppColors.ink)),
+                          color: isDark ? Colors.white : AppColors.ink)),
                   const SizedBox(height: 2),
                   Text(sublabel,
                       style: TextStyle(

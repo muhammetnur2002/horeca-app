@@ -16,6 +16,10 @@ import 'package:share_plus/share_plus.dart';
 import 'package:horeca_app/features/custom_template/data/template_repository.dart';
 import 'package:horeca_app/features/custom_template/data/template_models.dart';
 import 'package:horeca_app/features/inventory/data/stock_levels_repository.dart';
+import 'package:horeca_app/core/db/dao/operations_dao.dart';
+import 'package:horeca_app/core/db/ids.dart';
+import 'package:horeca_app/features/auth/data/auth_repository.dart';
+import 'package:horeca_app/features/stock/data/stock_repository.dart';
 
 class ReportStep extends ConsumerWidget {
   const ReportStep({super.key});
@@ -230,13 +234,27 @@ class ReportStep extends ConsumerWidget {
                   return;
                 }
                 final repo = ref.read(historyRepositoryProvider.notifier);
-                repo.add(HistoryEntry(
-                  id: DateTime.now().millisecondsSinceEpoch.toString(),
-                  type: HistoryType.inventory,
-                  title: '${l10n.inventory} $deptName',
-                  text: text,
-                  createdAt: DateTime.now(),
-                ));
+                final auth = ref.read(authRepositoryProvider);
+                final docId = Ids.newId();
+                repo.add(
+                  HistoryEntry(
+                    id: docId,
+                    type: HistoryType.inventory,
+                    title: '${l10n.inventory} $deptName',
+                    text: text,
+                    createdAt: DateTime.now(),
+                  ),
+                  staffId: auth.staffId,
+                  lines: [
+                    for (final i in state.items)
+                      DocumentLineInput(
+                        productId: i.productId,
+                        productName: i.productName,
+                        unit: i.unit,
+                        quantity: i.remaining,
+                      ),
+                  ],
+                );
 
 // Обновляем текущие остатки для отслеживания низких запасов
                 final levels = <String, double>{};
@@ -246,6 +264,10 @@ class ReportStep extends ConsumerWidget {
                 ref
                     .read(stockLevelsRepositoryProvider.notifier)
                     .updateLevels(levels);
+                // Инвентаризация — замер для товарного учёта.
+                ref.read(stockRepositoryProvider).recordCount(levels,
+                    documentId: docId, actor: Actor.of(auth));
+                ref.read(stockRevisionProvider.notifier).state++;
 
                 try {
                   final pdfItems = state.items

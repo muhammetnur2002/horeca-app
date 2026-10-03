@@ -97,6 +97,7 @@ class AnalyticsRepository extends StateNotifier<List<ShiftRecord>> {
     ShiftRecord record, {
     String? shiftId,
     List<String> staffNames = const [],
+    String? closedByStaffId,
     double inkass = 0,
     Map<String, String> writeoffProductIds = const {},
     Map<String, String> writeoffUnits = const {},
@@ -107,6 +108,7 @@ class AnalyticsRepository extends StateNotifier<List<ShiftRecord>> {
       id: shiftId ?? Ids.newId(),
       closedAt: record.date,
       staffNames: staffNames,
+      closedByStaffId: closedByStaffId,
       revenueMinor: _toMinor(record.revenue),
       qrMinor: _toMinor(record.qr),
       cardMinor: _toMinor(record.card),

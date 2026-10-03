@@ -6,6 +6,9 @@ import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/features/request/domain/usecases/request_state.dart';
 import 'package:horeca_app/features/history/data/history_repository.dart';
 import 'package:horeca_app/features/history/domain/history_entry.dart';
+import 'package:horeca_app/core/db/dao/operations_dao.dart';
+import 'package:horeca_app/core/db/ids.dart';
+import 'package:horeca_app/features/auth/data/auth_repository.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
 import 'package:horeca_app/shared/models/product_model.dart';
 import 'package:horeca_app/shared/models/category_model.dart';
@@ -299,13 +302,27 @@ class GenerateStep extends ConsumerWidget {
                   return;
                 }
                 final repo = ref.read(historyRepositoryProvider.notifier);
-                repo.add(HistoryEntry(
-                  id: DateTime.now().millisecondsSinceEpoch.toString(),
-                  type: HistoryType.request,
-                  title: '${l10n.requestTitle}: $departmentLabel',
-                  text: text,
-                  createdAt: DateTime.now(),
-                ));
+                repo.add(
+                  HistoryEntry(
+                    id: Ids.newId(),
+                    type: HistoryType.request,
+                    title: '${l10n.requestTitle}: $departmentLabel',
+                    text: text,
+                    createdAt: DateTime.now(),
+                  ),
+                  staffId: ref.read(authRepositoryProvider).staffId,
+                  // Строки заявки — по ним потом сверяется поставка.
+                  lines: [
+                    for (final i in state.items)
+                      DocumentLineInput(
+                        productId: i.productId,
+                        productName: i.productName,
+                        unit: i.unit,
+                        ordered: i.quantity,
+                        quantity: i.quantity,
+                      ),
+                  ],
+                );
                 final pdfBytes = await PdfGenerator.generateRequestPdf(
                   title: l10n.requestTitle,
                   establishmentName: establishmentName,

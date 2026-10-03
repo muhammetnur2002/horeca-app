@@ -22,7 +22,10 @@ class HistoryRepository extends StateNotifier<List<HistoryEntry>> {
   Future<void> _load() async {
     final rows = await _dao.loadHistory(_venueId);
     if (!mounted) return;
+    // Приёмки поставок тоже лежат в истории документов, но показываются
+    // в разделе «Учёт товара», а не на экране истории.
     state = rows
+        .where((r) => r.kind == 'request' || r.kind == 'inventory')
         .map((r) => HistoryEntry(
               id: r.id,
               type: r.kind == 'inventory'
@@ -37,14 +40,23 @@ class HistoryRepository extends StateNotifier<List<HistoryEntry>> {
 
   List<HistoryEntry> getAll() => List.unmodifiable(state);
 
-  void add(HistoryEntry entry) {
+  /// Добавляет документ. [lines] — его строки (что заказали / сколько
+  /// насчитали), нужны для сверки поставки с заявкой.
+  Future<void> add(
+    HistoryEntry entry, {
+    List<DocumentLineInput> lines = const [],
+    String? staffId,
+  }) {
     state = [entry, ...state];
-    _dao.addHistoryEntry(
+    return _dao.addHistoryEntry(
       venueId: _venueId,
+      id: entry.id,
       kind: entry.type == HistoryType.inventory ? 'inventory' : 'request',
       title: entry.title,
       body: entry.text,
+      staffId: staffId,
       createdAt: entry.createdAt,
+      lines: lines,
     );
   }
 

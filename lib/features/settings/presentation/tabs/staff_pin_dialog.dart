@@ -141,8 +141,8 @@ class _StaffPinDialogState extends ConsumerState<_StaffPinDialog> {
             ],
             const SizedBox(height: 16),
             Text('Роль',
-                style: TextStyle(
-                    fontWeight: FontWeight.w600, color: textColor)),
+                style:
+                    TextStyle(fontWeight: FontWeight.w600, color: textColor)),
             const SizedBox(height: 8),
             Wrap(spacing: 8, children: [
               for (final (value, label) in [

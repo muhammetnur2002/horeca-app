@@ -14,6 +14,7 @@ import 'package:horeca_app/features/analytics/presentation/analytics_screen.dart
 import 'package:horeca_app/features/notifications/presentation/notifications_screen.dart';
 import 'package:horeca_app/features/custom_template/presentation/template_screen.dart';
 import 'package:horeca_app/features/auth/data/auth_repository.dart';
+import 'package:horeca_app/features/stock/presentation/stock_screen.dart';
 
 /// Настройки и аналитика видны только администратору — соответствующие
 /// кнопки и так скрыты для сотрудников (см. HomeScreen, MainShell), но это
@@ -43,6 +44,11 @@ final router = GoRouter(
           builder: (_, __) => const SettingsScreen(),
         ),
       ],
+    ),
+    // Учёт товара: приёмка поставок, остатки и расход.
+    GoRoute(
+      path: '/stock',
+      builder: (_, __) => const StockScreen(),
     ),
     // Закрытие смены — без BottomBar, отдельный экран
     GoRoute(

@@ -10,6 +10,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/core/db/ids.dart';
 import 'package:horeca_app/features/analytics/data/analytics_repository.dart';
+import 'package:horeca_app/features/auth/data/auth_repository.dart';
+import 'package:horeca_app/features/stock/data/stock_repository.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
 import 'package:horeca_app/features/shift_close/data/shift_draft_provider.dart';
 import 'package:horeca_app/features/shift_close/presentation/shift_close_format.dart';
@@ -216,12 +218,24 @@ class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
           ),
           shiftId: _shiftId,
           staffNames: _selectedStaff.toList(),
+          closedByStaffId: ref.read(authRepositoryProvider).staffId,
           inkass: _hasInkass ? (double.tryParse(_inkassCtrl.text) ?? 0) : 0,
           writeoffProductIds: {
             for (final d in _desserts.where((d) => d.writeOff > 0))
               if (productIdByName[d.name] != null) d.name: productIdByName[d.name]!,
           },
           writeoffUnits: {for (final m in _manualWriteOffs) m.name: m.unit});
+      // Списанные десерты уходят и в товарный учёт.
+      ref.read(stockRepositoryProvider).recordWriteoffs(
+        {
+          for (final d in _desserts.where((d) => d.writeOff > 0))
+            if (productIdByName[d.name] != null)
+              productIdByName[d.name]!: d.writeOff.toDouble(),
+        },
+        shiftId: _shiftId,
+        actor: Actor.of(ref.read(authRepositoryProvider)),
+      );
+      ref.read(stockRevisionProvider.notifier).state++;
     }
 
     await ShiftClosePdf.generateAndShare(
