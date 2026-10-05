@@ -125,7 +125,7 @@ void main() {
     expect(text, contains('➕ Сверх заявки:\n• Лимон — 1 кг'));
   });
 
-  test('база версии 1 обновляется до версии 2 без потери данных', () async {
+  test('база версии 1 обновляется до текущей без потери данных', () async {
     final dir = await Directory.systemTemp.createTemp('akyl_mig');
     final file = File('${dir.path}/v1.sqlite');
     // Создаём базу текущей схемы и откатываем её к виду версии 1.
@@ -153,7 +153,7 @@ void main() {
         lines: const [DocumentLineInput(productName: 'Молоко', quantity: 1)]);
     expect((await ops2.loadDocumentLines(id)).single.productName, 'Молоко');
     final version = await v2.customSelect('PRAGMA user_version').getSingle();
-    expect(version.read<int>('user_version'), 2);
+    expect(version.read<int>('user_version'), 3);
     await v2.close();
     await dir.delete(recursive: true);
   });
@@ -169,5 +169,61 @@ void main() {
     expect(levels.state['milk'], 0);
     // Запись в базу идёт в фоне — даём ей завершиться до закрытия базы.
     await Future<void>.delayed(const Duration(milliseconds: 50));
+  });
+
+  test('база версии 2 получает цену в строках документа', () async {
+    final dir = await Directory.systemTemp.createTemp('akyl_mig2');
+    final file = File('${dir.path}/v2.sqlite');
+    final v2 = AppDatabase(NativeDatabase(file));
+    final ops = OperationsDao(v2);
+    final vid = await CatalogDao(v2).upsertVenue(code: '01', name: 'Центр');
+    final id = await ops.addHistoryEntry(
+        venueId: vid, kind: 'receipt', title: 'Приёмка', body: 'x',
+        lines: const [DocumentLineInput(productName: 'Молоко', quantity: 2)]);
+    await v2.customStatement('ALTER TABLE document_lines DROP COLUMN price');
+    await v2.customStatement('PRAGMA user_version = 2');
+    await v2.close();
+
+    final v3 = AppDatabase(NativeDatabase(file));
+    final ops3 = OperationsDao(v3);
+    expect((await ops3.loadDocumentLines(id)).single.price, isNull);
+    final id2 = await ops3.addHistoryEntry(
+        venueId: vid, kind: 'receipt', title: 'Чек', body: 'y',
+        lines: const [DocumentLineInput(productName: 'Сахар', quantity: 1, price: 350)]);
+    expect((await ops3.loadDocumentLines(id2)).single.price, 350);
+    await v3.close();
+    await dir.delete(recursive: true);
+  });
+
+  test('строка без товара каталога — в документе и отчёте, но не в остатках',
+      () async {
+    final id = await stock.recordReceipt(
+      title: 'Приёмка без заявки',
+      text: 'отчёт',
+      at: DateTime(2026, 10, 2),
+      lines: const [
+        ReceiptLine(productId: 'milk', productName: 'Молоко', unit: 'л',
+            received: 10, price: 420),
+        ReceiptLine(productId: null, productName: 'Лимоны', unit: 'кг',
+            received: 2.5, price: 900),
+      ],
+    );
+    final lines = await stock.lines(id);
+    expect(lines.map((l) => l.productName), ['Молоко', 'Лимоны']);
+    expect(lines.last.price, 900);
+    final movements = await ops.loadMovements(venueId);
+    expect(movements.map((m) => m.productId), ['milk']);
+
+    final text = buildReceiptReport(
+      venueName: 'Центр', at: DateTime(2026, 10, 2), currency: '₸',
+      lines: const [
+        ReceiptLine(productId: 'milk', productName: 'Молоко', unit: 'л',
+            received: 10, price: 420),
+        ReceiptLine(productId: null, productName: 'Лимоны', unit: 'кг',
+            received: 2.5, price: 900),
+      ],
+    );
+    expect(text, contains('Сумма по строкам: 6 450 ₸'));
+    expect(text, contains('Без товара в каталоге (не в остатках): Лимоны'));
   });
 }

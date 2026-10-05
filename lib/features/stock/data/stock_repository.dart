@@ -110,15 +110,17 @@ class StockRepository {
             unit: l.unit,
             ordered: l.ordered,
             quantity: l.received,
+            price: l.price,
           ),
       ],
     );
     await _dao.addMovements([
       for (final l in lines)
-        if (l.received != 0)
+        // Строки без товара каталога в остатки не идут.
+        if (l.received != 0 && l.productId != null)
           StockMovementInput(
             venueId: _venueId,
-            productId: l.productId,
+            productId: l.productId!,
             kind: MovementKind.receipt,
             quantity: l.received * l.unitFactor,
             occurredAt: when,
@@ -139,6 +141,8 @@ class StockRepository {
         'short': lines.where((l) => l.shortage > 0).length,
         if (requestId != null) 'request': requestId,
         if (photoPath != null) 'photo': true,
+        if (lines.any((l) => l.productId == null))
+          'unmatched': lines.where((l) => l.productId == null).length,
         if (actor.name != null) 'by': actor.name,
       }),
     );

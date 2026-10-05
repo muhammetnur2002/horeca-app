@@ -75,6 +75,7 @@ class OperationsDao {
                     unit: Value(l.unit),
                     ordered: Value(l.ordered),
                     quantity: l.quantity,
+                    price: Value(l.price),
                     sortOrder: Value(i),
                     createdAt: created,
                   ),
@@ -382,6 +383,7 @@ class DocumentLineInput {
   final String unit;
   final double? ordered;
   final double quantity;
+  final double? price;
 
   const DocumentLineInput({
     this.productId,
@@ -389,6 +391,7 @@ class DocumentLineInput {
     this.unit = 'шт',
     this.ordered,
     required this.quantity,
+    this.price,
   });
 }
 

@@ -168,6 +168,9 @@ class DocumentLines extends Table {
   /// Основное количество: в заявке — заказ, в приёмке — сколько пришло,
   /// в инвентаризации — остаток.
   RealColumn get quantity => real()();
+
+  /// Цена за единицу по накладной/чеку (если известна).
+  RealColumn get price => real().nullable()();
   IntColumn get sortOrder => integer().withDefault(const Constant(0))();
   DateTimeColumn get createdAt => dateTime()();
 

@@ -3216,6 +3216,11 @@ class $DocumentLinesTable extends DocumentLines
   late final GeneratedColumn<double> quantity = GeneratedColumn<double>(
       'quantity', aliasedName, false,
       type: DriftSqlType.double, requiredDuringInsert: true);
+  static const VerificationMeta _priceMeta = const VerificationMeta('price');
+  @override
+  late final GeneratedColumn<double> price = GeneratedColumn<double>(
+      'price', aliasedName, true,
+      type: DriftSqlType.double, requiredDuringInsert: false);
   static const VerificationMeta _sortOrderMeta =
       const VerificationMeta('sortOrder');
   @override
@@ -3240,6 +3245,7 @@ class $DocumentLinesTable extends DocumentLines
         unit,
         ordered,
         quantity,
+        price,
         sortOrder,
         createdAt
       ];
@@ -3298,6 +3304,10 @@ class $DocumentLinesTable extends DocumentLines
     } else if (isInserting) {
       context.missing(_quantityMeta);
     }
+    if (data.containsKey('price')) {
+      context.handle(
+          _priceMeta, price.isAcceptableOrUnknown(data['price']!, _priceMeta));
+    }
     if (data.containsKey('sort_order')) {
       context.handle(_sortOrderMeta,
           sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta));
@@ -3333,6 +3343,8 @@ class $DocumentLinesTable extends DocumentLines
           .read(DriftSqlType.double, data['${effectivePrefix}ordered']),
       quantity: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}quantity'])!,
+      price: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}price']),
       sortOrder: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}sort_order'])!,
       createdAt: attachedDatabase.typeMapping
@@ -3364,6 +3376,9 @@ class DocumentLineRow extends DataClass implements Insertable<DocumentLineRow> {
   /// Основное количество: в заявке — заказ, в приёмке — сколько пришло,
   /// в инвентаризации — остаток.
   final double quantity;
+
+  /// Цена за единицу по накладной/чеку (если известна).
+  final double? price;
   final int sortOrder;
   final DateTime createdAt;
   const DocumentLineRow(
@@ -3375,6 +3390,7 @@ class DocumentLineRow extends DataClass implements Insertable<DocumentLineRow> {
       required this.unit,
       this.ordered,
       required this.quantity,
+      this.price,
       required this.sortOrder,
       required this.createdAt});
   @override
@@ -3392,6 +3408,9 @@ class DocumentLineRow extends DataClass implements Insertable<DocumentLineRow> {
       map['ordered'] = Variable<double>(ordered);
     }
     map['quantity'] = Variable<double>(quantity);
+    if (!nullToAbsent || price != null) {
+      map['price'] = Variable<double>(price);
+    }
     map['sort_order'] = Variable<int>(sortOrder);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
@@ -3411,6 +3430,8 @@ class DocumentLineRow extends DataClass implements Insertable<DocumentLineRow> {
           ? const Value.absent()
           : Value(ordered),
       quantity: Value(quantity),
+      price:
+          price == null && nullToAbsent ? const Value.absent() : Value(price),
       sortOrder: Value(sortOrder),
       createdAt: Value(createdAt),
     );
@@ -3428,6 +3449,7 @@ class DocumentLineRow extends DataClass implements Insertable<DocumentLineRow> {
       unit: serializer.fromJson<String>(json['unit']),
       ordered: serializer.fromJson<double?>(json['ordered']),
       quantity: serializer.fromJson<double>(json['quantity']),
+      price: serializer.fromJson<double?>(json['price']),
       sortOrder: serializer.fromJson<int>(json['sortOrder']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
@@ -3444,6 +3466,7 @@ class DocumentLineRow extends DataClass implements Insertable<DocumentLineRow> {
       'unit': serializer.toJson<String>(unit),
       'ordered': serializer.toJson<double?>(ordered),
       'quantity': serializer.toJson<double>(quantity),
+      'price': serializer.toJson<double?>(price),
       'sortOrder': serializer.toJson<int>(sortOrder),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
@@ -3458,6 +3481,7 @@ class DocumentLineRow extends DataClass implements Insertable<DocumentLineRow> {
           String? unit,
           Value<double?> ordered = const Value.absent(),
           double? quantity,
+          Value<double?> price = const Value.absent(),
           int? sortOrder,
           DateTime? createdAt}) =>
       DocumentLineRow(
@@ -3469,6 +3493,7 @@ class DocumentLineRow extends DataClass implements Insertable<DocumentLineRow> {
         unit: unit ?? this.unit,
         ordered: ordered.present ? ordered.value : this.ordered,
         quantity: quantity ?? this.quantity,
+        price: price.present ? price.value : this.price,
         sortOrder: sortOrder ?? this.sortOrder,
         createdAt: createdAt ?? this.createdAt,
       );
@@ -3484,6 +3509,7 @@ class DocumentLineRow extends DataClass implements Insertable<DocumentLineRow> {
       unit: data.unit.present ? data.unit.value : this.unit,
       ordered: data.ordered.present ? data.ordered.value : this.ordered,
       quantity: data.quantity.present ? data.quantity.value : this.quantity,
+      price: data.price.present ? data.price.value : this.price,
       sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
@@ -3500,6 +3526,7 @@ class DocumentLineRow extends DataClass implements Insertable<DocumentLineRow> {
           ..write('unit: $unit, ')
           ..write('ordered: $ordered, ')
           ..write('quantity: $quantity, ')
+          ..write('price: $price, ')
           ..write('sortOrder: $sortOrder, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
@@ -3508,7 +3535,7 @@ class DocumentLineRow extends DataClass implements Insertable<DocumentLineRow> {
 
   @override
   int get hashCode => Object.hash(id, venueId, documentId, productId,
-      productName, unit, ordered, quantity, sortOrder, createdAt);
+      productName, unit, ordered, quantity, price, sortOrder, createdAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -3521,6 +3548,7 @@ class DocumentLineRow extends DataClass implements Insertable<DocumentLineRow> {
           other.unit == this.unit &&
           other.ordered == this.ordered &&
           other.quantity == this.quantity &&
+          other.price == this.price &&
           other.sortOrder == this.sortOrder &&
           other.createdAt == this.createdAt);
 }
@@ -3534,6 +3562,7 @@ class DocumentLinesCompanion extends UpdateCompanion<DocumentLineRow> {
   final Value<String> unit;
   final Value<double?> ordered;
   final Value<double> quantity;
+  final Value<double?> price;
   final Value<int> sortOrder;
   final Value<DateTime> createdAt;
   final Value<int> rowid;
@@ -3546,6 +3575,7 @@ class DocumentLinesCompanion extends UpdateCompanion<DocumentLineRow> {
     this.unit = const Value.absent(),
     this.ordered = const Value.absent(),
     this.quantity = const Value.absent(),
+    this.price = const Value.absent(),
     this.sortOrder = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -3559,6 +3589,7 @@ class DocumentLinesCompanion extends UpdateCompanion<DocumentLineRow> {
     this.unit = const Value.absent(),
     this.ordered = const Value.absent(),
     required double quantity,
+    this.price = const Value.absent(),
     this.sortOrder = const Value.absent(),
     required DateTime createdAt,
     this.rowid = const Value.absent(),
@@ -3577,6 +3608,7 @@ class DocumentLinesCompanion extends UpdateCompanion<DocumentLineRow> {
     Expression<String>? unit,
     Expression<double>? ordered,
     Expression<double>? quantity,
+    Expression<double>? price,
     Expression<int>? sortOrder,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
@@ -3590,6 +3622,7 @@ class DocumentLinesCompanion extends UpdateCompanion<DocumentLineRow> {
       if (unit != null) 'unit': unit,
       if (ordered != null) 'ordered': ordered,
       if (quantity != null) 'quantity': quantity,
+      if (price != null) 'price': price,
       if (sortOrder != null) 'sort_order': sortOrder,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
@@ -3605,6 +3638,7 @@ class DocumentLinesCompanion extends UpdateCompanion<DocumentLineRow> {
       Value<String>? unit,
       Value<double?>? ordered,
       Value<double>? quantity,
+      Value<double?>? price,
       Value<int>? sortOrder,
       Value<DateTime>? createdAt,
       Value<int>? rowid}) {
@@ -3617,6 +3651,7 @@ class DocumentLinesCompanion extends UpdateCompanion<DocumentLineRow> {
       unit: unit ?? this.unit,
       ordered: ordered ?? this.ordered,
       quantity: quantity ?? this.quantity,
+      price: price ?? this.price,
       sortOrder: sortOrder ?? this.sortOrder,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
@@ -3650,6 +3685,9 @@ class DocumentLinesCompanion extends UpdateCompanion<DocumentLineRow> {
     if (quantity.present) {
       map['quantity'] = Variable<double>(quantity.value);
     }
+    if (price.present) {
+      map['price'] = Variable<double>(price.value);
+    }
     if (sortOrder.present) {
       map['sort_order'] = Variable<int>(sortOrder.value);
     }
@@ -3673,6 +3711,7 @@ class DocumentLinesCompanion extends UpdateCompanion<DocumentLineRow> {
           ..write('unit: $unit, ')
           ..write('ordered: $ordered, ')
           ..write('quantity: $quantity, ')
+          ..write('price: $price, ')
           ..write('sortOrder: $sortOrder, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
@@ -8857,6 +8896,7 @@ typedef $$DocumentLinesTableCreateCompanionBuilder = DocumentLinesCompanion
   Value<String> unit,
   Value<double?> ordered,
   required double quantity,
+  Value<double?> price,
   Value<int> sortOrder,
   required DateTime createdAt,
   Value<int> rowid,
@@ -8871,6 +8911,7 @@ typedef $$DocumentLinesTableUpdateCompanionBuilder = DocumentLinesCompanion
   Value<String> unit,
   Value<double?> ordered,
   Value<double> quantity,
+  Value<double?> price,
   Value<int> sortOrder,
   Value<DateTime> createdAt,
   Value<int> rowid,
@@ -8908,6 +8949,9 @@ class $$DocumentLinesTableFilterComposer
 
   ColumnFilters<double> get quantity => $composableBuilder(
       column: $table.quantity, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get price => $composableBuilder(
+      column: $table.price, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<int> get sortOrder => $composableBuilder(
       column: $table.sortOrder, builder: (column) => ColumnFilters(column));
@@ -8949,6 +8993,9 @@ class $$DocumentLinesTableOrderingComposer
   ColumnOrderings<double> get quantity => $composableBuilder(
       column: $table.quantity, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<double> get price => $composableBuilder(
+      column: $table.price, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<int> get sortOrder => $composableBuilder(
       column: $table.sortOrder, builder: (column) => ColumnOrderings(column));
 
@@ -8988,6 +9035,9 @@ class $$DocumentLinesTableAnnotationComposer
 
   GeneratedColumn<double> get quantity =>
       $composableBuilder(column: $table.quantity, builder: (column) => column);
+
+  GeneratedColumn<double> get price =>
+      $composableBuilder(column: $table.price, builder: (column) => column);
 
   GeneratedColumn<int> get sortOrder =>
       $composableBuilder(column: $table.sortOrder, builder: (column) => column);
@@ -9030,6 +9080,7 @@ class $$DocumentLinesTableTableManager extends RootTableManager<
             Value<String> unit = const Value.absent(),
             Value<double?> ordered = const Value.absent(),
             Value<double> quantity = const Value.absent(),
+            Value<double?> price = const Value.absent(),
             Value<int> sortOrder = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
@@ -9043,6 +9094,7 @@ class $$DocumentLinesTableTableManager extends RootTableManager<
             unit: unit,
             ordered: ordered,
             quantity: quantity,
+            price: price,
             sortOrder: sortOrder,
             createdAt: createdAt,
             rowid: rowid,
@@ -9056,6 +9108,7 @@ class $$DocumentLinesTableTableManager extends RootTableManager<
             Value<String> unit = const Value.absent(),
             Value<double?> ordered = const Value.absent(),
             required double quantity,
+            Value<double?> price = const Value.absent(),
             Value<int> sortOrder = const Value.absent(),
             required DateTime createdAt,
             Value<int> rowid = const Value.absent(),
@@ -9069,6 +9122,7 @@ class $$DocumentLinesTableTableManager extends RootTableManager<
             unit: unit,
             ordered: ordered,
             quantity: quantity,
+            price: price,
             sortOrder: sortOrder,
             createdAt: createdAt,
             rowid: rowid,

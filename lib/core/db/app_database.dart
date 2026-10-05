@@ -35,7 +35,7 @@ class AppDatabase extends _$AppDatabase {
   static const _databaseName = 'akyl';
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   /// Даты хранятся текстом ISO-8601: сохраняются миллисекунды (нужны
   /// курсорам синхронизации), значение сортируемо и читаемо глазами.
@@ -60,6 +60,10 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(historyEntries, historyEntries.attachmentPath);
             await m.createTable(documentLines);
             await _createDocumentLinesIndex();
+          } else if (from < 3) {
+            // v3: цена в строках документа (накладные, чеки). При переходе
+            // с v1 таблица уже создана сразу с ценой.
+            await m.addColumn(documentLines, documentLines.price);
           }
         },
         beforeOpen: (details) async {

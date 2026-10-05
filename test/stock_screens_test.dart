@@ -100,8 +100,21 @@ void main() {
           () => Future<void>.delayed(const Duration(milliseconds: 30)));
       await tester.pump();
     }
-    expect(find.text('Добавить товар не из заявки'), findsOneWidget);
+    expect(find.text('Фото → строки'), findsOneWidget);
+    expect(find.text('Вручную'), findsOneWidget);
+    expect(find.text('Из каталога'), findsOneWidget);
     expect(find.text('Принять поставку'), findsOneWidget);
+
+    // Строка ручного ввода: название, количество, цена.
+    await tester.tap(find.text('Вручную'));
+    await tester.pump();
+    expect(find.text('Нет в каталоге — в остатки не попадёт'), findsOneWidget);
+    await tester.enterText(find.widgetWithText(TextField, 'Название товара'), 'Лимоны');
+    await tester.enterText(find.widgetWithText(TextField, 'Пришло'), '2,5');
+    await tester.enterText(find.widgetWithText(TextField, 'Цена'), '900');
+    await tester.pump();
+    expect(find.text('Сумма по строкам'), findsOneWidget);
+    expect(find.textContaining('2 250'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

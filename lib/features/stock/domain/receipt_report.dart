@@ -11,6 +11,16 @@ String _q(double v) {
       .replaceFirst(RegExp(r'\.$'), '');
 }
 
+String _money(double v) {
+  final r = v.round().abs().toString();
+  final b = StringBuffer(v < 0 ? '−' : '');
+  for (var i = 0; i < r.length; i++) {
+    if (i > 0 && (r.length - i) % 3 == 0) b.write(' ');
+    b.write(r[i]);
+  }
+  return b.toString();
+}
+
 String buildReceiptReport({
   required String venueName,
   required DateTime at,
@@ -18,6 +28,7 @@ String buildReceiptReport({
   String? requestTitle,
   String? staffName,
   String? note,
+  String currency = '',
 }) {
   String two(int n) => n.toString().padLeft(2, '0');
   final date =
@@ -68,6 +79,21 @@ String buildReceiptReport({
           'недовоз ${_q(l.ordered! - l.received)}');
   section('❌ Не пришло:', missing, (l) => '${_q(l.ordered!)} ${l.unit}');
   section('➕ Сверх заявки:', extra, (l) => '${_q(l.received)} ${l.unit}');
+
+  // Сумма — если по строкам есть цены (из накладной/чека или вручную).
+  final priced = lines.where((l) => l.sum != null && l.received > 0);
+  if (priced.isNotEmpty) {
+    final total = priced.fold<double>(0, (a, l) => a + l.sum!);
+    b
+      ..writeln()
+      ..writeln('💰 Сумма по строкам: ${_money(total)}'
+          '${currency.isEmpty ? '' : ' $currency'}');
+  }
+  final unlinked = lines.where((l) => l.productId == null && l.received > 0);
+  if (unlinked.isNotEmpty) {
+    b.writeln('ℹ️ Без товара в каталоге (не в остатках): '
+        '${unlinked.map((l) => l.productName).join(', ')}');
+  }
 
   if (note != null && note.trim().isNotEmpty) {
     b

@@ -18,6 +18,7 @@ import 'package:horeca_app/features/notifications/presentation/notifications_scr
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
 import 'package:horeca_app/features/settings/presentation/about_screen.dart';
 import 'package:horeca_app/features/settings/presentation/faq_screen.dart';
+import 'package:horeca_app/features/settings/presentation/gemini_settings_screen.dart';
 import 'package:horeca_app/features/settings/presentation/tabs/app_settings_account_section.dart';
 import 'package:horeca_app/features/settings/presentation/tabs/app_settings_currency_card.dart';
 import 'package:horeca_app/features/settings/presentation/tabs/app_settings_dialogs.dart';
@@ -84,6 +85,16 @@ class AppSettingsTab extends ConsumerWidget {
           isDark: isDark,
           onTap: () => Navigator.push(context,
               MaterialPageRoute(builder: (_) => const NotificationsScreen())),
+        ),
+        const SizedBox(height: 10),
+        SettingsNavCard(
+          icon: Icons.document_scanner_outlined,
+          title: 'Распознавание накладных',
+          subtitle: 'Gemini 2.5 Flash читает накладные и чеки по фото',
+          color: AppColors.accent3,
+          isDark: isDark,
+          onTap: () => Navigator.push(context,
+              MaterialPageRoute(builder: (_) => const GeminiSettingsScreen())),
         ),
         const SizedBox(height: 10),
         SettingsNavCard(
