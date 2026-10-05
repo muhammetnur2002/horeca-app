@@ -58,7 +58,7 @@ void showHistoryDetail(BuildContext ctx, HistoryEntry e) {
                             fontWeight: FontWeight.w600,
                             color: isDark
                                 ? Colors.white
-                                : const Color(0xFF1A1A2E),
+                                : AppColors.ink,
                           ),
                         ),
                       ),
@@ -83,7 +83,7 @@ void showHistoryDetail(BuildContext ctx, HistoryEntry e) {
                         height: 1.6,
                         color: isDark
                             ? Colors.white.withOpacity(0.85)
-                            : const Color(0xFF1A1A2E),
+                            : AppColors.ink,
                       ),
                     ),
                   ),

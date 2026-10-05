@@ -19,7 +19,7 @@ class AboutScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final textColor = isDark ? Colors.white : AppColors.ink;
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -37,12 +37,7 @@ class AboutScreen extends ConsumerWidget {
         Positioned.fill(
             child: Container(
                 decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: isDark
-                            ? const [Color(0xFF0F1629), Color(0xFF1A1040), Color(0xFF0D1F35)]
-                            : const [Color(0xFFEEF2FF), Color(0xFFF5F7FF), Color(0xFFEEF2FF)])))),
+                    gradient: BackdropGradient(isDark)))),
         SafeArea(
           child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 90, 20, 30),
@@ -112,7 +107,7 @@ class AboutScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 24),
               Center(
-                child: Text('Akyl v1.0.0 — управляй с умом',
+                child: Text('Akyl v1.2.0 — управляй с умом',
                     style: TextStyle(
                         fontSize: 11, color: AppColors.muted.withOpacity(0.6))),
               ),
@@ -146,13 +141,13 @@ class AboutScreen extends ConsumerWidget {
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: const Text('Связаться с нами',
               style: TextStyle(fontWeight: FontWeight.w600)),
-          content: const Text(
+          content: Text(
               'Напишите нам на почту:\nsupport@akylapp.com\n\nМы отвечаем в течение 1-2 рабочих дней.',
               style: TextStyle(color: AppColors.muted, fontSize: 14)),
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text('Закрыть',
+                child: Text('Закрыть',
                     style: TextStyle(color: AppColors.muted))),
           ],
         );
@@ -169,7 +164,7 @@ class AboutScreen extends ConsumerWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: const Text('Очистить все данные?',
             style: TextStyle(fontWeight: FontWeight.w600)),
-        content: const Text(
+        content: Text(
             'Будут удалены все настройки, товары, сотрудники и история. '
             'Это действие нельзя отменить.',
             style: TextStyle(color: AppColors.muted, fontSize: 14)),
@@ -177,12 +172,12 @@ class AboutScreen extends ConsumerWidget {
           TextButton(
               onPressed: () => Navigator.pop(ctx),
               child: Text(l10n.cancel,
-                  style: const TextStyle(color: AppColors.muted))),
+                  style: TextStyle(color: AppColors.muted))),
           ElevatedButton(
               onPressed: () {
                 Navigator.pop(ctx);
                 ref.read(settingsRepositoryProvider.notifier).resetAll();
-                ref.read(historyRepositoryProvider).clear();
+                ref.read(historyRepositoryProvider.notifier).clear();
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                   content: Text('Все данные очищены'),
                   behavior: SnackBarBehavior.floating,
@@ -216,7 +211,7 @@ class _AboutRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final textColor = isDark ? Colors.white : AppColors.ink;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -248,7 +243,7 @@ class _AboutRow extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(subtitle,
                     style:
-                        const TextStyle(fontSize: 12, color: AppColors.muted)),
+                        TextStyle(fontSize: 12, color: AppColors.muted)),
               ])),
           Icon(Icons.chevron_right_rounded,
               color: AppColors.muted.withOpacity(0.5)),

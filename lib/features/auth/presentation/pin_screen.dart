@@ -1,16 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
-import 'package:horeca_app/app/di.dart';
 import 'package:horeca_app/features/auth/data/auth_repository.dart';
+import 'package:horeca_app/features/auth/data/staff_pin_service.dart';
 import 'package:horeca_app/features/auth/presentation/pin_recovery_dialog.dart';
 import 'package:horeca_app/features/venue/data/venue_repository.dart';
-import 'package:horeca_app/features/account/data/account_repository.dart';
-import 'package:horeca_app/features/account/data/cloud_sync_service.dart';
-import 'package:horeca_app/features/settings/data/settings_repository.dart';
-import 'package:horeca_app/features/history/data/history_repository.dart';
-import 'package:horeca_app/features/analytics/data/analytics_repository.dart';
-import 'package:horeca_app/features/notifications/data/notification_repository.dart';
 
 class PinScreen extends ConsumerStatefulWidget {
   const PinScreen({super.key});
@@ -36,6 +30,19 @@ class _PinScreenState extends ConsumerState<PinScreen> {
     setState(() => _pin = _pin.substring(0, _pin.length - 1));
   }
 
+  /// Личный PIN сотрудника (4 цифры). Проверяется раньше общих PIN:
+  /// при совпадении приложение знает, кто именно вошёл.
+  Future<bool> _tryPersonalPin(String pin, String typed) async {
+    final repo = ref.read(authRepositoryProvider.notifier);
+    if (repo.lockoutSecondsRemaining > 0) return false;
+    final staff = await ref.read(staffPinServiceProvider).match(pin);
+    if (staff == null || !mounted || _pin != typed) return false;
+    repo.resetFailedAttempts();
+    repo.login(staff.role == 'admin' ? UserRole.admin : UserRole.staff,
+        userName: staff.fullName, staffId: staff.id);
+    return true;
+  }
+
   /// Если заведение одно (обычный случай) — вводится просто PIN, как раньше.
   /// Если заведений несколько — первые 2 цифры это код заведения (например
   /// "02"), а следующие 4 — пароль администратора/сотрудника этого заведения.
@@ -46,8 +53,25 @@ class _PinScreenState extends ConsumerState<PinScreen> {
     if (!venueState.isMultiVenue) {
       if (currentPin.length < 4) return;
       final repo = ref.read(authRepositoryProvider.notifier);
-      final role = await repo.checkPinReady(currentPin);
+      await repo.pinsReady;
       if (!mounted || _pin != currentPin) return;
+      if (currentPin.length == 4 &&
+          await _tryPersonalPin(currentPin, currentPin)) {
+        return;
+      }
+      if (!mounted || _pin != currentPin) return;
+      // Сейчас PIN всегда 4 цифры, но в старых версиях можно было задать
+      // 5-6. Пока набрано меньше цифр, чем в самом длинном сохранённом PIN,
+      // и совпадения нет — просто ждём следующую цифру, не засчитывая
+      // неудачную попытку (раньше одна ошибка в 6-значном вводе считалась
+      // за три попытки, и блокировка срабатывала уже после двух ошибок).
+      final maxLen = [repo.adminPin, repo.staffPin]
+          .whereType<String>()
+          .fold<int>(4, (m, p) => p.length > m ? p.length : m);
+      final isExactMatch =
+          currentPin == repo.adminPin || currentPin == repo.staffPin;
+      if (!isExactMatch && currentPin.length < maxLen) return;
+      final role = repo.checkPin(currentPin);
       if (role != null) {
         repo.login(role);
       } else if (repo.lockoutSecondsRemaining > 0) {
@@ -55,7 +79,7 @@ class _PinScreenState extends ConsumerState<PinScreen> {
           _error = 'Слишком много попыток. Подождите ${repo.lockoutSecondsRemaining} сек.';
           _pin = '';
         });
-      } else if (currentPin.length >= 6) {
+      } else {
         setState(() {
           _error = 'Неверный PIN-код';
           _pin = '';
@@ -77,27 +101,12 @@ class _PinScreenState extends ConsumerState<PinScreen> {
       return;
     }
     venueNotifier.setActiveVenue(code);
+    if (await _tryPersonalPin(password, currentPin)) return;
+    if (!mounted || _pin != currentPin) return;
     final repo = ref.read(authRepositoryProvider.notifier);
     final role = await repo.checkPinReady(password);
     if (!mounted || _pin != currentPin) return;
     if (role != null) {
-      // Если это заведение на этом устройстве ещё не открывали (данных нет
-      // локально), а аккаунт залогинен в облако — подтягиваем его данные,
-      // прежде чем показать приложение (иначе увидим пустые заготовки
-      // вместо реальных отделов/истории этого заведения).
-      final account = ref.read(accountRepositoryProvider);
-      if (account.isLoggedIn && account.uid != null) {
-        final prefs = ref.read(sharedPreferencesProvider);
-        final hasLocalData =
-            prefs.getString('settings_data${venueKeySuffix(code)}') != null;
-        if (!hasLocalData) {
-          await CloudSyncService.pullToLocal(account.uid!, prefs, code);
-          ref.invalidate(settingsRepositoryProvider);
-          ref.invalidate(historyRepositoryProvider);
-          ref.invalidate(analyticsRepositoryProvider);
-          ref.invalidate(notificationRepositoryProvider);
-        }
-      }
       repo.login(role);
     } else if (repo.lockoutSecondsRemaining > 0) {
       setState(() {
@@ -115,22 +124,19 @@ class _PinScreenState extends ConsumerState<PinScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final textColor = isDark ? Colors.white : AppColors.ink;
     final isMultiVenue = ref.watch(venueRepositoryProvider).isMultiVenue;
 
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight,
-            colors: isDark
-                ? const [Color(0xFF0F1629), Color(0xFF1A1040), Color(0xFF0D1F35)]
-                : const [Color(0xFFEEF2FF), Color(0xFFF5F7FF), Color(0xFFEEF2FF)])),
+          gradient: BackdropGradient(isDark)),
         child: SafeArea(
           child: Column(children: [
             const SizedBox(height: 60),
             Container(width: 64, height: 64,
                 decoration: BoxDecoration(color: AppColors.orange.withOpacity(0.12), borderRadius: BorderRadius.circular(18)),
-                child: const Icon(Icons.lock_outline_rounded, color: AppColors.orange, size: 32)),
+                child: Icon(Icons.lock_outline_rounded, color: AppColors.orange, size: 32)),
             const SizedBox(height: 20),
             Text('Введите PIN-код', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: textColor)),
             if (isMultiVenue) ...[
@@ -214,9 +220,9 @@ class _NumPad extends StatelessWidget {
                     border: Border.all(color: Colors.white.withOpacity(isDark ? 0.1 : 0.4))),
                 child: Center(
                   child: isBackspace
-                      ? Icon(Icons.backspace_outlined, color: isDark ? Colors.white70 : const Color(0xFF1A1A2E), size: 22)
+                      ? Icon(Icons.backspace_outlined, color: isDark ? Colors.white70 : AppColors.ink, size: 22)
                       : Text(key, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600,
-                          color: isDark ? Colors.white : const Color(0xFF1A1A2E))),
+                          color: isDark ? Colors.white : AppColors.ink)),
                 ),
               ),
             );

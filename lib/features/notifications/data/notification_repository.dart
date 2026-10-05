@@ -1,9 +1,9 @@
-import 'dart:convert';
+import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:horeca_app/app/di.dart';
-import 'package:horeca_app/features/account/data/cloud_auto_sync.dart';
+import 'package:horeca_app/core/db/app_database.dart';
+import 'package:horeca_app/core/db/ids.dart';
 import 'package:horeca_app/features/notifications/data/notification_service.dart';
+import 'package:horeca_app/features/venue/data/venue_repository.dart';
 
 enum ReminderFrequency { daily, weekly }
 
@@ -104,42 +104,71 @@ class NotificationData {
   );
 }
 
+/// Напоминания заведения. Хранятся в базе (таблица reminders), свои
+/// у каждого заведения; запланированные уведомления — системные, поэтому
+/// напоминания других заведений продолжают срабатывать.
 class NotificationRepository extends StateNotifier<NotificationData> {
-  final SharedPreferences _prefs;
+  final AppDatabase _db;
+  final String _venueId;
+  final String _venueCode;
   final NotificationService _service = NotificationService();
-  final void Function()? _onChanged;
-  static const _key = 'notification_data';
-  int _nextId = 1000;
+  String? _inventoryRowId;
 
-  NotificationRepository(this._prefs, {void Function()? onChanged})
-      : _onChanged = onChanged,
-        super(const NotificationData()) {
+  /// Номер уведомления инвентаризации свой у каждого заведения:
+  /// у "01" — 999 (как раньше) и 998 для «за день до», у "02" — 997/996…
+  /// Напоминания о товарах нумеруются с 1000, пересечений нет.
+  int get _invId => 1001 - 2 * (int.tryParse(_venueCode) ?? 1);
+  int get _dayBeforeId => _invId - 1;
+
+  NotificationRepository(this._db, this._venueId, this._venueCode)
+      : super(const NotificationData()) {
     _load();
     _service.init();
   }
 
-  void _load() {
-    final jsonString = _prefs.getString(_key);
-    if (jsonString == null) return;
-    try {
-      final data = jsonDecode(jsonString);
-      final reminders = (data['productReminders'] as List)
-          .map((e) => ProductReminder.fromJson(e)).toList();
-      final invReminder = InventoryReminder.fromJson(data['inventoryReminder'] ?? {});
-      state = NotificationData(productReminders: reminders, inventoryReminder: invReminder);
-      if (reminders.isNotEmpty) {
-        _nextId = reminders.map((r) => r.id).reduce((a, b) => a > b ? a : b) + 1;
+  Future<void> _load() async {
+    final rows = await (_db.select(_db.reminders)
+          ..where((t) => t.venueId.equals(_venueId) & t.deletedAt.isNull())
+          ..orderBy([(t) => OrderingTerm(expression: t.createdAt)]))
+        .get();
+    if (!mounted) return;
+    final products = <ProductReminder>[];
+    var inventory = const InventoryReminder();
+    for (final r in rows) {
+      if (r.frequency == 'monthly') {
+        _inventoryRowId = r.id;
+        inventory = InventoryReminder(
+          enabled: r.isEnabled,
+          dayOfMonth: r.dayOfMonth ?? 1,
+          hour: r.hour,
+          minute: r.minute,
+          dayBeforeEnabled: r.remindDayBefore,
+        );
+      } else if (r.isEnabled) {
+        products.add(ProductReminder(
+          id: r.notificationId,
+          productName: r.title,
+          frequency: r.frequency == 'weekly'
+              ? ReminderFrequency.weekly
+              : ReminderFrequency.daily,
+          hour: r.hour,
+          minute: r.minute,
+          weekday: r.weekday,
+        ));
       }
-    } catch (_) {}
+    }
+    state = NotificationData(
+        productReminders: products, inventoryReminder: inventory);
   }
 
-  void _save() {
-    final data = {
-      'productReminders': state.productReminders.map((r) => r.toJson()).toList(),
-      'inventoryReminder': state.inventoryReminder.toJson(),
-    };
-    _prefs.setString(_key, jsonEncode(data));
-    _onChanged?.call();
+  /// Следующий свободный номер уведомления — по всем заведениям устройства.
+  Future<int> _nextNotificationId() async {
+    final max = await (_db.selectOnly(_db.reminders)
+          ..addColumns([_db.reminders.notificationId.max()]))
+        .map((row) => row.read(_db.reminders.notificationId.max()))
+        .getSingleOrNull();
+    final next = (max ?? 999) + 1;
+    return next < 1000 ? 1000 : next;
   }
 
   Future<void> addProductReminder({
@@ -149,13 +178,25 @@ class NotificationRepository extends StateNotifier<NotificationData> {
     required int minute,
     int? weekday,
   }) async {
-    final id = _nextId++;
+    final id = await _nextNotificationId();
     final reminder = ProductReminder(
       id: id, productName: productName, frequency: frequency,
       hour: hour, minute: minute, weekday: weekday,
     );
     state = state.copyWith(productReminders: [...state.productReminders, reminder]);
-    _save();
+    final now = DateTime.now().toUtc();
+    await _db.into(_db.reminders).insert(RemindersCompanion.insert(
+          id: Ids.newId(),
+          createdAt: now,
+          updatedAt: now,
+          venueId: _venueId,
+          notificationId: id,
+          title: productName,
+          frequency: frequency.name,
+          hour: hour,
+          minute: minute,
+          weekday: Value(frequency == ReminderFrequency.weekly ? weekday : null),
+        ));
 
     final title = 'Заказать товар';
     final body = 'Время заказать: $productName';
@@ -170,22 +211,40 @@ class NotificationRepository extends StateNotifier<NotificationData> {
   Future<void> removeProductReminder(int id) async {
     state = state.copyWith(
         productReminders: state.productReminders.where((r) => r.id != id).toList());
-    _save();
+    final now = DateTime.now().toUtc();
+    await (_db.update(_db.reminders)
+          ..where((t) => t.venueId.equals(_venueId) & t.notificationId.equals(id)))
+        .write(RemindersCompanion(deletedAt: Value(now), updatedAt: Value(now)));
     await _service.cancel(id);
   }
 
   Future<void> setInventoryReminder(InventoryReminder reminder) async {
     state = state.copyWith(inventoryReminder: reminder);
-    _save();
+    final now = DateTime.now().toUtc();
+    final rowId = _inventoryRowId ??= Ids.newId();
+    final row = RemindersCompanion.insert(
+      id: rowId,
+      createdAt: now,
+      updatedAt: now,
+      venueId: _venueId,
+      notificationId: _invId,
+      title: 'Инвентаризация',
+      frequency: 'monthly',
+      hour: reminder.hour,
+      minute: reminder.minute,
+      dayOfMonth: Value(reminder.dayOfMonth),
+      remindDayBefore: Value(reminder.dayBeforeEnabled),
+      isEnabled: Value(reminder.enabled),
+    );
+    await _db.into(_db.reminders).insert(row,
+        onConflict: DoUpdate((_) => row.copyWith(createdAt: const Value.absent())));
 
-    const invId = 999;
-    const dayBeforeId = 998;
-    await _service.cancel(invId);
-    await _service.cancel(dayBeforeId);
+    await _service.cancel(_invId);
+    await _service.cancel(_dayBeforeId);
 
     if (reminder.enabled) {
       await _service.scheduleMonthlyReminder(
-        id: invId,
+        id: _invId,
         title: 'Инвентаризация',
         body: 'Сегодня день инвентаризации',
         dayOfMonth: reminder.dayOfMonth,
@@ -195,7 +254,7 @@ class NotificationRepository extends StateNotifier<NotificationData> {
       if (reminder.dayBeforeEnabled) {
         final dayBefore = reminder.dayOfMonth == 1 ? 28 : reminder.dayOfMonth - 1;
         await _service.scheduleMonthlyReminder(
-          id: dayBeforeId,
+          id: _dayBeforeId,
           title: 'Инвентаризация завтра',
           body: 'Не забудьте подготовиться к инвентаризации',
           dayOfMonth: dayBefore,
@@ -209,7 +268,9 @@ class NotificationRepository extends StateNotifier<NotificationData> {
 
 final notificationRepositoryProvider =
     StateNotifierProvider<NotificationRepository, NotificationData>((ref) {
-  final prefs = ref.watch(sharedPreferencesProvider);
-  return NotificationRepository(prefs,
-      onChanged: () => ref.read(cloudAutoSyncProvider).scheduleSync());
+  return NotificationRepository(
+    ref.watch(appDatabaseProvider),
+    ref.watch(activeVenueIdProvider),
+    ref.watch(venueRepositoryProvider.select((s) => s.activeVenueCode)),
+  );
 });

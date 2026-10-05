@@ -15,7 +15,7 @@ class _OnboardingStep {
   });
 }
 
-const _steps = [
+final _steps = [
   _OnboardingStep(
     icon: Icons.auto_awesome_rounded,
     color: AppColors.orange,

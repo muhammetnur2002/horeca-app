@@ -1,24 +1,31 @@
-import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:horeca_app/app/di.dart';
+import 'package:horeca_app/core/db/app_database.dart';
+import 'package:horeca_app/core/db/dao/catalog_dao.dart';
+import 'package:horeca_app/core/db/db_providers.dart';
+import 'package:horeca_app/core/db/ids.dart';
 
-/// Суффикс для ключей SharedPreferences/secure storage конкретного заведения.
-/// Заведение "01" — это те же ключи, что использовались до появления
-/// мультизаведений (settings_data, history_data, ...), поэтому у существующих
-/// пользователей ничего не переносится и не теряется при обновлении.
-/// Заведения "02".."05" получают отдельные ключи с суффиксом.
+/// Суффикс ключей SharedPreferences/secure storage конкретного заведения.
+/// Данные заведений теперь в базе; суффикс остаётся для PIN-кодов
+/// и настроек входа, которые пока хранятся по-старому.
 String venueKeySuffix(String code) => code == '01' ? '' : '_$code';
 
 class Venue {
+  /// id строки в базе. Пустой у заведений из облачного реестра, которые
+  /// ещё не заведены на этом устройстве.
+  final String id;
   final String code; // '01'..'05'
   final String name;
-  const Venue({required this.code, required this.name});
+  const Venue({this.id = '', required this.code, required this.name});
 
   Map<String, dynamic> toJson() => {'code': code, 'name': name};
   factory Venue.fromJson(Map<String, dynamic> j) =>
       Venue(code: j['code'] as String, name: j['name'] as String? ?? 'Заведение');
+
+  factory Venue.fromRow(VenueRow row) =>
+      Venue(id: row.id, code: row.code, name: row.name);
 }
 
 class VenueState {
@@ -39,55 +46,37 @@ class VenueState {
       );
 }
 
+/// Заведения устройства. Список хранится в базе и загружается до запуска
+/// интерфейса (см. main.dart), поэтому состояние доступно сразу. Какое
+/// заведение открыто — настройка устройства, она остаётся в SharedPreferences.
 class VenueRepository extends StateNotifier<VenueState> {
   final SharedPreferences _prefs;
+  final CatalogDao _dao;
   static const _secureStorage = FlutterSecureStorage();
-  static const _venuesKey = 'venues_list';
   static const _activeKey = 'active_venue_code';
   static const maxVenues = 5;
   static const allCodes = ['01', '02', '03', '04', '05'];
 
-  VenueRepository(this._prefs)
-      : super(const VenueState(venues: [], activeVenueCode: '01')) {
-    _load();
+  VenueRepository(this._prefs, this._dao, List<Venue> initialVenues)
+      : super(VenueState(
+          venues: initialVenues,
+          activeVenueCode: _resolveActive(_prefs, initialVenues),
+        ));
+
+  static String _resolveActive(SharedPreferences prefs, List<Venue> venues) {
+    final saved = prefs.getString(_activeKey);
+    if (saved != null && venues.any((v) => v.code == saved)) return saved;
+    return venues.isEmpty ? '01' : venues.first.code;
   }
 
-  void _load() {
-    final jsonString = _prefs.getString(_venuesKey);
-    List<Venue> venues;
-    if (jsonString == null) {
-      // Первый запуск после обновления: заводим заведение "01" без переноса
-      // данных — оно само указывает на уже существующие ключи.
-      venues = [Venue(code: '01', name: _legacyName() ?? 'Моё заведение')];
-      _saveVenues(venues);
-    } else {
-      try {
-        final List<dynamic> data = jsonDecode(jsonString);
-        venues = data.map((e) => Venue.fromJson(e as Map<String, dynamic>)).toList();
-        if (venues.isEmpty) {
-          venues = [Venue(code: '01', name: _legacyName() ?? 'Моё заведение')];
-        }
-      } catch (_) {
-        venues = [Venue(code: '01', name: _legacyName() ?? 'Моё заведение')];
-      }
+  /// Загружает заведения из базы; если их нет — заводит пустое "01".
+  static Future<List<Venue>> loadInitial(CatalogDao dao) async {
+    var rows = await dao.loadVenues();
+    if (rows.isEmpty) {
+      await dao.upsertVenue(code: '01', name: 'Моё заведение');
+      rows = await dao.loadVenues();
     }
-    final active = _prefs.getString(_activeKey) ?? '01';
-    state = VenueState(venues: venues, activeVenueCode: active);
-  }
-
-  String? _legacyName() {
-    try {
-      final raw = _prefs.getString('settings_data');
-      if (raw == null) return null;
-      final data = jsonDecode(raw) as Map<String, dynamic>;
-      return data['establishmentName'] as String?;
-    } catch (_) {
-      return null;
-    }
-  }
-
-  void _saveVenues(List<Venue> venues) {
-    _prefs.setString(_venuesKey, jsonEncode(venues.map((v) => v.toJson()).toList()));
+    return rows.map(Venue.fromRow).toList();
   }
 
   /// Свободный код для нового заведения (null, если уже занято все 5).
@@ -98,22 +87,30 @@ class VenueRepository extends StateNotifier<VenueState> {
     return null;
   }
 
+  /// Новое заведение заводится пустым — без демонстрационных данных.
   bool addVenue(String name) {
     final code = nextFreeCode;
     if (code == null || name.trim().isEmpty) return false;
-    final updated = [...state.venues, Venue(code: code, name: name.trim())];
-    _saveVenues(updated);
-    state = state.copyWith(venues: updated);
+    final id = Ids.newId();
+    _dao.upsertVenue(
+        id: id, code: code, name: name.trim(), reportName: name.trim());
+    state = state.copyWith(
+        venues: [...state.venues, Venue(id: id, code: code, name: name.trim())]);
     return true;
   }
 
   void renameVenue(String code, String newName) {
     if (newName.trim().isEmpty) return;
-    final updated = state.venues
-        .map((v) => v.code == code ? Venue(code: code, name: newName.trim()) : v)
-        .toList();
-    _saveVenues(updated);
-    state = state.copyWith(venues: updated);
+    final venue = findByCode(code);
+    if (venue == null) return;
+    _dao.updateVenue(venue.id, name: newName.trim());
+    state = state.copyWith(
+      venues: state.venues
+          .map((v) => v.code == code
+              ? Venue(id: v.id, code: code, name: newName.trim())
+              : v)
+          .toList(),
+    );
   }
 
   Venue? findByCode(String code) {
@@ -126,22 +123,16 @@ class VenueRepository extends StateNotifier<VenueState> {
     state = state.copyWith(activeVenueCode: code);
   }
 
-  /// Безвозвратно удаляет заведение с этого устройства: локальные данные
-  /// (SharedPreferences) и PIN-коды (secure storage). Облачную копию нужно
-  /// удалить отдельно через CloudSyncService.deleteVenueCloud — репозиторий
-  /// сам с сетью не работает. Нельзя удалить последнее оставшееся заведение
-  /// аккаунта — всегда должно остаться хотя бы одно.
+  /// Удаляет заведение с этого устройства: данные в базе (мягко) и PIN-коды.
+  /// Последнее оставшееся заведение удалить нельзя.
   Future<bool> deleteVenue(String code) async {
     if (state.venues.length <= 1) return false;
-    if (!state.venues.any((v) => v.code == code)) return false;
+    final venue = findByCode(code);
+    if (venue == null) return false;
 
+    await _dao.deleteVenue(venue.id);
     final suffix = venueKeySuffix(code);
     for (final key in [
-      'settings_data',
-      'history_data',
-      'shift_records',
-      'notification_data',
-      'cloud_sync_last_known_update_ms',
       'pins_enabled',
       'pin_failed_attempts',
       'pin_locked_until',
@@ -154,7 +145,6 @@ class VenueRepository extends StateNotifier<VenueState> {
     } catch (_) {}
 
     final updated = state.venues.where((v) => v.code != code).toList();
-    _saveVenues(updated);
     final newActive =
         state.activeVenueCode == code ? updated.first.code : state.activeVenueCode;
     if (newActive != state.activeVenueCode) {
@@ -164,22 +154,37 @@ class VenueRepository extends StateNotifier<VenueState> {
     return true;
   }
 
-  /// Добавляет в локальный список заведения, которые уже есть в облачном
-  /// реестре, но ещё не заведены на этом устройстве (например, вход в
-  /// аккаунт на новом телефоне). Сами данные заведения при этом не
-  /// скачиваются — только код и название, чтобы PIN-экран знал, что такой
-  /// код существует.
+  /// Добавляет заведения из облачного реестра, которых ещё нет на этом
+  /// устройстве (вход в аккаунт на новом телефоне). Заводятся пустыми.
   void mergeFromCloud(List<Venue> cloudVenues) {
     final localCodes = state.venues.map((v) => v.code).toSet();
-    final toAdd = cloudVenues.where((v) => !localCodes.contains(v.code)).toList();
-    if (toAdd.isEmpty) return;
-    final updated = [...state.venues, ...toAdd];
-    _saveVenues(updated);
-    state = state.copyWith(venues: updated);
+    final added = <Venue>[];
+    for (final v in cloudVenues) {
+      if (localCodes.contains(v.code) || !allCodes.contains(v.code)) continue;
+      final id = Ids.newId();
+      _dao.upsertVenue(id: id, code: v.code, name: v.name, reportName: v.name);
+      added.add(Venue(id: id, code: v.code, name: v.name));
+    }
+    if (added.isEmpty) return;
+    state = state.copyWith(venues: [...state.venues, ...added]);
   }
 }
 
+/// Заведения, загруженные до запуска интерфейса (переопределяется в main).
+final initialVenuesProvider = Provider<List<Venue>>((ref) {
+  throw UnimplementedError('Must be initialized in main');
+});
+
 final venueRepositoryProvider = StateNotifierProvider<VenueRepository, VenueState>((ref) {
-  final prefs = ref.watch(sharedPreferencesProvider);
-  return VenueRepository(prefs);
+  return VenueRepository(
+    ref.watch(sharedPreferencesProvider),
+    ref.watch(catalogDaoProvider),
+    ref.watch(initialVenuesProvider),
+  );
+});
+
+/// id активного заведения в базе.
+final activeVenueIdProvider = Provider<String>((ref) {
+  final state = ref.watch(venueRepositoryProvider);
+  return state.active?.id ?? state.venues.first.id;
 });

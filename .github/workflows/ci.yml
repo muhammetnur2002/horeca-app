@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+
+jobs:
+  analyze-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.5'
+          channel: stable
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+
+  build-android:
+    runs-on: ubuntu-latest
+    needs: analyze-and-test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.5'
+          channel: stable
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - run: flutter pub get
+      # Debug-сборка не гоняет R8/ProGuard вообще — этого достаточно, чтобы
+      # поймать поломки Gradle/AGP/Kotlin, манифеста и ресурсов, но не
+      # поломки от минификации (см. предупреждение в android/app/proguard-rules.pro
+      # про то, что R8 может вырезать нужные Firebase-классы именно в релизе).
+      - run: flutter build apk --debug
+      # Без android/key.properties release-сборка подписывается debug-ключом
+      # (см. комментарий в android/app/build.gradle.kts) — в Play Store так
+      # публиковать нельзя, но для CI этого достаточно: isMinifyEnabled/R8
+      # реально включаются только в release, и именно тут ловится класс
+      # ошибок "работает в debug, падает в релизе" из-за вырезанных классов.
+      - run: flutter build apk --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
+
+  # Собрать APK — не то же самое, что убедиться, что приложение реально
+  # открывается: краш в первые секунды после запуска (например, необработанное
+  # исключение в конструкторе провайдера) сборку не остановит, его видно
+  # только при фактическом запуске. Раз в песочнице разработки нет доступа
+  # к Android SDK/эмулятору (см. коммиты выше), эту проверку переносим сюда —
+  # реальный эмулятор, реальная установка APK, реальный запуск.
+  launch-check:
+    runs-on: ubuntu-latest
+    needs: build-android
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: app-debug-apk
+      - name: Enable KVM for hardware-accelerated emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Boot emulator, install APK, verify it launches without crashing
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          # reactivecircus/android-emulator-runner запускает КАЖДУЮ строку
+          # script как отдельный `sh -c` — переменные между строками не
+          # сохраняются, многострочный if/fi ломается ("unexpected EOF").
+          # Поэтому вся проверка "жив ли процесс" — одна строка на shell-группе.
+          script: |
+            adb install -r app-debug.apk
+            adb logcat -c
+            adb shell am start -n com.akyl.horeca/.MainActivity
+            sleep 15
+            adb shell pidof com.akyl.horeca || { echo "App process not found 15s after launch — crashed or closed."; adb logcat -d -t 150; exit 1; }
+            echo "App is running 15s after launch — no crash detected."

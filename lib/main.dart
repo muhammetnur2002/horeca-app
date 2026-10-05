@@ -7,6 +7,10 @@ import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/app/di.dart';
+import 'package:horeca_app/core/db/app_database.dart';
+import 'package:horeca_app/core/db/dao/catalog_dao.dart';
+import 'package:horeca_app/core/db/legacy_migration.dart';
+import 'package:horeca_app/features/venue/data/venue_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
@@ -19,7 +23,14 @@ void main() async {
     // работать без аккаунта, если Firebase недоступен.
     bool firebaseReady = false;
     try {
-      await Firebase.initializeApp();
+      // Таймаут — страховка от сетей, где firebase_core_web не получает ни
+      // успеха, ни ошибки: он подгружает Firebase JS SDK через динамический
+      // import() из gstatic.com прямо в браузере, и если этот import
+      // зависает (медленная/фильтрующая сеть, а не явный отказ), то Future
+      // от Firebase.initializeApp() может никогда не завершиться — тогда
+      // runApp() ниже не вызовется вообще, и вместо офлайн-режима
+      // пользователь увидит бесконечный пустой экран.
+      await Firebase.initializeApp().timeout(const Duration(seconds: 8));
       firebaseReady = true;
     } catch (e) {
       debugPrint('Firebase init failed, продолжаем офлайн: $e');
@@ -61,10 +72,25 @@ void main() async {
 
     final prefs = await SharedPreferences.getInstance();
 
+    // Фон-туманность выбранной темы рисуется заранее, чтобы первый же
+    // экран открылся с ним, а не с простым градиентом.
+    final palette = AkylPalette.fromKey(prefs.getString('app_palette'));
+    AppColors.applyPalette(palette);
+    await AkylBackdrop.prepare(palette);
+
+    // Локальная база: при первом запуске версии с базой однократно
+    // переносим в неё данные из SharedPreferences (все заведения), затем
+    // загружаем список заведений до показа интерфейса.
+    final db = AppDatabase();
+    await LegacyMigration.run(db: db, prefs: prefs);
+    final venues = await VenueRepository.loadInitial(CatalogDao(db));
+
     runApp(
       ProviderScope(
         overrides: [
           sharedPreferencesProvider.overrideWithValue(prefs),
+          appDatabaseProvider.overrideWithValue(db),
+          initialVenuesProvider.overrideWithValue(venues),
         ],
         child: const HorecaApp(),
       ),

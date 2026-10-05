@@ -17,7 +17,7 @@ class VenueSettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final textColor = isDark ? Colors.white : AppColors.ink;
     final venueState = ref.watch(venueRepositoryProvider);
 
     return Scaffold(
@@ -44,12 +44,7 @@ class VenueSettingsScreen extends ConsumerWidget {
         Positioned.fill(
             child: Container(
                 decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: isDark
-                            ? const [Color(0xFF0F1629), Color(0xFF1A1040), Color(0xFF0D1F35)]
-                            : const [Color(0xFFEEF2FF), Color(0xFFF5F7FF), Color(0xFFEEF2FF)])))),
+                    gradient: BackdropGradient(isDark)))),
         SafeArea(
           child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 80, 20, 30),
@@ -76,6 +71,18 @@ class VenueSettingsScreen extends ConsumerWidget {
                           MaterialPageRoute(builder: (_) => PinSettingsScreen(venue: v)));
                     },
                     onDelete: () => showDeleteVenueDialog(context, ref, v, isDark),
+                    // Раньше переключиться на другое заведение можно было только
+                    // с экрана PIN, поэтому заведение без PIN-кода было недоступно.
+                    // Если у выбранного заведения включён PIN, приложение само
+                    // покажет экран ввода PIN этого заведения.
+                    onOpen: v.code == venueState.activeVenueCode
+                        ? null
+                        : () {
+                            Navigator.of(context).popUntil((r) => r.isFirst);
+                            ref
+                                .read(venueRepositoryProvider.notifier)
+                                .setActiveVenue(v.code);
+                          },
                   )),
               if (venueState.venues.length >= VenueRepository.maxVenues) ...[
                 const SizedBox(height: 12),

@@ -64,7 +64,7 @@ class ShiftStepperIndicator extends StatelessWidget {
                         width: 1.5)),
                 child: Center(
                     child: isDone
-                        ? const Icon(Icons.check_rounded,
+                        ? Icon(Icons.check_rounded,
                             size: 16, color: AppColors.green)
                         : Text('${di + 1}',
                             style: TextStyle(

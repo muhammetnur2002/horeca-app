@@ -2,15 +2,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
+import 'package:horeca_app/features/auth/data/auth_repository.dart';
 import 'package:horeca_app/features/history/data/history_repository.dart';
 import 'package:horeca_app/features/history/domain/history_entry.dart';
 import 'package:horeca_app/features/history/presentation/history_dialogs.dart';
-import 'package:horeca_app/features/history/presentation/history_widgets.dart';
+import 'package:horeca_app/shared/widgets/orbit_kit.dart';
 import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
 import 'package:share_plus/share_plus.dart';
 
-/// Экран "История" (заявки/инвентаризации). Карточка записи вынесена в
-/// history_widgets.dart, нижний лист с деталями — в history_dialogs.dart.
+/// Экран "История" (заявки/инвентаризации): записи одной стеклянной группой,
+/// нижний лист с деталями — в history_dialogs.dart.
 class HistoryScreen extends ConsumerStatefulWidget {
   const HistoryScreen({super.key});
 
@@ -39,7 +40,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final entries = ref.watch(historyEntriesProvider);
-    final repo = ref.read(historyRepositoryProvider);
+    final repo = ref.read(historyRepositoryProvider.notifier);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -51,7 +52,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
         title: Text(
           l10n.history,
           style: TextStyle(
-            color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+            color: isDark ? Colors.white : AppColors.ink,
             fontSize: 18,
             fontWeight: FontWeight.w600,
           ),
@@ -109,21 +110,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
       ),
       body: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isDark
-                ? const [
-                    Color(0xFF0F1629),
-                    Color(0xFF1A1040),
-                    Color(0xFF0D1F35)
-                  ]
-                : const [
-                    Color(0xFFEEF2FF),
-                    Color(0xFFF5F7FF),
-                    Color(0xFFEEF2FF)
-                  ],
-          ),
+          gradient: BackdropGradient(isDark),
         ),
         child: TabBarView(
           controller: _tabController,
@@ -195,32 +182,64 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 140, 16, 16),
-      itemCount: entries.length,
-      itemBuilder: (_, i) {
-        final e = entries[entries.length - 1 - i]; // новые сверху
-        return HistoryCard(
-          entry: e,
-          isDark: isDark,
-          onShare: () => Share.share(e.text),
-          onTap: () => showHistoryDetail(ctx, e),
-        );
-      },
+    // Записи одной стеклянной группой, как в макете: иконка типа,
+    // название, дата моноширинным; нажатие — подробности.
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 140, 16, 24),
+      children: [
+        OrbitGroup(children: [
+          for (final e in entries)
+            OrbitRow(
+              icon: e.type == HistoryType.request
+                  ? Icons.description_outlined
+                  : Icons.inventory_2_outlined,
+              iconColor: e.type == HistoryType.request
+                  ? AppColors.orange
+                  : Colors.amber,
+              title: e.title,
+              subtitle: _historyDate(e.createdAt),
+              monoSubtitle: true,
+              onTap: () => showHistoryDetail(ctx, e),
+              trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                IconButton(
+                  tooltip: 'Поделиться',
+                  visualDensity: VisualDensity.compact,
+                  icon: Icon(Icons.share_outlined,
+                      size: 18, color: AppColors.muted),
+                  onPressed: () => Share.share(e.text),
+                ),
+                Icon(Icons.chevron_right_rounded,
+                    color: isDark ? Colors.white54 : AppColors.inkSoft),
+              ]),
+            ),
+        ]),
+      ],
     );
+  }
+
+  static String _historyDate(DateTime d) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final day = DateTime(d.year, d.month, d.day);
+    String two(int n) => n.toString().padLeft(2, '0');
+    final time = '${two(d.hour)}:${two(d.minute)}';
+    if (day == today) return 'сегодня, $time';
+    if (day == today.subtract(const Duration(days: 1))) return 'вчера, $time';
+    const m = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+    return '${d.day} ${m[d.month - 1]}, $time';
   }
 
   void _confirmClear(
       BuildContext context, dynamic repo, AppLocalizations l10n) {
     final type =
         _tabController.index == 0 ? HistoryType.request : HistoryType.inventory;
-    repo.clearByType(type);
+    repo.clearByType(type, staffId: ref.read(authRepositoryProvider).staffId);
     ref.invalidate(historyEntriesProvider);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: const Text('История очищена',
             style: TextStyle(color: Colors.white)),
-        backgroundColor: const Color(0xFF2E3352),
+        backgroundColor: AppColors.darkCard2,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),

@@ -15,6 +15,8 @@ class InventoryScreen extends ConsumerWidget {
     final state = ref.watch(inventoryStateProvider);
 
     return Scaffold(
+      // Фон — общий фон оболочки (туманность) за экраном.
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text('Инвентаризация'),
         leading: state.step > 0
@@ -24,7 +26,7 @@ class InventoryScreen extends ConsumerWidget {
                   if (state.step == 1) {
                     ref.read(inventoryStateProvider.notifier).reset();
                   } else if (state.step == 2) {
-                    ref.read(inventoryStateProvider.notifier).reset(); // вернуться к выбору категорий
+                    ref.read(inventoryStateProvider.notifier).backToCategories();
                   } else if (state.step == 3) {
                     ref.read(inventoryStateProvider.notifier).backToInput();
                   }

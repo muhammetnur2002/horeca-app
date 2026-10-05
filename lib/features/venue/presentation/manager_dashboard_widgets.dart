@@ -56,7 +56,7 @@ class InsightRow extends StatelessWidget {
             style: TextStyle(
               fontSize: 13,
               height: 1.4,
-              color: isDark ? Colors.white.withOpacity(0.9) : const Color(0xFF1A1A2E),
+              color: isDark ? Colors.white.withOpacity(0.9) : AppColors.ink,
             ),
           ),
         ),
@@ -73,7 +73,7 @@ class VenueCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final textColor = isDark ? Colors.white : AppColors.ink;
     return GlassCard(
       isDark: isDark,
       child: Column(
@@ -88,7 +88,7 @@ class VenueCard extends StatelessWidget {
                   color: AppColors.orange.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(10)),
               child: Text(snapshot.venue.code,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.orange)),
             ),
             const SizedBox(width: 10),
@@ -98,7 +98,7 @@ class VenueCard extends StatelessWidget {
                         fontSize: 14, fontWeight: FontWeight.w600, color: textColor))),
             if (snapshot.error == null)
               Text(formatDashboardMoney(snapshot.todayRevenue),
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.green)),
           ]),
           if (snapshot.error != null) ...[
@@ -107,7 +107,7 @@ class VenueCard extends StatelessWidget {
           ] else ...[
             const SizedBox(height: 6),
             Text('Закрытий смены сегодня: ${snapshot.shiftsToday}',
-                style: const TextStyle(fontSize: 12, color: AppColors.muted)),
+                style: TextStyle(fontSize: 12, color: AppColors.muted)),
           ],
         ],
       ),

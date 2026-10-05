@@ -1,7 +1,7 @@
 name: horeca_app
 description: A fast SaaS app for HoReCa
 publish_to: 'none'
-version: 1.1.0+2
+version: 1.2.0+3
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -32,12 +32,18 @@ dependencies:
   flutter_secure_storage: ^9.0.0
   firebase_app_check: ^0.3.0
   firebase_crashlytics: ^4.0.0
+  drift: ^2.35.1
+  drift_flutter: ^0.3.1
+  uuid: ^4.6.0
+  crypto: ^3.0.7
 
 dev_dependencies:
   flutter_launcher_icons: ^0.14.4
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  build_runner: ^2.15.1
+  drift_dev: ^2.35.1
 
 flutter:
   generate: true
@@ -46,11 +52,43 @@ flutter:
     - assets/fonts/NotoSans-Regular.ttf
     - assets/fonts/NotoSans-Bold.ttf
     - assets/licenses/third_party_licenses.txt
+  # Шрифты оформления Akyl (OFL): Manrope — текст, Unbounded — заголовки,
+  # JetBrains Mono — цифры.
+  fonts:
+    - family: Manrope
+      fonts:
+        - asset: assets/fonts/Manrope-400.ttf
+        - asset: assets/fonts/Manrope-500.ttf
+          weight: 500
+        - asset: assets/fonts/Manrope-600.ttf
+          weight: 600
+        - asset: assets/fonts/Manrope-700.ttf
+          weight: 700
+        - asset: assets/fonts/Manrope-800.ttf
+          weight: 800
+    - family: Unbounded
+      fonts:
+        - asset: assets/fonts/Unbounded-600.ttf
+          weight: 600
+        - asset: assets/fonts/Unbounded-700.ttf
+          weight: 700
+    # Запасной шрифт: в Manrope и JetBrains Mono нет знаков валют (₸, ₼…).
+    - family: NotoSans
+      fonts:
+        - asset: assets/fonts/NotoSans-Regular.ttf
+        - asset: assets/fonts/NotoSans-Bold.ttf
+          weight: 700
+    - family: JetBrainsMono
+      fonts:
+        - asset: assets/fonts/JetBrainsMono-500.ttf
+          weight: 500
+        - asset: assets/fonts/JetBrainsMono-700.ttf
+          weight: 700
 
 flutter_launcher_icons:
   android: true
   ios: false
   image_path: "assets/icon/icon.png"
   min_sdk_android: 21
-  adaptive_icon_background: "#0D1128"
+  adaptive_icon_background: "#0D1030"
   adaptive_icon_foreground: "assets/icon/icon_fg.png"

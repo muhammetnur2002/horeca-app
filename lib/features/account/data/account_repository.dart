@@ -44,7 +44,14 @@ class AccountState {
 }
 
 class AccountRepository extends StateNotifier<AccountState> {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  // late (не field initializer!) — раньше здесь было
+  // `= FirebaseAuth.instance` прямо в объявлении поля, а инициализаторы
+  // полей выполняются ДО тела конструктора, то есть раньше try/catch ниже.
+  // Из-за этого, если Firebase не смог инициализироваться (main.dart это
+  // осознанно допускает — приложение обязано работать офлайн), сам вызов
+  // FirebaseAuth.instance бросал необработанное исключение прямо при
+  // создании репозитория и ронял старт всего приложения.
+  late final FirebaseAuth _auth;
   final SharedPreferences _prefs;
 
   // Отдельный, чисто локальный флаг "на этом устройстве уже когда-то
@@ -64,6 +71,7 @@ class AccountRepository extends StateNotifier<AccountState> {
     // валит старт приложения) — тогда FirebaseAuth.instance бросит
     // исключение. Раньше это было ничем не защищено.
     try {
+      _auth = FirebaseAuth.instance;
       final user = _auth.currentUser;
       if (user != null) {
         state = AccountState(
@@ -193,10 +201,10 @@ class AccountRepository extends StateNotifier<AccountState> {
   /// разрушительными действиями (например, удаление заведения), а не
   /// полноценный вход. Не трогает текущую сессию, только проверяет пароль.
   Future<bool> verifyPassword(String password) async {
-    final user = _auth.currentUser;
-    final email = user?.email;
-    if (user == null || email == null) return false;
     try {
+      final user = _auth.currentUser;
+      final email = user?.email;
+      if (user == null || email == null) return false;
       final cred = EmailAuthProvider.credential(email: email, password: password);
       await user.reauthenticateWithCredential(cred);
       return true;

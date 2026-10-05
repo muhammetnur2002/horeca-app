@@ -1,22 +1,23 @@
 /// Ядро настроек заведения: отделы, категории, товары, сотрудники, валюта,
 /// лого. CRUD-методы для персонала/отделов/категорий и для товаров вынесены
 /// в settings_repository_staff.dart и settings_repository_products.dart
-/// (extension на SettingsRepository) — здесь остаётся только состояние,
-/// загрузка/сохранение и публичные data/applyUpdate(), которыми эти
-/// extension-методы пользуются (state из StateNotifier — protected,
-/// extension не является подклассом и не может обратиться к нему напрямую).
+/// (extension на SettingsRepository).
+///
+/// Данные хранятся в локальной базе. Состояние в памяти — кэш для
+/// синхронных обращений экранов: при создании репозиторий загружает
+/// данные заведения из базы, а каждое изменение сразу применяется
+/// к состоянию и записывается в базу.
 library;
 
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:horeca_app/app/di.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:horeca_app/core/db/dao/catalog_dao.dart';
+import 'package:horeca_app/core/db/db_providers.dart';
+import 'package:horeca_app/shared/models/department_icons.dart';
 import 'package:horeca_app/shared/models/department_model.dart';
 import 'package:horeca_app/shared/models/category_model.dart';
 import 'package:horeca_app/shared/models/product_model.dart';
 import 'package:horeca_app/features/venue/data/venue_repository.dart';
-import 'package:horeca_app/features/account/data/cloud_auto_sync.dart';
 
 class SettingsData {
   final List<DepartmentModel> departments;
@@ -32,8 +33,8 @@ class SettingsData {
     required this.departments,
     required this.categories,
     required this.products,
-    this.establishmentName = 'Спартак',
-    this.staff = const ['Настя', 'Никита', 'Медина', 'Бэлла', 'Альбина'],
+    this.establishmentName = 'Моё заведение',
+    this.staff = const [],
     this.currency = '₸',
     this.logoPath,
     this.showShiftDesserts = true,
@@ -62,222 +63,155 @@ class SettingsData {
     );
   }
 
-  factory SettingsData.initial() {
-    return SettingsData(
-      departments: [
-        DepartmentModel(id: '1', name: 'Кухня', icon: Icons.kitchen),
-        DepartmentModel(id: '2', name: 'Бар', icon: Icons.local_bar),
-        DepartmentModel(id: '3', name: 'Зал', icon: Icons.table_restaurant),
-        DepartmentModel(id: '4', name: 'Склад', icon: Icons.warehouse),
-        DepartmentModel(
-            id: '5', name: 'Клининг', icon: Icons.cleaning_services),
-      ],
-      categories: [
-        CategoryModel(id: '1', name: 'Продукты', departmentId: '1'),
-        CategoryModel(id: '2', name: 'Заморозка', departmentId: '1'),
-        CategoryModel(id: '3', name: 'Хозтовары', departmentId: '1'),
-        CategoryModel(id: '4', name: 'Напитки', departmentId: '2'),
-        CategoryModel(id: '5', name: 'Кофе', departmentId: '2'),
-        CategoryModel(id: '6', name: 'Сиропы', departmentId: '2'),
-        CategoryModel(
-            id: '7',
-            name: 'Десерты',
-            departmentId: '2',
-            isDessertCategory: true),
-        CategoryModel(id: '8', name: 'Хозтовары', departmentId: '2'),
-        CategoryModel(id: '9', name: 'Упаковка', departmentId: '3'),
-        CategoryModel(id: '10', name: 'Хозтовары', departmentId: '3'),
-      ],
-      products: [
-        ProductModel(id: '1', name: 'Томаты', unit: 'кг', categoryId: '1'),
-        ProductModel(id: '2', name: 'Сыр', unit: 'кг', categoryId: '1'),
-        ProductModel(
-            id: '3',
-            name: 'Замороженные овощи',
-            unit: 'упаковка',
-            categoryId: '2'),
-        ProductModel(
-            id: '4', name: 'Моющее средство', unit: 'шт', categoryId: '3'),
-        ProductModel(id: '5', name: 'Кола', unit: 'л', categoryId: '4'),
-        ProductModel(
-            id: '6', name: 'Кофе зерновой', unit: 'кг', categoryId: '5'),
-        ProductModel(
-            id: '7', name: 'Сироп клубничный', unit: 'мл', categoryId: '6'),
-        ProductModel(id: '8', name: 'Чизкейк', unit: 'шт', categoryId: '7'),
-        ProductModel(
-            id: '9',
-            name: 'Пакеты бумажные',
-            unit: 'упаковка',
-            categoryId: '9'),
-        ProductModel(id: '10', name: 'Салфетки', unit: 'шт', categoryId: '10'),
-      ],
-      establishmentName: 'Спартак',
-      staff: ['Настя', 'Никита', 'Медина', 'Бэлла', 'Альбина'],
-      currency: '₸',
-    );
-  }
+  /// Пустое заведение — без демонстрационных данных.
+  factory SettingsData.empty() =>
+      const SettingsData(departments: [], categories: [], products: []);
 }
 
 class SettingsRepository extends StateNotifier<SettingsData> {
-  final SharedPreferences _prefs;
-  final String _settingsKey;
-  final VoidCallback? _onChanged;
+  final CatalogDao _dao;
 
-  SettingsRepository(this._prefs, String venueCode, {VoidCallback? onChanged})
-      : _settingsKey = 'settings_data${venueKeySuffix(venueCode)}',
-        _onChanged = onChanged,
-        super(SettingsData.initial()) {
-    _loadFromPrefs();
+  /// id заведения в базе — для extension-методов.
+  final String venueId;
+
+  /// Сотрудники в состоянии хранятся именами (так их показывают экраны),
+  /// а в базе — строками с id. Карта нужна для переименования/удаления.
+  final Map<String, String> _staffIdByName = {};
+
+  bool _loaded = false;
+  bool get isLoaded => _loaded;
+
+  SettingsRepository(this._dao, this.venueId) : super(SettingsData.empty()) {
+    _ready = _load();
   }
 
-  /// Текущие данные — публичный доступ для extension-методов в
-  /// settings_repository_staff.dart / settings_repository_products.dart.
+  late final Future<void> _ready;
+
+  /// Завершается, когда данные загружены из базы.
+  Future<void> get ready => _ready;
+
+  /// Доступ к базе для extension-методов.
+  CatalogDao get dao => _dao;
+
+  /// Текущие данные — публичный доступ для extension-методов.
   SettingsData get data => state;
 
-  /// Общая точка входа для extension-методов: применяет изменение и сразу
-  /// сохраняет (state из StateNotifier — protected, extension-методы не
-  /// могут менять его напрямую).
+  /// Применяет изменение к состоянию (запись в базу делает вызывающий).
   void applyUpdate(SettingsData Function(SettingsData current) update) {
     state = update(state);
-    persistToPrefs();
   }
 
-  void persistToPrefs() {
-    final data = {
-      'departments': state.departments
-          .map((d) =>
-              {'id': d.id, 'name': d.name, 'icon': d.icon.codePoint.toString()})
-          .toList(),
-      'categories': state.categories
-          .map((c) => {
-                'id': c.id,
-                'name': c.name,
-                'departmentId': c.departmentId,
-                'isDessertCategory': c.isDessertCategory,
-              })
-          .toList(),
-      'products': state.products
-          .map((p) => {
-                'id': p.id,
-                'name': p.name,
-                'unit': p.unit,
-                'inventoryUnit': p.inventoryUnit,
-                'categoryId': p.categoryId,
-                'minStock': p.minStock,
-              })
-          .toList(),
-      'establishmentName': state.establishmentName,
-      'staff': state.staff,
-      'currency': state.currency,
-      'logoPath': state.logoPath,
-      'showShiftDesserts': state.showShiftDesserts,
-    };
-    _prefs.setString(_settingsKey, jsonEncode(data));
-    // Мгновенная (с коротким дебаунсом) отправка в облако по аккаунту —
-    // см. cloud_auto_sync.dart. Ничего не делает, если не залогинены.
-    _onChanged?.call();
-  }
+  /// Последняя запись сотрудника в базу — экраны, читающие сотрудников
+  /// из базы (роли, личные PIN), дожидаются её, чтобы не увидеть старое.
+  Future<void> pendingStaffWrite = Future.value();
 
-  void _loadFromPrefs() {
-    final jsonString = _prefs.getString(_settingsKey);
-    if (jsonString == null) return;
-    try {
-      final data = jsonDecode(jsonString);
-      final depts = (data['departments'] as List)
+  String? staffIdByName(String name) => _staffIdByName[name];
+  void rememberStaffId(String name, String id) => _staffIdByName[name] = id;
+  void forgetStaffName(String name) => _staffIdByName.remove(name);
+
+  Future<void> _load() async {
+    final venues = await _dao.loadVenues();
+    final venue = venues.where((v) => v.id == venueId);
+    final departments = await _dao.loadDepartments(venueId);
+    final categories = await _dao.loadCategories(venueId);
+    final products = await _dao.loadProducts(venueId);
+    final staff = await _dao.loadStaff(venueId);
+    if (!mounted) return;
+
+    _staffIdByName
+      ..clear()
+      ..addEntries(staff.map((s) => MapEntry(s.fullName, s.id)));
+
+    state = SettingsData(
+      departments: departments
           .map((d) => DepartmentModel(
-                id: d['id'],
-                name: d['name'],
-                // ignore: non_const_argument_for_const_parameter
-                icon:
-                    IconData(int.parse(d['icon']), fontFamily: 'MaterialIcons'),
+                id: d.id,
+                name: d.name,
+                icon: DepartmentIcons.resolve(d.iconKey),
               ))
-          .toList();
-      final cats = (data['categories'] as List)
+          .toList(),
+      categories: categories
           .map((c) => CategoryModel(
-                id: c['id'],
-                name: c['name'],
-                departmentId: c['departmentId'],
-                // Обратная совместимость: в старых сохранённых данных этого
-                // поля не было — тогда один раз подстраховываемся по названию
-                // (содержит "десерт"), дальше это уже явный флаг и от
-                // названия больше не зависит.
-                isDessertCategory: c['isDessertCategory'] as bool? ??
-                    (c['name'] as String).toLowerCase().contains('десерт'),
+                id: c.id,
+                name: c.name,
+                departmentId: c.departmentId ?? '',
+                isDessertCategory: c.isDessert,
               ))
-          .toList();
-      final prods = (data['products'] as List)
+          .toList(),
+      products: products
           .map((p) => ProductModel(
-                id: p['id'],
-                name: p['name'],
-                unit: p['unit'],
-                inventoryUnit: p['inventoryUnit'] ?? p['unit'],
-                categoryId: p['categoryId'],
-                minStock: (p['minStock'] as num?)?.toDouble(),
+                id: p.id,
+                name: p.name,
+                unit: p.unit,
+                inventoryUnit: p.inventoryUnit,
+                categoryId: p.categoryId ?? '',
+                minStock: p.minStock,
+                iikoProductId: p.iikoProductId,
+                unitFactor: p.unitFactor,
               ))
-          .toList();
-      final name = data['establishmentName'] as String? ?? 'Спартак';
-      final currency = data['currency'] as String? ?? '₸';
-      final logoPath = data['logoPath'] as String?;
-      final showShiftDesserts = data['showShiftDesserts'] as bool? ?? true;
-      List<String> staff;
-      try {
-        staff = data['staff'] != null
-            ? List<String>.from(data['staff'] as List)
-            : ['Настя', 'Никита', 'Медина', 'Бэлла', 'Альбина'];
-      } catch (_) {
-        staff = ['Настя', 'Никита', 'Медина', 'Бэлла', 'Альбина'];
-      }
-      state = SettingsData(
-        departments: depts,
-        categories: cats,
-        products: prods,
-        establishmentName: name,
-        staff: staff,
-        currency: currency,
-        logoPath: logoPath,
-        showShiftDesserts: showShiftDesserts,
-      );
-    } catch (_) {}
+          .toList(),
+      establishmentName:
+          venue.isEmpty ? 'Моё заведение' : venue.first.reportName,
+      staff: staff.map((s) => s.fullName).toList(),
+      currency: venue.isEmpty ? '₸' : venue.first.currency,
+      logoPath: venue.isEmpty ? null : venue.first.logoPath,
+      showShiftDesserts: venue.isEmpty ? true : venue.first.showShiftDesserts,
+    );
+    _loaded = true;
   }
 
   // ── Десерты на закрытии смены (можно скрыть, если не нужны) ────────────────
   void setShowShiftDesserts(bool value) {
     state = state.copyWith(showShiftDesserts: value);
-    persistToPrefs();
+    _dao.updateVenue(venueId, showShiftDesserts: value);
   }
 
-  // ── Сброс всех данных ─────────────────────────────────────────────────────
+  // ── Сброс справочников ────────────────────────────────────────────────────
   void resetAll() {
-    state = state.copyWith(
-      categories: [],
-      products: [],
-      staff: [],
-    );
-    persistToPrefs();
+    for (final c in state.categories) {
+      _dao.deleteCategory(c.id);
+    }
+    for (final p in state.products) {
+      _dao.deleteProduct(p.id);
+    }
+    for (final id in _staffIdByName.values) {
+      _dao.deleteStaffMember(id);
+    }
+    _staffIdByName.clear();
+    state = state.copyWith(categories: [], products: [], staff: []);
   }
 
   // ── Лого заведения ───────────────────────────────────────────────────────
   void setLogoPath(String path) {
     state = state.copyWith(logoPath: path);
-    persistToPrefs();
+    _dao.updateVenue(venueId, logoPath: path);
   }
 
   void removeLogo() {
     state = state.copyWith(clearLogo: true);
-    persistToPrefs();
+    _dao.updateVenue(venueId, clearLogo: true);
   }
 
   // ── Валюта ────────────────────────────────────────────────────────────────
   void setCurrency(String currency) {
     state = state.copyWith(currency: currency);
-    persistToPrefs();
+    _dao.updateVenue(venueId, currency: currency);
   }
+
+  // ── Название для отчётов ──────────────────────────────────────────────────
+  void setEstablishmentName(String name) {
+    state = state.copyWith(establishmentName: name);
+    _dao.updateVenue(venueId, reportName: name);
+  }
+
+  /// Ключ иконки для записи в базу.
+  static String iconKeyOf(IconData icon) => DepartmentIcons.keyOf(icon);
 }
 
 final settingsRepositoryProvider =
     StateNotifierProvider<SettingsRepository, SettingsData>((ref) {
-  final prefs = ref.watch(sharedPreferencesProvider);
-  final venueCode = ref.watch(venueRepositoryProvider).activeVenueCode;
-  return SettingsRepository(prefs, venueCode,
-      onChanged: () => ref.read(cloudAutoSyncProvider).scheduleSync());
+  return SettingsRepository(
+    ref.watch(catalogDaoProvider),
+    ref.watch(activeVenueIdProvider),
+  );
 });

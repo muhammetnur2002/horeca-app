@@ -24,7 +24,7 @@ class LoginCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final textColor = isDark ? Colors.white : AppColors.ink;
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
@@ -38,21 +38,21 @@ class LoginCard extends StatelessWidget {
             Row(children: [
               Container(width: 40, height: 40,
                   decoration: BoxDecoration(color: AppColors.orange.withOpacity(0.12), borderRadius: BorderRadius.circular(12)),
-                  child: const Icon(Icons.store_rounded, color: AppColors.orange, size: 20)),
+                  child: Icon(Icons.store_rounded, color: AppColors.orange, size: 20)),
               const SizedBox(width: 12),
               Expanded(child: Text('Подключить iiko', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: textColor))),
             ]),
             const SizedBox(height: 8),
             Text('Введите API-логин из личного кабинета iikoWeb (раздел интеграции)',
-                style: const TextStyle(fontSize: 12, color: AppColors.muted)),
+                style: TextStyle(fontSize: 12, color: AppColors.muted)),
             const SizedBox(height: 16),
             TextField(
               controller: controller,
               style: TextStyle(color: textColor),
               decoration: InputDecoration(
                 hintText: 'API-логин',
-                hintStyle: const TextStyle(color: AppColors.muted),
-                prefixIcon: const Icon(Icons.key_rounded, color: AppColors.orange),
+                hintStyle: TextStyle(color: AppColors.muted),
+                prefixIcon: Icon(Icons.key_rounded, color: AppColors.orange),
               ),
             ),
             const SizedBox(height: 16),
@@ -87,7 +87,7 @@ class ConnectedCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final textColor = isDark ? Colors.white : AppColors.ink;
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
@@ -99,7 +99,7 @@ class ConnectedCard extends StatelessWidget {
             border: Border.all(color: AppColors.green.withOpacity(0.25))),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
-              const Icon(Icons.check_circle_rounded, color: AppColors.green, size: 22),
+              Icon(Icons.check_circle_rounded, color: AppColors.green, size: 22),
               const SizedBox(width: 8),
               Expanded(child: Text('Подключено: $orgName', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: textColor))),
             ]),
@@ -138,8 +138,8 @@ class SelectRow extends StatelessWidget {
           color: Colors.white.withOpacity(isDark ? 0.06 : 0.6),
           border: Border.all(color: Colors.white.withOpacity(isDark ? 0.1 : 0.4))),
         child: Row(children: [
-          Expanded(child: Text(title, style: TextStyle(fontSize: 14, color: isDark ? Colors.white : const Color(0xFF1A1A2E)))),
-          const Icon(Icons.chevron_right_rounded, color: AppColors.muted),
+          Expanded(child: Text(title, style: TextStyle(fontSize: 14, color: isDark ? Colors.white : AppColors.ink))),
+          Icon(Icons.chevron_right_rounded, color: AppColors.muted),
         ]),
       ),
     );
@@ -163,7 +163,7 @@ class CheckRow extends StatelessWidget {
       child: CheckboxListTile(
         value: checked,
         onChanged: onChanged,
-        title: Text(title, style: TextStyle(fontSize: 14, color: isDark ? Colors.white : const Color(0xFF1A1A2E))),
+        title: Text(title, style: TextStyle(fontSize: 14, color: isDark ? Colors.white : AppColors.ink)),
         activeColor: AppColors.orange,
         controlAffinity: ListTileControlAffinity.leading,
         contentPadding: EdgeInsets.zero,
@@ -183,7 +183,7 @@ Future<bool> showLowStockRequestDialog(
   required bool isDark,
   required List<LowStockSuggestion> suggestions,
 }) async {
-  final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+  final textColor = isDark ? Colors.white : AppColors.ink;
   final l10n = AppLocalizations.of(context);
   final result = await showDialog<bool>(
     context: context,
@@ -200,7 +200,7 @@ Future<bool> showLowStockRequestDialog(
           children: [
             Text(
               '${suggestions.length} ${suggestions.length == 1 ? "товар" : "товара(ов)"} ниже минимального остатка:',
-              style: const TextStyle(fontSize: 13, color: AppColors.muted),
+              style: TextStyle(fontSize: 13, color: AppColors.muted),
             ),
             const SizedBox(height: 12),
             ConstrainedBox(
@@ -220,12 +220,12 @@ Future<bool> showLowStockRequestDialog(
                               style: TextStyle(
                                   fontWeight: FontWeight.w600, fontSize: 14, color: textColor)),
                           Text('Остаток: ${_formatQty(s.currentAmount)} ${s.iikoUnit}',
-                              style: const TextStyle(fontSize: 12, color: AppColors.muted)),
+                              style: TextStyle(fontSize: 12, color: AppColors.muted)),
                         ],
                       ),
                     ),
                     Text('+${_formatQty(s.suggestedQuantity)} ${s.product.unit}',
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.orange)),
                   ]);
                 },
@@ -237,7 +237,7 @@ Future<bool> showLowStockRequestDialog(
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx, false),
-          child: Text(l10n.cancel, style: const TextStyle(color: AppColors.muted)),
+          child: Text(l10n.cancel, style: TextStyle(color: AppColors.muted)),
         ),
         ElevatedButton(
           onPressed: () => Navigator.pop(ctx, true),
@@ -268,8 +268,8 @@ class BalanceRow extends StatelessWidget {
         color: Colors.white.withOpacity(isDark ? 0.06 : 0.6),
         border: Border.all(color: Colors.white.withOpacity(isDark ? 0.1 : 0.4))),
       child: Row(children: [
-        Expanded(child: Text(item.productName, style: TextStyle(fontSize: 14, color: isDark ? Colors.white : const Color(0xFF1A1A2E)))),
-        Text('${item.amount} ${item.unit}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.orange)),
+        Expanded(child: Text(item.productName, style: TextStyle(fontSize: 14, color: isDark ? Colors.white : AppColors.ink))),
+        Text('${item.amount} ${item.unit}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.orange)),
       ]),
     );
   }

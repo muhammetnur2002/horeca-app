@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -14,6 +16,7 @@ import 'package:horeca_app/features/analytics/presentation/analytics_screen.dart
 import 'package:horeca_app/features/notifications/presentation/notifications_screen.dart';
 import 'package:horeca_app/features/custom_template/presentation/template_screen.dart';
 import 'package:horeca_app/features/auth/data/auth_repository.dart';
+import 'package:horeca_app/features/stock/presentation/stock_screen.dart';
 
 /// Настройки и аналитика видны только администратору — соответствующие
 /// кнопки и так скрыты для сотрудников (см. HomeScreen, MainShell), но это
@@ -22,7 +25,8 @@ import 'package:horeca_app/features/auth/data/auth_repository.dart';
 /// сворачивания, диплинк и т.п.) и получить доступ к PIN администратора,
 /// удалению заведений и финансовым показателям.
 String? _adminOnlyRedirect(BuildContext context, GoRouterState state) {
-  final authState = ProviderScope.containerOf(context).read(authRepositoryProvider);
+  final authState =
+      ProviderScope.containerOf(context).read(authRepositoryProvider);
   if (authState.role == UserRole.staff) return '/';
   return null;
 }
@@ -35,7 +39,8 @@ final router = GoRouter(
       routes: [
         GoRoute(path: '/', builder: (_, __) => const HomeScreen()),
         GoRoute(path: '/request', builder: (_, __) => const RequestScreen()),
-        GoRoute(path: '/inventory', builder: (_, __) => const InventoryScreen()),
+        GoRoute(
+            path: '/inventory', builder: (_, __) => const InventoryScreen()),
         GoRoute(path: '/history', builder: (_, __) => const HistoryScreen()),
         GoRoute(
           path: '/settings',
@@ -43,6 +48,11 @@ final router = GoRouter(
           builder: (_, __) => const SettingsScreen(),
         ),
       ],
+    ),
+    // Учёт товара: приёмка поставок, остатки и расход.
+    GoRoute(
+      path: '/stock',
+      builder: (_, __) => const StockScreen(),
     ),
     // Закрытие смены — без BottomBar, отдельный экран
     GoRoute(
@@ -80,60 +90,73 @@ class MainShell extends ConsumerWidget {
     final authState = ref.watch(authRepositoryProvider);
     final isAdmin = authState.role != UserRole.staff;
 
-    return Scaffold(
-      body: child,
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: isDark
-              ? AppColors.darkSurface
-              : Colors.white,
-          border: Border(
-            top: BorderSide(
-              color: isDark
-                  ? Colors.white.withOpacity(0.06)
-                  : Colors.black.withOpacity(0.06),
-              width: 0.5,
-            ),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 16,
-              offset: const Offset(0, -4),
-            ),
-          ],
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _calculateIndex(context),
-          onTap: (index) => _onTap(context, index),
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          selectedItemColor: AppColors.orange,
-          unselectedItemColor: AppColors.muted,
-          selectedLabelStyle: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-          ),
-          unselectedLabelStyle: const TextStyle(fontSize: 11),
-          items: [
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.home_outlined),
-              activeIcon: const Icon(Icons.home_rounded),
-              label: l10n.appTitle,
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.history_outlined),
-              activeIcon: const Icon(Icons.history_rounded),
-              label: l10n.history,
-            ),
-            if (isAdmin)
-              BottomNavigationBarItem(
-                icon: const Icon(Icons.settings_outlined),
-                activeIcon: const Icon(Icons.settings_rounded),
-                label: l10n.settings,
+    // Фон-туманность рисуется под всей оболочкой: экраны рисуют тот же
+    // фон от верхнего края, поэтому под нижней панелью он продолжается
+    // без шва.
+    return DecoratedBox(
+      decoration: BoxDecoration(gradient: BackdropGradient(isDark)),
+      child: Scaffold(
+        body: child,
+        backgroundColor: Colors.transparent,
+        // Нижняя панель — плавающая стеклянная «капсула».
+        bottomNavigationBar: Container(
+          padding: EdgeInsets.fromLTRB(
+              16, 6, 16, 10 + MediaQuery.paddingOf(context).bottom),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(26),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(26),
+                  color: isDark
+                      ? Colors.white.withOpacity(0.07)
+                      : Colors.white.withOpacity(0.75),
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white.withOpacity(0.12)
+                        : AppColors.orange.withOpacity(0.12),
+                  ),
+                ),
+                child: MediaQuery.removePadding(
+                  context: context,
+                  removeBottom: true,
+                  child: BottomNavigationBar(
+                    currentIndex: _calculateIndex(context),
+                    onTap: (index) => _onTap(context, index),
+                    type: BottomNavigationBarType.fixed,
+                    backgroundColor: Colors.transparent,
+                    elevation: 0,
+                    selectedItemColor: AppColors.orange,
+                    unselectedItemColor: AppColors.muted,
+                    selectedLabelStyle: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    unselectedLabelStyle: const TextStyle(fontSize: 11),
+                    items: [
+                      BottomNavigationBarItem(
+                        icon: const Icon(Icons.home_outlined),
+                        activeIcon: const Icon(Icons.home_rounded),
+                        label: l10n.appTitle,
+                      ),
+                      BottomNavigationBarItem(
+                        icon: const Icon(Icons.history_outlined),
+                        activeIcon: const Icon(Icons.history_rounded),
+                        label: l10n.history,
+                      ),
+                      if (isAdmin)
+                        BottomNavigationBarItem(
+                          icon: const Icon(Icons.settings_outlined),
+                          activeIcon: const Icon(Icons.settings_rounded),
+                          label: l10n.settings,
+                        ),
+                    ],
+                  ),
+                ),
               ),
-          ],
+            ),
+          ),
         ),
       ),
     );
@@ -148,9 +171,15 @@ class MainShell extends ConsumerWidget {
 
   void _onTap(BuildContext context, int index) {
     switch (index) {
-      case 0: context.go('/'); break;
-      case 1: context.go('/history'); break;
-      case 2: context.go('/settings'); break;
+      case 0:
+        context.go('/');
+        break;
+      case 1:
+        context.go('/history');
+        break;
+      case 2:
+        context.go('/settings');
+        break;
     }
   }
 }

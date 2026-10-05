@@ -105,7 +105,7 @@ class CatalogTab extends ConsumerWidget {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text('Отдел «${dept.name}» удалён'),
-                  backgroundColor: const Color(0xFF2E3352),
+                  backgroundColor: AppColors.darkCard2,
                   behavior: SnackBarBehavior.floating,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
@@ -141,7 +141,7 @@ class CatalogTab extends ConsumerWidget {
           decoration: InputDecoration(
             hintText: 'Название отдела',
             prefixIcon:
-                const Icon(Icons.store_outlined, color: AppColors.orange),
+                Icon(Icons.store_outlined, color: AppColors.orange),
           ),
         ),
         actions: [
@@ -157,7 +157,7 @@ class CatalogTab extends ConsumerWidget {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('Отдел «${nameCtrl.text}» добавлен'),
-                    backgroundColor: const Color(0xFF2E3352),
+                    backgroundColor: AppColors.darkCard2,
                     behavior: SnackBarBehavior.floating,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
@@ -194,7 +194,7 @@ class CatalogTab extends ConsumerWidget {
           decoration: InputDecoration(
             hintText: 'Название отдела',
             prefixIcon:
-                const Icon(Icons.store_outlined, color: AppColors.orange),
+                Icon(Icons.store_outlined, color: AppColors.orange),
           ),
         ),
         actions: [
@@ -210,7 +210,7 @@ class CatalogTab extends ConsumerWidget {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('Отдел «${nameCtrl.text}» обновлён'),
-                    backgroundColor: const Color(0xFF2E3352),
+                    backgroundColor: AppColors.darkCard2,
                     behavior: SnackBarBehavior.floating,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
@@ -313,7 +313,7 @@ class _DeptRow extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w500,
-                        color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+                        color: isDark ? Colors.white : AppColors.ink,
                       ),
                     ),
                   ),

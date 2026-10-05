@@ -55,16 +55,16 @@ Widget buildShiftStep2({
         isDark: isDark,
         accentColor: AppColors.green,
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('Итоговая выручка (авто)',
+          Text('Итоговая выручка (авто)',
               style: TextStyle(fontSize: 11, color: AppColors.green)),
           const SizedBox(height: 4),
           Text('${shiftCloseFormatMoney(autoTotal)} $currency',
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.w700,
                   color: AppColors.green)),
           const SizedBox(height: 2),
-          const Text('QR + карта + наличные',
+          Text('QR + карта + наличные',
               style: TextStyle(fontSize: 11, color: AppColors.muted)),
         ])),
     const SizedBox(height: 10),

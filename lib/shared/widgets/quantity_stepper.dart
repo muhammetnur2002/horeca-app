@@ -33,6 +33,9 @@ class QuantityStepper extends StatelessWidget {
     this.allowDecimal = false,
   });
 
+  /// Шаг 0,5 с дробным значением не должен давать «1.2999999».
+  static double _round(double v) => (v * 1000).roundToDouble() / 1000;
+
   String get _formatted =>
       value == value.truncateToDouble() ? value.toInt().toString() : value.toString();
 
@@ -57,7 +60,7 @@ class QuantityStepper extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text(l10n.cancel, style: const TextStyle(color: AppColors.muted)),
+            child: Text(l10n.cancel, style: TextStyle(color: AppColors.muted)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -83,14 +86,14 @@ class QuantityStepper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasQty = value > 0;
-    final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final textColor = isDark ? Colors.white : AppColors.ink;
     return Row(mainAxisSize: MainAxisSize.min, children: [
       _QtyBtn(
         icon: Icons.remove,
         isDark: isDark,
         onTap: () {
           if (value > 0) {
-            final next = value - step;
+            final next = _round(value - step);
             onChanged(next < 0 ? 0 : next);
           }
         },
@@ -105,17 +108,16 @@ class QuantityStepper extends StatelessWidget {
               _formatted,
               textAlign: TextAlign.center,
               style: TextStyle(
+                fontFamily: AppFonts.mono,
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
-                color: hasQty ? AppColors.orange : textColor,
-                decoration: TextDecoration.underline,
-                decorationColor: hasQty ? AppColors.orange : AppColors.muted,
+                color: hasQty ? AppColors.green : textColor,
               ),
             ),
           ),
         ),
       ),
-      _QtyBtn(icon: Icons.add, isDark: isDark, onTap: () => onChanged(value + step)),
+      _QtyBtn(icon: Icons.add, isDark: isDark, onTap: () => onChanged(_round(value + step))),
     ]);
   }
 }
@@ -133,15 +135,19 @@ class _QtyBtn extends StatelessWidget {
         // нажимают эту кнопку десятки раз подряд при инвентаризации, часто
         // мокрыми/жирными руками или в перчатках.
         child: Container(
-          width: 44,
-          height: 44,
+          width: 40,
+          height: 40,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(isDark ? 0.08 : 0.6),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.white.withOpacity(isDark ? 0.1 : 0.3)),
+            color: Colors.white.withOpacity(isDark ? 0.06 : 0.7),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+                color: isDark
+                    ? Colors.white.withOpacity(0.14)
+                    : AppColors.orange.withOpacity(0.15)),
           ),
-          child: Icon(icon, size: 18, color: isDark ? Colors.white : const Color(0xFF1A1A2E)),
+          child: Icon(icon,
+              size: 16, color: isDark ? Colors.white70 : AppColors.inkSoft),
         ),
       );
 }

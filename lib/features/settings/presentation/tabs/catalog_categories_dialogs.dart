@@ -1,5 +1,7 @@
 /// Диалоги экрана "Категории": удаление, добавление, редактирование.
 /// Вынесены из catalog_categories_screen.dart.
+library;
+
 import 'package:flutter/material.dart';
 import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
@@ -32,7 +34,7 @@ void confirmDeleteCategory(BuildContext context, SettingsRepository repo,
             if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
               content: Text('Категория «${cat.name}» удалена'),
-              backgroundColor: const Color(0xFF2E3352),
+              backgroundColor: AppColors.darkCard2,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
@@ -80,7 +82,7 @@ void showAddCategoryDialog({
                 autofocus: true,
                 decoration: InputDecoration(
                   hintText: 'Название категории',
-                  prefixIcon: const Icon(Icons.folder_outlined,
+                  prefixIcon: Icon(Icons.folder_outlined,
                       color: AppColors.orange),
                 ),
               ),
@@ -106,7 +108,7 @@ void showAddCategoryDialog({
                   if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                     content: Text('Категория «${nameCtrl.text}» добавлена'),
-                    backgroundColor: const Color(0xFF2E3352),
+                    backgroundColor: AppColors.darkCard2,
                     behavior: SnackBarBehavior.floating,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
@@ -157,7 +159,7 @@ void showEditCategoryDialog({
                 autofocus: true,
                 decoration: InputDecoration(
                   hintText: 'Название категории',
-                  prefixIcon: const Icon(Icons.folder_outlined,
+                  prefixIcon: Icon(Icons.folder_outlined,
                       color: AppColors.orange),
                 ),
               ),
@@ -183,7 +185,7 @@ void showEditCategoryDialog({
                   if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                     content: Text('Категория «${nameCtrl.text}» обновлена'),
-                    backgroundColor: const Color(0xFF2E3352),
+                    backgroundColor: AppColors.darkCard2,
                     behavior: SnackBarBehavior.floating,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),

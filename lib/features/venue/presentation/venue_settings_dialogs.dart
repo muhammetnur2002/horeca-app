@@ -28,7 +28,7 @@ void showAddVenueDialog(BuildContext context, WidgetRef ref, bool isDark) {
         controller: ctrl,
         autofocus: true,
         textCapitalization: TextCapitalization.words,
-        decoration: const InputDecoration(
+        decoration: InputDecoration(
           hintText: 'Название заведения',
           prefixIcon: Icon(Icons.storefront_outlined, color: AppColors.orange),
         ),
@@ -36,7 +36,7 @@ void showAddVenueDialog(BuildContext context, WidgetRef ref, bool isDark) {
       actions: [
         TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text(l10n.cancel, style: const TextStyle(color: AppColors.muted))),
+            child: Text(l10n.cancel, style: TextStyle(color: AppColors.muted))),
         ElevatedButton(
           onPressed: () {
             if (ctrl.text.trim().isNotEmpty) {
@@ -70,7 +70,7 @@ void showRenameVenueDialog(BuildContext context, WidgetRef ref, Venue venue, boo
         controller: ctrl,
         autofocus: true,
         textCapitalization: TextCapitalization.words,
-        decoration: const InputDecoration(
+        decoration: InputDecoration(
           hintText: 'Название заведения',
           prefixIcon: Icon(Icons.storefront_outlined, color: AppColors.orange),
         ),
@@ -78,7 +78,7 @@ void showRenameVenueDialog(BuildContext context, WidgetRef ref, Venue venue, boo
       actions: [
         TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text(l10n.cancel, style: const TextStyle(color: AppColors.muted))),
+            child: Text(l10n.cancel, style: TextStyle(color: AppColors.muted))),
         ElevatedButton(
           onPressed: () {
             if (ctrl.text.trim().isNotEmpty) {
@@ -121,7 +121,7 @@ void showDeleteVenueDialog(BuildContext context, WidgetRef ref, Venue venue, boo
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Все данные этого заведения (товары, история, отчёты) будут '
               'удалены безвозвратно — с этого устройства и из облака. '
               'Подтвердите PIN-кодом администратора этого заведения или '
@@ -136,7 +136,7 @@ void showDeleteVenueDialog(BuildContext context, WidgetRef ref, Venue venue, boo
               enabled: !isChecking,
               decoration: InputDecoration(
                 hintText: 'PIN администратора или пароль аккаунта',
-                prefixIcon: const Icon(Icons.lock_outline, color: AppColors.orange),
+                prefixIcon: Icon(Icons.lock_outline, color: AppColors.orange),
                 suffixIcon: IconButton(
                   icon: Icon(
                       obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
@@ -154,7 +154,7 @@ void showDeleteVenueDialog(BuildContext context, WidgetRef ref, Venue venue, boo
         actions: [
           TextButton(
             onPressed: isChecking ? null : () => Navigator.pop(ctx),
-            child: Text(l10n.cancel, style: const TextStyle(color: AppColors.muted)),
+            child: Text(l10n.cancel, style: TextStyle(color: AppColors.muted)),
           ),
           ElevatedButton(
             onPressed: isChecking

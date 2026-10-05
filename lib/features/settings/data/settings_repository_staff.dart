@@ -1,11 +1,10 @@
-/// CRUD-методы для персонала, названия заведения, отделов и категорий —
-/// extension на SettingsRepository. Вынесены из settings_repository.dart,
-/// чтобы не раздувать его; работают через публичные data/applyUpdate()
-/// (state из StateNotifier — protected, extension-методы не могут его
-/// использовать напрямую, т.к. extension не является подклассом).
+/// CRUD-методы для персонала, отделов и категорий — extension на
+/// SettingsRepository. Каждое изменение применяется к состоянию в памяти
+/// и записывается в базу.
 library;
 
 import 'package:flutter/material.dart';
+import 'package:horeca_app/core/db/ids.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
 import 'package:horeca_app/shared/models/category_model.dart';
 import 'package:horeca_app/shared/models/department_model.dart';
@@ -14,43 +13,66 @@ extension SettingsRepositoryStaff on SettingsRepository {
   // ── Сотрудники ────────────────────────────────────────────────────────────
   void addStaff(String name) {
     if (name.isEmpty || data.staff.contains(name)) return;
+    final id = Ids.newId();
+    rememberStaffId(name, id);
     applyUpdate((s) => s.copyWith(staff: [...s.staff, name]));
+    pendingStaffWrite =
+        dao.upsertStaffMember(venueId: venueId, id: id, fullName: name);
   }
 
   void deleteStaff(String name) {
+    final id = staffIdByName(name);
+    forgetStaffName(name);
     applyUpdate(
         (s) => s.copyWith(staff: s.staff.where((x) => x != name).toList()));
+    if (id != null) pendingStaffWrite = dao.deleteStaffMember(id);
   }
 
   void updateStaff(String oldName, String newName) {
     if (newName.isEmpty) return;
+    final id = staffIdByName(oldName);
+    forgetStaffName(oldName);
+    if (id != null) {
+      rememberStaffId(newName, id);
+      pendingStaffWrite =
+          dao.upsertStaffMember(venueId: venueId, id: id, fullName: newName);
+    }
     applyUpdate((s) => s.copyWith(
         staff: s.staff.map((x) => x == oldName ? newName : x).toList()));
   }
 
-  // ── Заведение ─────────────────────────────────────────────────────────────
-  void setEstablishmentName(String name) {
-    applyUpdate((s) => s.copyWith(establishmentName: name));
-  }
-
   // ── Отделы ────────────────────────────────────────────────────────────────
   void addDepartment(String name, IconData icon) {
-    final d = DepartmentModel(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        name: name,
-        icon: icon);
+    final d = DepartmentModel(id: Ids.newId(), name: name, icon: icon);
     applyUpdate((s) => s.copyWith(departments: [...s.departments, d]));
+    dao.upsertDepartment(
+        venueId: venueId,
+        id: d.id,
+        name: name,
+        iconKey: SettingsRepository.iconKeyOf(icon),
+        sortOrder: data.departments.length - 1);
   }
 
   void updateDepartment(String id, String newName, IconData? newIcon) {
+    var index = 0;
     applyUpdate((s) => s.copyWith(
-            departments: s.departments.map((d) {
+            departments: s.departments.indexed.map((e) {
+          final d = e.$2;
           if (d.id == id) {
+            index = e.$1;
             return DepartmentModel(
                 id: d.id, name: newName, icon: newIcon ?? d.icon);
           }
           return d;
         }).toList()));
+    final d = data.departments.where((d) => d.id == id);
+    if (d.isEmpty) return;
+    dao.upsertDepartment(
+        venueId: venueId,
+        id: id,
+        name: newName,
+        iconKey: SettingsRepository.iconKeyOf(d.first.icon),
+        sortOrder: index);
   }
 
   void deleteDepartment(String id) {
@@ -62,20 +84,18 @@ extension SettingsRepositoryStaff on SettingsRepository {
               orElse: () => CategoryModel(id: '', name: '', departmentId: ''));
           return cat.departmentId != id;
         }).toList()));
+    // В базе отдел удаляется вместе с категориями и их товарами.
+    dao.deleteDepartment(id);
   }
 
   // ── Категории ─────────────────────────────────────────────────────────────
   void addCategory(String name, String departmentId,
       {bool isDessertCategory = false}) {
-    addCategoryWithId(DateTime.now().millisecondsSinceEpoch.toString(), name,
-        departmentId, isDessertCategory: isDessertCategory);
+    addCategoryWithId(Ids.newId(), name, departmentId,
+        isDessertCategory: isDessertCategory);
   }
 
-  /// Вариант addCategory с явным id — нужен массовому импорту (например, из
-  /// iiko), где несколько категорий создаются подряд в одном синхронном
-  /// цикле: id на основе DateTime.now() в таком цикле может совпасть у
-  /// соседних вызовов (одна и та же миллисекунда), а вызывающий код сам
-  /// гарантирует уникальность своих id.
+  /// Вариант addCategory с явным id — для массового импорта (iiko).
   String addCategoryWithId(String id, String name, String departmentId,
       {bool isDessertCategory = false}) {
     final c = CategoryModel(
@@ -84,15 +104,17 @@ extension SettingsRepositoryStaff on SettingsRepository {
         departmentId: departmentId,
         isDessertCategory: isDessertCategory);
     applyUpdate((s) => s.copyWith(categories: [...s.categories, c]));
+    _saveCategory(c, sortOrder: data.categories.length - 1);
     return id;
   }
 
   void updateCategory(String id, String newName,
       {String? newDepartmentId, bool? isDessertCategory}) {
+    CategoryModel? updated;
     applyUpdate((s) => s.copyWith(
             categories: s.categories.map((c) {
           if (c.id == id) {
-            return CategoryModel(
+            return updated = CategoryModel(
                 id: c.id,
                 name: newName,
                 departmentId: newDepartmentId ?? c.departmentId,
@@ -100,11 +122,25 @@ extension SettingsRepositoryStaff on SettingsRepository {
           }
           return c;
         }).toList()));
+    if (updated != null) _saveCategory(updated!);
   }
 
   void deleteCategory(String id) {
     applyUpdate((s) => s.copyWith(
         categories: s.categories.where((c) => c.id != id).toList(),
         products: s.products.where((p) => p.categoryId != id).toList()));
+    // В базе категория удаляется вместе с товарами.
+    dao.deleteCategory(id);
+  }
+
+  void _saveCategory(CategoryModel c, {int? sortOrder}) {
+    dao.upsertCategory(
+      venueId: venueId,
+      id: c.id,
+      name: c.name,
+      departmentId: c.departmentId.isEmpty ? null : c.departmentId,
+      isDessert: c.isDessertCategory,
+      sortOrder: sortOrder,
+    );
   }
 }

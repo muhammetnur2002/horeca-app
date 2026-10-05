@@ -10,7 +10,6 @@ import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
 import 'package:horeca_app/features/settings/data/settings_repository_products.dart';
-import 'package:horeca_app/features/settings/data/settings_repository_staff.dart';
 import 'package:horeca_app/shared/models/category_model.dart';
 import 'package:horeca_app/shared/models/department_model.dart';
 import 'package:horeca_app/shared/models/product_model.dart';
@@ -103,7 +102,7 @@ Future<void> changeProductsDepartmentAndCategory({
   }
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
     content: Text('Изменено у ${selectedIds.length} товаров'),
-    backgroundColor: const Color(0xFF2E3352),
+    backgroundColor: AppColors.darkCard2,
     behavior: SnackBarBehavior.floating,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
   ));
@@ -131,7 +130,7 @@ Future<void> showBatchChangeProductsDialog({
     }
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text('$title изменено у ${ids.length} товаров'),
-      backgroundColor: const Color(0xFF2E3352),
+      backgroundColor: AppColors.darkCard2,
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     ));
@@ -266,7 +265,7 @@ void showBulkAddProductsDialog({
                       defaultInventoryUnit: sInvUnit);
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                     content: Text('Добавлено ${names.length} товаров'),
-                    backgroundColor: const Color(0xFF2E3352),
+                    backgroundColor: AppColors.darkCard2,
                     behavior: SnackBarBehavior.floating,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),

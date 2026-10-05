@@ -11,12 +11,12 @@ import 'package:horeca_app/features/splash/splash_screen.dart';
 import 'package:horeca_app/features/auth/data/auth_repository.dart';
 import 'package:horeca_app/features/auth/presentation/pin_screen.dart';
 import 'package:horeca_app/features/account/data/account_repository.dart';
-import 'package:horeca_app/features/account/data/cloud_auto_sync.dart';
 import 'package:horeca_app/features/account/data/cloud_sync_service.dart';
 import 'package:horeca_app/features/account/presentation/account_gate_screen.dart';
 import 'package:horeca_app/features/venue/data/venue_repository.dart';
 
 export 'app_theme.dart';
+export 'backdrop.dart';
 
 /// Корневой виджет приложения: заставка, гейт входа/PIN и MaterialApp.router
 /// с темами. Цвета и ThemeData вынесены в app_theme.dart (и реэкспортированы
@@ -71,12 +71,11 @@ class _HorecaAppState extends ConsumerState<HorecaApp> with WidgetsBindingObserv
   void _syncIfLoggedIn() {
     final account = ref.read(accountRepositoryProvider);
     if (account.isLoggedIn && account.uid != null) {
-      // Синхронизируем только активное на этом устройстве заведение — это
-      // устройство обычно работает с одним конкретным заведением (касса
-      // на месте), а не со всеми пятью сразу.
-      final venueCode = ref.read(venueRepositoryProvider).activeVenueCode;
-      CloudSyncService.syncSmart(
-          account.uid!, ref.read(sharedPreferencesProvider), venueCode);
+      // Данные заведений теперь в локальной базе; синхронизация данных
+      // с облаком вернётся с переездом на новый сервер. Пока отправляем
+      // только список заведений (нужен при входе с другого устройства).
+      CloudSyncService.pushVenueRegistry(
+          account.uid!, ref.read(venueRepositoryProvider).venues);
     }
   }
 
@@ -86,11 +85,6 @@ class _HorecaAppState extends ConsumerState<HorecaApp> with WidgetsBindingObserv
   // с учётом времени последнего изменения, а не слепую перезапись.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused) {
-      // Досылаем изменение, которое ещё ждёт дебаунса (см. cloud_auto_sync.dart),
-      // чтобы не потерять его при сворачивании прямо в это окно.
-      ref.read(cloudAutoSyncProvider).flush();
-    }
     if (state == AppLifecycleState.paused || state == AppLifecycleState.resumed) {
       _syncIfLoggedIn();
     }
@@ -99,6 +93,10 @@ class _HorecaAppState extends ConsumerState<HorecaApp> with WidgetsBindingObserv
   @override
   Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
+    // Палитра применяется к AppColors в PaletteNotifier; watch нужен, чтобы
+    // при смене темы перестроить MaterialApp с новыми цветами.
+    final palette = ref.watch(paletteProvider);
+    AppColors.applyPalette(palette);
 
     if (_showSplash) {
       return Directionality(
@@ -127,8 +125,8 @@ class _HorecaAppState extends ConsumerState<HorecaApp> with WidgetsBindingObserv
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: const [Locale('ru')],
-        theme: ThemeData(brightness: Brightness.light, useMaterial3: true),
-        darkTheme: ThemeData(brightness: Brightness.dark, useMaterial3: true),
+        theme: ThemeData(brightness: Brightness.light, useMaterial3: true, colorSchemeSeed: AppColors.orange),
+        darkTheme: ThemeData(brightness: Brightness.dark, useMaterial3: true, colorSchemeSeed: AppColors.orange),
         home: AccountGateScreen(
           onSkip: () {
             ref.read(sharedPreferencesProvider).setBool(_accountGateSkippedKey, true);
@@ -153,8 +151,8 @@ class _HorecaAppState extends ConsumerState<HorecaApp> with WidgetsBindingObserv
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: const [Locale('ru')],
-        theme: ThemeData(brightness: Brightness.light, useMaterial3: true),
-        darkTheme: ThemeData(brightness: Brightness.dark, useMaterial3: true),
+        theme: ThemeData(brightness: Brightness.light, useMaterial3: true, colorSchemeSeed: AppColors.orange),
+        darkTheme: ThemeData(brightness: Brightness.dark, useMaterial3: true, colorSchemeSeed: AppColors.orange),
         home: const PinScreen(),
       );
     }

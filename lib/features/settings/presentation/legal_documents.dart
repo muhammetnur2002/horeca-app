@@ -36,7 +36,7 @@ void _showLegalSheet(BuildContext context, {required String title, required Stri
                     style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : const Color(0xFF1A1A2E)))),
+                        color: isDark ? Colors.white : AppColors.ink))),
             Expanded(
               child: SingleChildScrollView(
                 controller: scrollCtrl,
@@ -48,7 +48,7 @@ void _showLegalSheet(BuildContext context, {required String title, required Stri
                       height: 1.6,
                       color: isDark
                           ? Colors.white.withOpacity(0.85)
-                          : const Color(0xFF1A1A2E)),
+                          : AppColors.ink),
                 ),
               ),
             ),

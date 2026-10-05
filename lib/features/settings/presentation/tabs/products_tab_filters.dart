@@ -37,7 +37,7 @@ Widget buildProductsSearchField({
           child: TextField(
             controller: controller,
             style: TextStyle(
-              color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+              color: isDark ? Colors.white : AppColors.ink,
               fontSize: 14,
             ),
             decoration: InputDecoration(
@@ -46,7 +46,7 @@ Widget buildProductsSearchField({
               prefixIcon: Icon(Icons.search_rounded, color: AppColors.muted),
               suffixIcon: searchQuery.isNotEmpty
                   ? IconButton(
-                      icon: const Icon(Icons.close_rounded,
+                      icon: Icon(Icons.close_rounded,
                           color: AppColors.muted, size: 18),
                       onPressed: onClear)
                   : null,

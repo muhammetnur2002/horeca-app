@@ -53,7 +53,7 @@ Widget buildShiftStep3({
               child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Касса на следуюущую смену',
+                    Text('Касса на следующую смену',
                         style: TextStyle(fontSize: 13, color: AppColors.muted)),
                     Text('${shiftCloseFormatMoney(tomorrowCash)} $currency',
                         style: TextStyle(
@@ -61,7 +61,7 @@ Widget buildShiftStep3({
                             fontWeight: FontWeight.w600,
                             color: isDark
                                 ? Colors.white
-                                : const Color(0xFF1A1A2E))),
+                                : AppColors.ink)),
                   ])),
         ])),
     const SizedBox(height: 10),
@@ -72,7 +72,7 @@ Widget buildShiftStep3({
             Text('Была инкассация?',
                 style: TextStyle(
                     fontSize: 14,
-                    color: isDark ? Colors.white : const Color(0xFF1A1A2E))),
+                    color: isDark ? Colors.white : AppColors.ink)),
             Switch(
                 value: hasInkass,
                 activeColor: AppColors.orange,
@@ -87,7 +87,7 @@ Widget buildShiftStep3({
                 currency: currency,
                 onChanged: (_) => setState(() {})),
             const SizedBox(height: 6),
-            const Text('Остаток в кассе пересчитается автоматически',
+            Text('Остаток в кассе пересчитается автоматически',
                 style: TextStyle(fontSize: 11, color: AppColors.orange)),
           ],
         ])),

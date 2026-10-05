@@ -28,7 +28,7 @@ class AppCurrencyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final textColor = isDark ? Colors.white : AppColors.ink;
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: BackdropFilter(
@@ -52,7 +52,7 @@ class AppCurrencyCard extends StatelessWidget {
                     decoration: BoxDecoration(
                         color: AppColors.green.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(12)),
-                    child: const Icon(Icons.attach_money_rounded,
+                    child: Icon(Icons.attach_money_rounded,
                         color: AppColors.green, size: 20)),
                 const SizedBox(width: 12),
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -63,7 +63,7 @@ class AppCurrencyCard extends StatelessWidget {
                           color: textColor)),
                   Text('Текущая: $currency',
                       style:
-                          const TextStyle(fontSize: 12, color: AppColors.muted)),
+                          TextStyle(fontSize: 12, color: AppColors.muted)),
                 ]),
               ]),
               const SizedBox(height: 16),
@@ -103,13 +103,13 @@ class AppCurrencyCard extends StatelessWidget {
                                     fontWeight: FontWeight.w700,
                                     color: selected ? AppColors.orange : textColor)),
                             Text(c['name']!,
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontSize: 10, color: AppColors.muted)),
                           ],
                         ),
                         if (selected) ...[
                           const SizedBox(width: 6),
-                          const Icon(Icons.check_circle_rounded,
+                          Icon(Icons.check_circle_rounded,
                               size: 16, color: AppColors.orange),
                         ],
                       ]),

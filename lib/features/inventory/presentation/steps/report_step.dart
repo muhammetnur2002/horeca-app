@@ -1,5 +1,4 @@
 import 'dart:ui';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,26 +16,19 @@ import 'package:share_plus/share_plus.dart';
 import 'package:horeca_app/features/custom_template/data/template_repository.dart';
 import 'package:horeca_app/features/custom_template/data/template_models.dart';
 import 'package:horeca_app/features/inventory/data/stock_levels_repository.dart';
+import 'package:horeca_app/core/db/dao/operations_dao.dart';
+import 'package:horeca_app/core/db/ids.dart';
+import 'package:horeca_app/features/auth/data/auth_repository.dart';
+import 'package:horeca_app/features/stock/data/stock_repository.dart';
 
 class ReportStep extends ConsumerWidget {
   const ReportStep({super.key});
 
-  String _getDeptName(String? departmentId, AppLocalizations l10n) {
+  String _getDeptName(String? departmentId, AppLocalizations l10n,
+      List<DepartmentModel> allDepartments) {
     if (departmentId == 'all') return l10n.allDepartments;
-    switch (departmentId) {
-      case '1':
-        return 'Кухня';
-      case '2':
-        return 'Бар';
-      case '3':
-        return 'Зал';
-      case '4':
-        return 'Склад';
-      case '5':
-        return 'Клининг';
-      default:
-        return departmentId ?? 'Неизвестный отдел';
-    }
+    final matches = allDepartments.where((d) => d.id == departmentId);
+    return matches.isEmpty ? 'Неизвестный отдел' : matches.first.name;
   }
 
   String _generateReport(
@@ -53,7 +45,7 @@ class ReportStep extends ConsumerWidget {
         '${l10n.date}: ${DateTime.now().toLocal().toString().split('.')[0]}');
     buffer.writeln('${l10n.establishment}: "$establishmentName"');
     buffer.writeln(
-        '${l10n.department}: ${_getDeptName(state.departmentId, l10n)}');
+        '${l10n.department}: ${_getDeptName(state.departmentId, l10n, allDepartments)}');
     buffer.writeln();
 
     final Map<String, List<InventoryItem>> grouped = {};
@@ -86,7 +78,10 @@ class ReportStep extends ConsumerWidget {
     for (final catName in catOrder) {
       buffer.writeln('${l10n.category}: $catName');
       for (final item in grouped[catName]!) {
-        buffer.writeln('- ${item.productName}: ${item.remaining} ${item.unit}');
+        final remaining = item.remaining == item.remaining.truncateToDouble()
+            ? item.remaining.toInt().toString()
+            : item.remaining.toString();
+        buffer.writeln('- ${item.productName}: $remaining ${item.unit}');
       }
       buffer.writeln();
     }
@@ -104,19 +99,13 @@ class ReportStep extends ConsumerWidget {
     final allCategories = settings.categories;
     final allDepartments = settings.departments;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final deptName = _getDeptName(state.departmentId, l10n);
+    final deptName =
+        _getDeptName(state.departmentId, l10n, allDepartments);
     final text = _generateReport(state, l10n, establishmentName, allProducts,
         allCategories, allDepartments);
 
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isDark
-              ? const [Color(0xFF0F1629), Color(0xFF1A1040), Color(0xFF0D1F35)]
-              : const [Color(0xFFEEF2FF), Color(0xFFF5F7FF), Color(0xFFEEF2FF)],
-        ),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -128,7 +117,7 @@ class ReportStep extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Шаг 4',
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 12,
                         color: AppColors.orange,
                         fontWeight: FontWeight.w500)),
@@ -138,7 +127,7 @@ class ReportStep extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+                    color: isDark ? Colors.white : AppColors.ink,
                   ),
                 ),
               ],
@@ -170,7 +159,7 @@ class ReportStep extends ConsumerWidget {
                           height: 1.6,
                           color: isDark
                               ? Colors.white.withOpacity(0.85)
-                              : const Color(0xFF1A1A2E),
+                              : AppColors.ink,
                         ),
                       ),
                     ),
@@ -191,10 +180,11 @@ class ReportStep extends ConsumerWidget {
                     color: AppColors.muted,
                     isDark: isDark,
                     onTap: () {
+                      final messenger = ScaffoldMessenger.of(context);
                       Clipboard.setData(ClipboardData(text: text)).then((_) {
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        messenger.showSnackBar(SnackBar(
                           content: Text(l10n.copySuccess),
-                          backgroundColor: const Color(0xFF2E3352),
+                          backgroundColor: AppColors.darkCard2,
                           behavior: SnackBarBehavior.floating,
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12)),
@@ -229,21 +219,35 @@ class ReportStep extends ConsumerWidget {
                 if (state.items.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                     content: Text(l10n.noData),
-                    backgroundColor: const Color(0xFF2E3352),
+                    backgroundColor: AppColors.darkCard2,
                     behavior: SnackBarBehavior.floating,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
                   ));
                   return;
                 }
-                final repo = ref.read(historyRepositoryProvider);
-                repo.add(HistoryEntry(
-                  id: DateTime.now().millisecondsSinceEpoch.toString(),
-                  type: HistoryType.inventory,
-                  title: '${l10n.inventory} $deptName',
-                  text: text,
-                  createdAt: DateTime.now(),
-                ));
+                final repo = ref.read(historyRepositoryProvider.notifier);
+                final auth = ref.read(authRepositoryProvider);
+                final docId = Ids.newId();
+                repo.add(
+                  HistoryEntry(
+                    id: docId,
+                    type: HistoryType.inventory,
+                    title: '${l10n.inventory} $deptName',
+                    text: text,
+                    createdAt: DateTime.now(),
+                  ),
+                  staffId: auth.staffId,
+                  lines: [
+                    for (final i in state.items)
+                      DocumentLineInput(
+                        productId: i.productId,
+                        productName: i.productName,
+                        unit: i.unit,
+                        quantity: i.remaining,
+                      ),
+                  ],
+                );
 
 // Обновляем текущие остатки для отслеживания низких запасов
                 final levels = <String, double>{};
@@ -253,6 +257,10 @@ class ReportStep extends ConsumerWidget {
                 ref
                     .read(stockLevelsRepositoryProvider.notifier)
                     .updateLevels(levels);
+                // Инвентаризация — замер для товарного учёта.
+                ref.read(stockRepositoryProvider).recordCount(levels,
+                    documentId: docId, actor: Actor.of(auth));
+                ref.read(stockRevisionProvider.notifier).state++;
 
                 try {
                   final pdfItems = state.items
@@ -350,7 +358,7 @@ class ReportStep extends ConsumerWidget {
                       child: Text(
                         l10n.newInventory,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 14, color: AppColors.green),
                       ),
                     ),

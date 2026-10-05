@@ -12,13 +12,18 @@ class AuthState {
   final UserRole? role;
   final String? userName;
 
-  const AuthState({this.isLoggedIn = false, this.role, this.userName});
+  /// id сотрудника, если вход был по личному PIN (иначе — общий PIN).
+  final String? staffId;
+
+  const AuthState(
+      {this.isLoggedIn = false, this.role, this.userName, this.staffId});
 
   AuthState copyWith({bool? isLoggedIn, UserRole? role, String? userName}) =>
       AuthState(
         isLoggedIn: isLoggedIn ?? this.isLoggedIn,
         role: role ?? this.role,
         userName: userName ?? this.userName,
+        staffId: staffId,
       );
 }
 
@@ -40,6 +45,15 @@ class AuthRepository extends StateNotifier<AuthState> {
   bool _pinsLoaded = false;
   final Completer<void> _pinsLoadedCompleter = Completer<void>();
 
+  // Счётчик записей PIN — нужен, чтобы фоновая _loadPins() (запущенная в
+  // конструкторе) не затёрла более свежее значение, если setAdminPin()/
+  // setStaffPin() успели выполниться, пока начальное чтение из secure
+  // storage ещё не завершилось (например, на медленном первом чтении из
+  // keystore на Android). Без этого PIN, только что установленный в
+  // Настройках сразу после переключения заведения, мог молча откатиться
+  // на старое значение в памяти — при этом на диске лежал бы уже верный.
+  int _pinWriteVersion = 0;
+
   AuthRepository(this._prefs, String venueCode)
       : _adminPinKey = 'admin_pin${venueKeySuffix(venueCode)}',
         _staffPinKey = 'staff_pin${venueKeySuffix(venueCode)}',
@@ -51,12 +65,22 @@ class AuthRepository extends StateNotifier<AuthState> {
   }
 
   Future<void> _loadPins() async {
+    final versionAtStart = _pinWriteVersion;
+    String? adminPin;
+    String? staffPin;
     try {
-      _cachedAdminPin = await _secureStorage.read(key: _adminPinKey);
-      _cachedStaffPin = await _secureStorage.read(key: _staffPinKey);
+      adminPin = await _secureStorage.read(key: _adminPinKey);
+      staffPin = await _secureStorage.read(key: _staffPinKey);
     } catch (_) {
-      _cachedAdminPin = null;
-      _cachedStaffPin = null;
+      adminPin = null;
+      staffPin = null;
+    }
+    // Если за время этого чтения кто-то успел вызвать setAdminPin/
+    // setStaffPin/clearPins — их значение свежее, чем то, что мы только
+    // что прочитали, поэтому не перезаписываем кэш.
+    if (_pinWriteVersion == versionAtStart) {
+      _cachedAdminPin = adminPin;
+      _cachedStaffPin = staffPin;
     }
     _pinsLoaded = true;
     if (!_pinsLoadedCompleter.isCompleted) _pinsLoadedCompleter.complete();
@@ -81,17 +105,20 @@ class AuthRepository extends StateNotifier<AuthState> {
 
   Future<void> setAdminPin(String pin) async {
     _cachedAdminPin = pin;
+    _pinWriteVersion++;
     await _secureStorage.write(key: _adminPinKey, value: pin);
   }
 
   Future<void> setStaffPin(String pin) async {
     _cachedStaffPin = pin;
+    _pinWriteVersion++;
     await _secureStorage.write(key: _staffPinKey, value: pin);
   }
 
   Future<void> clearPins() async {
     _cachedAdminPin = null;
     _cachedStaffPin = null;
+    _pinWriteVersion++;
     await _secureStorage.delete(key: _adminPinKey);
     await _secureStorage.delete(key: _staffPinKey);
     _prefs.setBool(_pinsEnabledKey, false);
@@ -146,6 +173,9 @@ class AuthRepository extends StateNotifier<AuthState> {
     }
     return null;
   }
+
+  /// Сбрасывает счётчик неверных попыток (успешный вход по личному PIN).
+  void resetFailedAttempts() => _failedAttempts = 0;
 
   /// То же самое, но сначала дожидается, пока PIN-коды заведения реально
   /// прочитаются из secure storage — нужно при входе сразу после
@@ -218,8 +248,9 @@ class AuthRepository extends StateNotifier<AuthState> {
     await prefs.setBool('pins_enabled${venueKeySuffix(venueCode)}', false);
   }
 
-  void login(UserRole role, {String? userName}) {
-    state = AuthState(isLoggedIn: true, role: role, userName: userName);
+  void login(UserRole role, {String? userName, String? staffId}) {
+    state = AuthState(
+        isLoggedIn: true, role: role, userName: userName, staffId: staffId);
   }
 
   void logout() {

@@ -6,7 +6,6 @@ library;
 import 'package:flutter/material.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
 import 'package:horeca_app/features/settings/data/settings_repository_products.dart';
-import 'package:horeca_app/features/settings/data/settings_repository_staff.dart';
 import 'package:horeca_app/features/settings/presentation/tabs/products_tab_batch_dialogs.dart';
 import 'package:horeca_app/features/settings/presentation/tabs/products_tab_widgets.dart';
 import 'package:horeca_app/shared/models/category_model.dart';
@@ -43,20 +42,28 @@ Widget? buildProductBatchEditPanel({
       onExitSelectMode: onExitSelectMode,
     ),
     onChangeCategory: () {
-      final catNames = categories.map((c) => c.name).toSet().toList();
+      // Названия категорий повторяются в разных отделах ("Хозтовары"), поэтому
+      // в списке показываем "Отдел / Категория" и по этой подписи находим id.
+      final catIdByLabel = <String, String>{};
+      for (final c in categories) {
+        final dept = departments.where((d) => d.id == c.departmentId);
+        final label =
+            dept.isEmpty ? c.name : '${dept.first.name} / ${c.name}';
+        catIdByLabel[label] = c.id;
+      }
       showBatchChangeProductsDialog(
         context: context,
         repo: repo,
         ids: selectedIds.toList(),
         title: 'Категория',
-        options: catNames,
+        options: catIdByLabel.keys.toList(),
         onApply: (repo, id, newValue) {
           final product = products.firstWhere((p) => p.id == id);
           repo.updateProduct(
             id,
             product.name,
-            newValue,
-            newCategoryId: product.categoryId,
+            product.unit,
+            newCategoryId: catIdByLabel[newValue],
             newInventoryUnit: product.inventoryUnit,
           );
         },

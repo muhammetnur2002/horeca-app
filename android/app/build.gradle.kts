@@ -35,7 +35,7 @@ android {
         // ВНИМАНИЕ: `flutter build`/`flutter upgrade` иногда переписывает эту
         // строку обратно на flutter.minSdkVersion при "Upgrading build.gradle.kts" —
         // проверяйте после апгрейдов Flutter, что тут снова стоит 23.
-        minSdk = 23
+        minSdk = flutter.minSdkVersion
         targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -74,7 +74,9 @@ android {
         }
     }
 
-    // Навсегда отключаем нативную C++ сборку
+    // Убираем устаревший kotlin-stdlib-jdk7 из транзитивных зависимостей
+    // плагинов — конфликтует с современным kotlin-stdlib и может ломать
+    // сборку дублирующимися классами.
     configurations.all {
         exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib-jdk7")
     }

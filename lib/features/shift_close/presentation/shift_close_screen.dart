@@ -8,7 +8,11 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
+import 'package:horeca_app/core/db/ids.dart';
 import 'package:horeca_app/features/analytics/data/analytics_repository.dart';
+import 'package:horeca_app/features/auth/data/auth_repository.dart';
+import 'package:horeca_app/features/stock/data/stock_repository.dart';
+import 'package:horeca_app/features/inventory/data/stock_levels_repository.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
 import 'package:horeca_app/features/shift_close/data/shift_draft_provider.dart';
 import 'package:horeca_app/features/shift_close/presentation/shift_close_format.dart';
@@ -45,6 +49,12 @@ class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
   final _eveningCashCtrl = TextEditingController();
   final _inkassCtrl = TextEditingController();
   bool _hasInkass = false;
+  // Защита от дублей в аналитике: кнопки WhatsApp/Telegram/PDF и "Закрыть
+  // смену" вызывают одно и то же действие, а при сбое отправки PDF человек
+  // жмёт ещё раз — запись о смене должна сохраниться только один раз.
+  bool _submitting = false;
+  bool _shiftSaved = false;
+  final String _shiftId = Ids.newId();
 
   double get _autoTotal =>
       (double.tryParse(_qrCtrl.text) ?? 0) +
@@ -173,9 +183,17 @@ class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
       context: context,
       builder: (_) => const ConfirmCloseShiftDialog(),
     );
-    if (confirm != true || !mounted) return;
+    if (confirm != true || !mounted || _submitting) return;
+    _submitting = true;
+    try {
+      await _saveAndShare();
+    } finally {
+      _submitting = false;
+    }
+  }
 
-    // Сохраняем запись для аналитики.
+  Future<void> _saveAndShare() async {
+    // Сохраняем запись для аналитики (один раз за этот экран).
     final writeOffsMap = <String, int>{};
     for (final d in _desserts.where((d) => d.writeOff > 0)) {
       writeOffsMap[d.name] = d.writeOff;
@@ -183,16 +201,48 @@ class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
     for (final m in _manualWriteOffs) {
       writeOffsMap[m.name] = (writeOffsMap[m.name] ?? 0) + m.quantity;
     }
-    ref.read(analyticsRepositoryProvider).addShift(ShiftRecord(
-          date: DateTime.now(),
-          revenue: _finalTotal,
-          qr: double.tryParse(_qrCtrl.text) ?? 0,
-          card: double.tryParse(_cardCtrl.text) ?? 0,
-          cash: double.tryParse(_cashCtrl.text) ?? 0,
-          morningCash: double.tryParse(_morningCashCtrl.text) ?? 0,
-          eveningCash: double.tryParse(_eveningCashCtrl.text) ?? 0,
-          writeOffs: writeOffsMap,
-        ));
+    // Запись о смене сохраняется один раз за этот экран (защита от дублей
+    // при повторной отправке), с id — повтор в базе тоже гасится.
+    if (!_shiftSaved) {
+      _shiftSaved = true;
+      final settings = ref.read(settingsRepositoryProvider);
+      final productIdByName = {for (final p in settings.products) p.name: p.id};
+      ref.read(analyticsRepositoryProvider.notifier).addShift(ShiftRecord(
+            date: DateTime.now(),
+            revenue: _finalTotal,
+            qr: double.tryParse(_qrCtrl.text) ?? 0,
+            card: double.tryParse(_cardCtrl.text) ?? 0,
+            cash: double.tryParse(_cashCtrl.text) ?? 0,
+            morningCash: double.tryParse(_morningCashCtrl.text) ?? 0,
+            eveningCash: double.tryParse(_eveningCashCtrl.text) ?? 0,
+            writeOffs: writeOffsMap,
+          ),
+          shiftId: _shiftId,
+          staffNames: _selectedStaff.toList(),
+          closedByStaffId: ref.read(authRepositoryProvider).staffId,
+          inkass: _hasInkass ? (double.tryParse(_inkassCtrl.text) ?? 0) : 0,
+          writeoffProductIds: {
+            for (final d in _desserts.where((d) => d.writeOff > 0))
+              if (productIdByName[d.name] != null) d.name: productIdByName[d.name]!,
+          },
+          writeoffUnits: {for (final m in _manualWriteOffs) m.name: m.unit});
+      // Списанные десерты уходят и в товарный учёт.
+      ref.read(stockRepositoryProvider).recordWriteoffs(
+        {
+          for (final d in _desserts.where((d) => d.writeOff > 0))
+            if (productIdByName[d.name] != null)
+              productIdByName[d.name]!: d.writeOff.toDouble(),
+        },
+        shiftId: _shiftId,
+        actor: Actor.of(ref.read(authRepositoryProvider)),
+      );
+      ref.read(stockLevelsRepositoryProvider.notifier).applyDeltas({
+        for (final d in _desserts.where((d) => d.writeOff > 0))
+          if (productIdByName[d.name] != null)
+            productIdByName[d.name]!: -d.writeOff.toDouble(),
+      });
+      ref.read(stockRevisionProvider.notifier).state++;
+    }
 
     await ShiftClosePdf.generateAndShare(
       currency: ref.read(settingsRepositoryProvider).currency,
@@ -225,13 +275,13 @@ class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_rounded,
-              color: isDark ? Colors.white : const Color(0xFF1A1A2E), size: 20),
+              color: isDark ? Colors.white : AppColors.ink, size: 20),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
           'Закрытие смены',
           style: TextStyle(
-            color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+            color: isDark ? Colors.white : AppColors.ink,
             fontSize: 18,
             fontWeight: FontWeight.w600,
           ),
@@ -242,7 +292,7 @@ class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
             child: Center(
               child: Text(
                 shiftCloseFormattedDate(),
-                style: const TextStyle(fontSize: 12, color: AppColors.muted),
+                style: TextStyle(fontSize: 12, color: AppColors.muted),
               ),
             ),
           ),
@@ -252,21 +302,7 @@ class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
         Positioned.fill(
           child: Container(
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: isDark
-                    ? const [
-                        Color(0xFF0F1629),
-                        Color(0xFF1A1040),
-                        Color(0xFF0D1F35)
-                      ]
-                    : const [
-                        Color(0xFFEEF2FF),
-                        Color(0xFFF5F7FF),
-                        Color(0xFFEEF2FF)
-                      ],
-              ),
+              gradient: BackdropGradient(isDark),
             ),
           ),
         ),

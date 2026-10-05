@@ -11,9 +11,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart' as fp;
 import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/app/di.dart';
+import 'package:horeca_app/core/db/app_database.dart';
 import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
-import 'package:horeca_app/features/settings/data/settings_repository_staff.dart';
 
 import 'package:horeca_app/features/backup/data/backup_service.dart';
 
@@ -63,7 +63,7 @@ void showLogoOptions(
                     borderRadius: BorderRadius.circular(2))),
             const SizedBox(height: 12),
             ListTile(
-              leading: const Icon(Icons.photo_library_outlined,
+              leading: Icon(Icons.photo_library_outlined,
                   color: AppColors.orange),
               title: const Text('Выбрать из галереи'),
               onTap: () {
@@ -105,14 +105,14 @@ void showEditEstablishmentNameDialog(BuildContext context, String currentName,
         decoration: InputDecoration(
           hintText: l10n.establishmentName,
           prefixIcon:
-              const Icon(Icons.storefront_outlined, color: AppColors.orange),
+              Icon(Icons.storefront_outlined, color: AppColors.orange),
         ),
       ),
       actions: [
         TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text(l10n.cancel,
-                style: const TextStyle(color: AppColors.muted))),
+                style: TextStyle(color: AppColors.muted))),
         ElevatedButton(
             onPressed: () {
               if (ctrl.text.isNotEmpty) {
@@ -132,9 +132,8 @@ void showEditEstablishmentNameDialog(BuildContext context, String currentName,
 }
 
 Future<void> createAppBackup(BuildContext context, WidgetRef ref) async {
-  final prefs = ref.read(sharedPreferencesProvider);
   try {
-    await BackupService.shareBackup(prefs);
+    await BackupService.shareBackup(ref.read(appDatabaseProvider));
   } catch (e) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -157,14 +156,14 @@ Future<void> restoreAppBackup(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       title: const Text('Восстановить из бэкапа?',
           style: TextStyle(fontWeight: FontWeight.w600)),
-      content: const Text(
+      content: Text(
           'Текущие данные будут заменены данными из файла резервной копии.',
           style: TextStyle(color: AppColors.muted, fontSize: 14)),
       actions: [
         TextButton(
             onPressed: () => Navigator.pop(ctx, false),
             child:
-                Text(l10n.cancel, style: const TextStyle(color: AppColors.muted))),
+                Text(l10n.cancel, style: TextStyle(color: AppColors.muted))),
         ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
@@ -185,8 +184,8 @@ Future<void> restoreAppBackup(
   if (result == null || result.files.single.path == null) return;
 
   final prefs = ref.read(sharedPreferencesProvider);
-  final restoreResult =
-      await BackupService.restoreFromFile(result.files.single.path!, prefs);
+  final restoreResult = await BackupService.restoreFromFile(
+      result.files.single.path!, ref.read(appDatabaseProvider), prefs);
 
   if (context.mounted) {
     final String message;

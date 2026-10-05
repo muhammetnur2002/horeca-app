@@ -78,7 +78,7 @@ List<Insight> generateDashboardInsights({
   }
 
   if (insights.isEmpty) {
-    insights.add(const Insight(
+    insights.add(Insight(
       text: 'Заметных отклонений за неделю нет — показатели в норме.',
       icon: Icons.check_circle_outline_rounded,
       color: AppColors.green,

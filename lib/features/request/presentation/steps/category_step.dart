@@ -16,13 +16,6 @@ class CategoryStep extends ConsumerWidget {
     if (state.departmentId == null) {
       return Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isDark
-                ? const [Color(0xFF0F1629), Color(0xFF1A1040)]
-                : const [Color(0xFFEEF2FF), Color(0xFFF5F7FF)],
-          ),
         ),
         child: Center(
           child: Text(
@@ -38,13 +31,6 @@ class CategoryStep extends ConsumerWidget {
     if (categories.isEmpty) {
       return Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isDark
-                ? const [Color(0xFF0F1629), Color(0xFF1A1040)]
-                : const [Color(0xFFEEF2FF), Color(0xFFF5F7FF)],
-          ),
         ),
         child: Center(
           child: Column(
@@ -82,13 +68,6 @@ class CategoryStep extends ConsumerWidget {
 
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isDark
-              ? const [Color(0xFF0F1629), Color(0xFF1A1040), Color(0xFF0D1F35)]
-              : const [Color(0xFFEEF2FF), Color(0xFFF5F7FF), Color(0xFFEEF2FF)],
-        ),
       ),
       child: GridView.builder(
         padding: const EdgeInsets.all(20),
@@ -203,7 +182,7 @@ class _CatCardState extends State<_CatCard>
                           .withOpacity(widget.isDark ? 0.15 : 0.1),
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.folder_outlined,
                       size: 26,
                       color: AppColors.orange,
@@ -222,7 +201,7 @@ class _CatCardState extends State<_CatCard>
                         fontWeight: FontWeight.w500,
                         color: widget.isDark
                             ? Colors.white
-                            : const Color(0xFF1A1A2E),
+                            : AppColors.ink,
                       ),
                     ),
                   ),

@@ -9,8 +9,11 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
+import 'package:horeca_app/core/db/ids.dart';
 import 'package:horeca_app/features/iiko/data/iiko_service.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
+import 'package:horeca_app/features/settings/data/settings_repository_products.dart';
+import 'package:horeca_app/features/settings/data/settings_repository_staff.dart';
 import 'package:horeca_app/shared/models/department_model.dart';
 
 class IikoImportScreen extends ConsumerStatefulWidget {
@@ -78,8 +81,6 @@ class _IikoImportScreenState extends ConsumerState<IikoImportScreen> {
     final groups = {for (final g in _nomenclature!.groups) g.id: g};
 
     var newCategories = 0, newProducts = 0, skippedDuplicates = 0;
-    var counter = 0;
-    String nextId() => '${DateTime.now().millisecondsSinceEpoch}_imp_${counter++}';
 
     for (final groupId in _selectedGroupIds) {
       final group = groups[groupId];
@@ -96,7 +97,7 @@ class _IikoImportScreenState extends ConsumerState<IikoImportScreen> {
           .toList();
       final categoryId = existingCategory.isNotEmpty
           ? existingCategory.first.id
-          : repo.addCategoryWithId(nextId(), group.name, departmentId);
+          : repo.addCategoryWithId(Ids.newId(), group.name, departmentId);
       if (existingCategory.isEmpty) newCategories++;
 
       for (final product in products) {
@@ -107,7 +108,8 @@ class _IikoImportScreenState extends ConsumerState<IikoImportScreen> {
         final unit = (product.measureUnit == null || product.measureUnit!.isEmpty)
             ? 'шт'
             : product.measureUnit!;
-        repo.addProductWithId(nextId(), product.name, unit, categoryId);
+        repo.addProductWithId(Ids.newId(), product.name, unit, categoryId,
+            iikoProductId: product.id);
         newProducts++;
       }
     }
@@ -129,7 +131,7 @@ class _IikoImportScreenState extends ConsumerState<IikoImportScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final textColor = isDark ? Colors.white : AppColors.ink;
     final departments = ref.watch(settingsRepositoryProvider).departments;
 
     return Scaffold(
@@ -184,7 +186,7 @@ class _IikoImportScreenState extends ConsumerState<IikoImportScreen> {
                                   title: Text(g.name,
                                       style: TextStyle(color: textColor, fontSize: 14)),
                                   subtitle: Text('$count товар${count == 1 ? '' : count < 5 ? 'а' : 'ов'}',
-                                      style: const TextStyle(color: AppColors.muted, fontSize: 12)),
+                                      style: TextStyle(color: AppColors.muted, fontSize: 12)),
                                 );
                               }).toList(),
                             ),
@@ -239,7 +241,7 @@ class _DepartmentPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final textColor = isDark ? Colors.white : AppColors.ink;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
