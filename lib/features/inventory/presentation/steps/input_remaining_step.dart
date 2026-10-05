@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:horeca_app/shared/widgets/orbit_kit.dart';
 import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/features/inventory/domain/usecases/inventory_state.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
@@ -128,16 +129,9 @@ class _InputRemainingStepState extends ConsumerState<InputRemainingStep> {
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            child: Text(
-                              entry.key.toUpperCase(),
-                              style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.muted,
-                                  letterSpacing: 0.6),
-                            ),
+                          OrbitSectionLabel(
+                            '${entry.key} · введите факт',
+                            padding: const EdgeInsets.fromLTRB(4, 10, 4, 8),
                           ),
                           ...entry.value.map((p) {
                             final item = state.items.firstWhere(
@@ -165,42 +159,14 @@ class _InputRemainingStepState extends ConsumerState<InputRemainingStep> {
                     }).toList(),
                   ),
           ),
-          // Кнопка предпросмотр
+          // Главное действие — градиент темы.
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-            child: GestureDetector(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+            child: OrbitPrimaryButton(
+              label: 'Предпросмотр',
+              icon: Icons.visibility_outlined,
               onTap: () =>
                   ref.read(inventoryStateProvider.notifier).generateReport(),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      color: AppColors.orange,
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.orange.withOpacity(0.3),
-                          blurRadius: 20,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: const Text(
-                      'Предпросмотр',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
             ),
           ),
         ],
@@ -222,25 +188,42 @@ class _ProductRow extends StatelessWidget {
     required this.onChanged,
   });
 
+  /// Весовые и объёмные товары считают с шагом 0,5, штучные — по одному.
+  static double _stepFor(String unit) {
+    final u = unit.toLowerCase();
+    return (u == 'кг' || u == 'л') ? 0.5 : 1;
+  }
+
   @override
   Widget build(BuildContext context) {
     final hasQty = item.remaining > 0;
+    final min = product.minStock;
+    final low = hasQty && min != null && item.remaining < min;
+    String q(double v) => v == v.roundToDouble()
+        ? v.toInt().toString()
+        : v.toString().replaceAll('.', ',');
+    final sub = min == null
+        ? product.inventoryUnit
+        : '${product.inventoryUnit} · ${low ? 'ниже минимума' : 'минимум'} ${q(min)}';
     return ClipRRect(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(16),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Container(
           margin: const EdgeInsets.only(bottom: 8),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(16),
             color: hasQty
-                ? AppColors.orange.withOpacity(0.08)
-                : Colors.white.withOpacity(isDark ? 0.06 : 0.55),
+                ? AppColors.green.withOpacity(0.07)
+                : Colors.white.withOpacity(isDark ? 0.06 : 0.6),
             border: Border.all(
-              color: hasQty
-                  ? AppColors.orange.withOpacity(0.3)
-                  : Colors.white.withOpacity(isDark ? 0.1 : 0.8),
+              width: hasQty ? 1.4 : 1,
+              color: low
+                  ? AppColors.accent3.withOpacity(0.7)
+                  : hasQty
+                      ? AppColors.green.withOpacity(0.7)
+                      : Colors.white.withOpacity(isDark ? 0.1 : 0.85),
             ),
           ),
           child: Row(children: [
@@ -250,14 +233,15 @@ class _ProductRow extends StatelessWidget {
                   children: [
                     Text(product.name,
                         style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
                             color: isDark
                                 ? Colors.white
                                 : AppColors.ink)),
-                    Text(product.inventoryUnit,
+                    Text(sub,
                         style: TextStyle(
-                            fontSize: 11, color: AppColors.muted)),
+                            fontSize: 12,
+                            color: low ? AppColors.accent3 : AppColors.muted)),
                   ]),
             ),
             QuantityStepper(
@@ -266,6 +250,7 @@ class _ProductRow extends StatelessWidget {
               isDark: isDark,
               productName: product.name,
               allowDecimal: true,
+              step: _stepFor(product.inventoryUnit),
               onChanged: onChanged,
             ),
           ]),

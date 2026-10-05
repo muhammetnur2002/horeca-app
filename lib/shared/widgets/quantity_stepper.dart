@@ -33,6 +33,9 @@ class QuantityStepper extends StatelessWidget {
     this.allowDecimal = false,
   });
 
+  /// Шаг 0,5 с дробным значением не должен давать «1.2999999».
+  static double _round(double v) => (v * 1000).roundToDouble() / 1000;
+
   String get _formatted =>
       value == value.truncateToDouble() ? value.toInt().toString() : value.toString();
 
@@ -90,7 +93,7 @@ class QuantityStepper extends StatelessWidget {
         isDark: isDark,
         onTap: () {
           if (value > 0) {
-            final next = value - step;
+            final next = _round(value - step);
             onChanged(next < 0 ? 0 : next);
           }
         },
@@ -114,7 +117,7 @@ class QuantityStepper extends StatelessWidget {
           ),
         ),
       ),
-      _QtyBtn(icon: Icons.add, isDark: isDark, onTap: () => onChanged(value + step)),
+      _QtyBtn(icon: Icons.add, isDark: isDark, onTap: () => onChanged(_round(value + step))),
     ]);
   }
 }

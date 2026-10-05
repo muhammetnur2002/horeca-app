@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:horeca_app/shared/widgets/orbit_kit.dart';
 import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/features/request/domain/usecases/request_state.dart';
 import 'package:horeca_app/features/history/data/history_repository.dart';
@@ -147,308 +148,184 @@ class GenerateStep extends ConsumerWidget {
     final departmentLabel = _resolveDepartmentLabel(
         state, allProducts, allCategories, allDepartments);
 
-    return Container(
-      decoration: BoxDecoration(
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Заголовок
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Предпросмотр',
-                    style: TextStyle(
-                        fontSize: 12,
-                        color: AppColors.orange,
-                        fontWeight: FontWeight.w500)),
-                const SizedBox(height: 4),
-                Text(
-                  l10n.preview,
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : AppColors.ink,
-                  ),
-                ),
-              ],
+    // Заявка попадает в историю (а значит, и в приёмку поставки) при
+    // отправке или PDF — один раз на один и тот же текст.
+    void saveToHistory() {
+      if (state.items.isEmpty) return;
+      if (ref.read(_savedRequestTextProvider) == text) return;
+      ref.read(_savedRequestTextProvider.notifier).state = text;
+      ref.read(historyRepositoryProvider.notifier).add(
+            HistoryEntry(
+              id: Ids.newId(),
+              type: HistoryType.request,
+              title: '${l10n.requestTitle}: $departmentLabel',
+              text: text,
+              createdAt: DateTime.now(),
             ),
+            staffId: ref.read(authRepositoryProvider).staffId,
+            // Строки заявки — по ним потом сверяется поставка.
+            lines: [
+              for (final i in state.items)
+                DocumentLineInput(
+                  productId: i.productId,
+                  productName: i.productName,
+                  unit: i.unit,
+                  ordered: i.quantity,
+                  quantity: i.quantity,
+                ),
+            ],
+          );
+    }
 
-            const SizedBox(height: 12),
+    void noData() => ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(l10n.noData),
+          backgroundColor: AppColors.darkCard2,
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ));
 
-            // Текст заявки
-            Expanded(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      color: Colors.white.withOpacity(isDark ? 0.06 : 0.55),
-                      border: Border.all(
-                        color: Colors.white.withOpacity(isDark ? 0.1 : 0.8),
-                      ),
+    final now = DateTime.now();
+    const months = [
+      'янв', 'фев', 'мар', 'апр', 'мая', 'июн',
+      'июл', 'авг', 'сен', 'окт', 'ноя', 'дек',
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Документ заявки в стеклянной карточке.
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    color: Colors.white.withOpacity(isDark ? 0.07 : 0.65),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(isDark ? 0.12 : 0.9),
                     ),
-                    child: SingleChildScrollView(
-                      child: SelectableText(
-                        text,
-                        style: TextStyle(
-                          fontSize: 13,
-                          height: 1.6,
-                          color: isDark
-                              ? Colors.white.withOpacity(0.85)
-                              : AppColors.ink,
+                  ),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        OrbitSectionLabel(
+                          'Заявка · «$establishmentName» · '
+                          '${now.day} ${months[now.month - 1]}',
+                          padding: const EdgeInsets.only(bottom: 10),
                         ),
-                      ),
+                        SelectableText(
+                          text,
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            height: 1.6,
+                            color: isDark
+                                ? Colors.white.withOpacity(0.88)
+                                : AppColors.ink,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ),
             ),
-
-            const SizedBox(height: 12),
-
-            // Кнопки
-            Row(
-              children: [
-                Expanded(
-                  child: _ActionBtn(
-                    icon: Icons.copy_rounded,
-                    label: l10n.copy,
-                    color: AppColors.muted,
-                    isDark: isDark,
-                    onTap: () {
-                      final messenger = ScaffoldMessenger.of(context);
-                      Clipboard.setData(ClipboardData(text: text)).then((_) {
-                        messenger.showSnackBar(SnackBar(
-                          content: Text(l10n.copySuccess),
-                          backgroundColor: AppColors.darkCard2,
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                        ));
-                      });
-                    },
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _ActionBtn(
-                    icon: Icons.share_rounded,
-                    label: l10n.share,
-                    color: const Color(0xFF2AABEE),
-                    isDark: isDark,
-                    onTap: () => Share.share(text),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 10),
-
-            Row(
-              children: [
-                Expanded(
-                  child: _ActionBtn(
-                    icon: Icons.chat_rounded,
-                    label: 'WhatsApp',
-                    color: const Color(0xFF25D366),
-                    isDark: isDark,
-                    onTap: () => Share.share(text),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _ActionBtn(
-                    icon: Icons.send_rounded,
-                    label: 'Telegram',
-                    color: const Color(0xFF2AABEE),
-                    isDark: isDark,
-                    onTap: () => Share.share(text),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 10),
-
-            _ActionBtn(
-              icon: Icons.picture_as_pdf_rounded,
-              label: l10n.downloadPdf,
-              color: AppColors.orange,
-              isDark: isDark,
-              fullWidth: true,
-              onTap: () async {
-                if (state.items.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text(l10n.noData),
-                    backgroundColor: AppColors.darkCard2,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ));
-                  return;
-                }
-                final repo = ref.read(historyRepositoryProvider.notifier);
-                repo.add(
-                  HistoryEntry(
-                    id: Ids.newId(),
-                    type: HistoryType.request,
-                    title: '${l10n.requestTitle}: $departmentLabel',
-                    text: text,
-                    createdAt: DateTime.now(),
-                  ),
-                  staffId: ref.read(authRepositoryProvider).staffId,
-                  // Строки заявки — по ним потом сверяется поставка.
-                  lines: [
-                    for (final i in state.items)
-                      DocumentLineInput(
-                        productId: i.productId,
-                        productName: i.productName,
-                        unit: i.unit,
-                        ordered: i.quantity,
-                        quantity: i.quantity,
-                      ),
-                  ],
-                );
-                final pdfBytes = await PdfGenerator.generateRequestPdf(
-                  title: l10n.requestTitle,
-                  establishmentName: establishmentName,
-                  department: departmentLabel,
-                  items: state.items
-                      .map((i) => {
-                            'name': i.productName,
-                            'quantity': _formatDouble(i.quantity),
-                            'unit': i.unit,
-                          })
-                      .toList(),
-                );
-                PdfGenerator.downloadFile(pdfBytes,
-                    'zayavka_${DateTime.now().millisecondsSinceEpoch}.pdf');
-              },
-            ),
-
-            const SizedBox(height: 10),
-
-            Row(
-              children: [
-                // Заявку, собранную автоматически (по остаткам iiko), нельзя
-                // "отредактировать" через goBack() — у неё нет своего отдела/
-                // категории (items могут быть из разных отделов), а goBack()
-                // ведёт на шаг выбора категории, который в этом случае пуст.
-                if (state.departmentId != null) ...[
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () =>
-                          ref.read(requestStateProvider.notifier).goBack(),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          color: Colors.white.withOpacity(isDark ? 0.06 : 0.5),
-                          border: Border.all(
-                              color:
-                                  Colors.white.withOpacity(isDark ? 0.1 : 0.4)),
-                        ),
-                        child: Text(
-                          l10n.edit,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 14, color: AppColors.muted),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                ],
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      ref.read(requestStateProvider.notifier).reset();
-                      Navigator.of(context).popUntil((route) => route.isFirst);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        color: AppColors.green.withOpacity(0.1),
-                        border:
-                            Border.all(color: AppColors.green.withOpacity(0.3)),
-                      ),
-                      child: Text(
-                        l10n.newRequest,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                            fontSize: 14, color: AppColors.green),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ActionBtn extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final bool isDark;
-  final VoidCallback onTap;
-  final bool fullWidth;
-
-  const _ActionBtn({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.isDark,
-    required this.onTap,
-    this.fullWidth = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            width: fullWidth ? double.infinity : null,
-            padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              color: color.withOpacity(isDark ? 0.15 : 0.1),
-              border: Border.all(color: color.withOpacity(0.3)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, color: color, size: 18),
-                const SizedBox(width: 8),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: color,
-                  ),
-                ),
-              ],
-            ),
           ),
-        ),
+          const SizedBox(height: 12),
+          OrbitPrimaryButton(
+            label: 'Отправить поставщику',
+            icon: Icons.send_rounded,
+            onTap: () {
+              if (state.items.isEmpty) return noData();
+              saveToHistory();
+              Share.share(text);
+            },
+          ),
+          const SizedBox(height: 10),
+          Row(children: [
+            Expanded(
+              child: OrbitGlassButton(
+                label: 'PDF',
+                icon: Icons.picture_as_pdf_outlined,
+                onTap: () async {
+                  if (state.items.isEmpty) return noData();
+                  saveToHistory();
+                  final pdfBytes = await PdfGenerator.generateRequestPdf(
+                    title: l10n.requestTitle,
+                    establishmentName: establishmentName,
+                    department: departmentLabel,
+                    items: state.items
+                        .map((i) => {
+                              'name': i.productName,
+                              'quantity': _formatDouble(i.quantity),
+                              'unit': i.unit,
+                            })
+                        .toList(),
+                  );
+                  PdfGenerator.downloadFile(pdfBytes,
+                      'zayavka_${DateTime.now().millisecondsSinceEpoch}.pdf');
+                },
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: OrbitGlassButton(
+                label: l10n.copy,
+                icon: Icons.copy_rounded,
+                onTap: () {
+                  final messenger = ScaffoldMessenger.of(context);
+                  Clipboard.setData(ClipboardData(text: text)).then((_) {
+                    messenger.showSnackBar(SnackBar(
+                      content: Text(l10n.copySuccess),
+                      backgroundColor: AppColors.darkCard2,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ));
+                  });
+                },
+              ),
+            ),
+          ]),
+          const SizedBox(height: 10),
+          Row(children: [
+            // Заявку, собранную автоматически (по остаткам iiko), нельзя
+            // "отредактировать" через goBack() — у неё нет своего отдела/
+            // категории (items могут быть из разных отделов), а goBack()
+            // ведёт на шаг выбора категории, который в этом случае пуст.
+            if (state.departmentId != null) ...[
+              Expanded(
+                child: OrbitGlassButton(
+                  label: l10n.edit,
+                  onTap: () => ref.read(requestStateProvider.notifier).goBack(),
+                ),
+              ),
+              const SizedBox(width: 10),
+            ],
+            Expanded(
+              child: OrbitGlassButton(
+                label: l10n.newRequest,
+                onTap: () {
+                  ref.read(requestStateProvider.notifier).reset();
+                  Navigator.of(context).popUntil((route) => route.isFirst);
+                },
+              ),
+            ),
+          ]),
+          const SizedBox(height: 20),
+        ],
       ),
     );
   }
 }
+
+/// Текст заявки, уже сохранённой в историю, — чтобы «Отправить» и «PDF»
+/// подряд не создавали две одинаковые записи.
+final _savedRequestTextProvider = StateProvider<String?>((_) => null);
