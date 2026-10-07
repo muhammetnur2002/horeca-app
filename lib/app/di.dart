@@ -12,9 +12,11 @@ final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>((r
 });
 
 class ThemeModeNotifier extends StateNotifier<ThemeMode> {
+  static const _prefsKey = 'theme_mode';
+
   final SharedPreferences _prefs;
   ThemeModeNotifier(this._prefs) : super(ThemeMode.system) {
-    final saved = _prefs.getString('theme_mode');
+    final saved = _prefs.getString(_prefsKey);
     if (saved == 'light') {
       state = ThemeMode.light;
     } else if (saved == 'dark') {
@@ -23,8 +25,15 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
       state = ThemeMode.system; // по умолчанию — системная
     }
   }
+
   void setThemeMode(ThemeMode mode) {
     state = mode;
-    _prefs.setString('theme_mode', mode == ThemeMode.light ? 'light' : 'dark');
+    // Сохраняем все три значения, иначе при выборе «system»
+    // в настройки попадало 'dark' и после перезапуска тема была неверной.
+    _prefs.setString(_prefsKey, switch (mode) {
+      ThemeMode.light => 'light',
+      ThemeMode.dark => 'dark',
+      ThemeMode.system => 'system',
+    });
   }
 }
