@@ -40,6 +40,7 @@ app.*.symbols
 app.*.map.json
 
 # Android Studio will place build artifacts here
+/android/build/
 /android/app/debug
 /android/app/profile
 /android/app/release
@@ -48,6 +49,10 @@ app.*.map.json
 /android/key.properties
 *.jks
 *.keystore
+
+# Локальные настройки Claude Code и его рабочие копии
+.claude/settings.local.json
+.claude/worktrees/
 
 # Личные пароли/коды доступа — никогда не коммитить
 /passwords for horeca Akyl/
