@@ -379,11 +379,17 @@ void main() {
     expect(cloud.contains(peoplePrefsKey), isFalse);
     expect(backup.contains(peoplePrefsKey), isFalse);
 
+    // Две двери: профиль открывает дверь сотрудника, а не кнопка на главной
+    // заведения. Заведение заходит в «Люди» только за выдачей доступа.
     final home = File('lib/features/home/presentation/home_screen.dart').readAsStringSync();
-    final peopleButton = home.indexOf("label: 'Люди'");
-    final adminGate = home.indexOf('if (isAdmin)');
-    expect(peopleButton, greaterThan(adminGate));
-    expect(home.contains("context.push('/people')"), isTrue);
+    expect(home.contains("label: 'Люди'"), isFalse);
+    expect(home.contains("context.push('/people')"), isFalse);
+    final routes = File('lib/app/routes.dart').readAsStringSync();
+    final staffRouter = routes.substring(routes.indexOf('final staffRouter'));
+    expect(staffRouter.contains('PeopleProfileScreen()'), isTrue);
+    final settings =
+        File('lib/features/settings/presentation/tabs/app_settings_tab.dart').readAsStringSync();
+    expect(settings.contains("context.push('/people/access')"), isTrue);
   });
 
   testWidgets('экран профиля показывает ID, рейтинг, одну специальность и пороги', (tester) async {

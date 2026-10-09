@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:horeca_app/app/app.dart';
+import 'package:horeca_app/features/landing/data/door_repository.dart';
 import 'package:horeca_app/features/people/data/people_repository.dart';
 import 'package:horeca_app/features/people/domain/people_calc.dart';
 import 'package:horeca_app/features/people/domain/people_models.dart';
@@ -20,6 +21,7 @@ class PeopleProfileScreen extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = PeopleColors(isDark);
     final me = ref.watch(peopleRepositoryProvider).me;
+    final staffDoor = ref.watch(doorProvider) == AppDoor.staff;
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBg : AppColors.lightBg,
@@ -29,7 +31,13 @@ class PeopleProfileScreen extends ConsumerWidget {
         iconTheme: IconThemeData(color: colors.text),
         title: Text('Люди', style: TextStyle(color: colors.text, fontWeight: FontWeight.w700)),
         actions: [
-          if (me != null)
+          if (staffDoor)
+            IconButton(
+              tooltip: 'Сменить вход',
+              onPressed: () => ref.read(doorProvider.notifier).reset(),
+              icon: const Icon(Icons.swap_horiz_rounded),
+            )
+          else if (me != null)
             TextButton(
               onPressed: () => context.push('/people/access'),
               child: const Text('Доступ', style: TextStyle(fontWeight: FontWeight.w700)),

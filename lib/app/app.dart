@@ -15,6 +15,8 @@ import 'package:horeca_app/features/account/data/cloud_auto_sync.dart';
 import 'package:horeca_app/features/account/data/cloud_sync_service.dart';
 import 'package:horeca_app/features/account/presentation/account_gate_screen.dart';
 import 'package:horeca_app/features/venue/data/venue_repository.dart';
+import 'package:horeca_app/features/landing/data/door_repository.dart';
+import 'package:horeca_app/features/landing/presentation/landing_screen.dart';
 
 export 'app_theme.dart';
 
@@ -107,6 +109,45 @@ class _HorecaAppState extends ConsumerState<HorecaApp> with WidgetsBindingObserv
       return Directionality(
         textDirection: TextDirection.ltr,
         child: SplashScreen(onSkip: _dismissSplash),
+      );
+    }
+
+    // Лендинг стоит перед входом заведения, пока дверь не выбрана.
+    final door = ref.watch(doorProvider);
+    if (door == null) {
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        themeMode: themeMode,
+        locale: const Locale('ru'),
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [Locale('ru')],
+        theme: buildAppLightTheme(),
+        darkTheme: buildAppDarkTheme(),
+        home: const LandingScreen(),
+      );
+    }
+
+    // Дверь сотрудника: личный профиль, без входа заведения и его PIN.
+    if (door == AppDoor.staff) {
+      return MaterialApp.router(
+        debugShowCheckedModeBanner: false,
+        themeMode: themeMode,
+        locale: const Locale('ru'),
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [Locale('ru')],
+        theme: buildAppLightTheme(),
+        darkTheme: buildAppDarkTheme(),
+        routerConfig: staffRouter,
       );
     }
 

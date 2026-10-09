@@ -13,7 +13,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/app/di.dart';
 import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
+import 'package:go_router/go_router.dart';
 import 'package:horeca_app/features/custom_template/presentation/template_screen.dart';
+import 'package:horeca_app/features/landing/data/door_repository.dart';
 import 'package:horeca_app/features/notifications/presentation/notifications_screen.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
 import 'package:horeca_app/features/settings/presentation/about_screen.dart';
@@ -121,6 +123,24 @@ class AppSettingsTab extends ConsumerWidget {
           isDark: isDark,
           onTap: () => Navigator.push(context,
               MaterialPageRoute(builder: (_) => const VenueSettingsScreen())),
+        ),
+        const SizedBox(height: 10),
+        SettingsNavCard(
+          icon: Icons.badge_outlined,
+          title: 'Доступ людей',
+          subtitle: 'Кто из сотрудников в какие разделы заведения допущен',
+          color: const Color(0xFFD4537E),
+          isDark: isDark,
+          onTap: () => context.push('/people/access'),
+        ),
+        const SizedBox(height: 10),
+        SettingsNavCard(
+          icon: Icons.swap_horiz_rounded,
+          title: 'Сменить вход',
+          subtitle: 'Вернуться к выбору: сотрудник или заведение. Данные останутся',
+          color: AppColors.muted,
+          isDark: isDark,
+          onTap: () => ref.read(doorProvider.notifier).reset(),
         ),
         const SizedBox(height: 16),
         SettingsInfoBanner(

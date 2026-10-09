@@ -73,7 +73,8 @@ final router = GoRouter(
       path: '/template',
       builder: (_, __) => const TemplateScreen(),
     ),
-    // Раздел «Люди» не смотрит на PIN администратора и сотрудника.
+    // Профиль «Люди» — дверь сотрудника. Отсюда заведение открывает только
+    // выдачу доступа (Настройки → «Доступ людей»).
     GoRoute(
       path: '/people',
       builder: (_, __) => const PeopleProfileScreen(),
@@ -84,6 +85,14 @@ final router = GoRouter(
         ),
       ],
     ),
+  ],
+);
+
+/// Дверь сотрудника. Склад, заявки и доступ заведения сюда не входят.
+final staffRouter = GoRouter(
+  initialLocation: '/',
+  routes: [
+    GoRoute(path: '/', builder: (_, __) => const PeopleProfileScreen()),
   ],
 );
 
