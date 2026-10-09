@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:horeca_app/features/account/data/cloud_sync_merge.dart';
 import 'package:horeca_app/features/venue/data/venue_repository.dart';
 
 /// Синхронизирует локальные данные с Firestore, привязывая их к uid
@@ -18,6 +19,12 @@ class CloudSyncService {
     'history_data',
     'shift_records',
     'notification_data',
+    'current_stock_levels',
+    'custom_inventory_template',
+    'supply_requests',
+    'goods_receipts',
+    'stock_moves',
+    'ocr_quota',
   ];
 
   static final _db = FirebaseFirestore.instance;
@@ -29,6 +36,21 @@ class CloudSyncService {
       _rootDoc(uid).collection('venues').doc(code);
 
   static String _lastKnownKey(String code) => 'cloud_sync_last_known_update_ms${venueKeySuffix(code)}';
+
+  static String _pendingKey(String code) => 'local_pending_sync${venueKeySuffix(code)}';
+
+  /// Локальное сохранение ещё не подтверждено облаком. Пока флаг стоит,
+  /// более новое облако не затирает эти правки целиком — списки соединяются.
+  static void markLocalPending(SharedPreferences prefs, String venueCode) {
+    prefs.setBool(_pendingKey(venueCode), true);
+  }
+
+  static bool isLocalPending(SharedPreferences prefs, String venueCode) =>
+      prefs.getBool(_pendingKey(venueCode)) ?? false;
+
+  static void clearLocalPending(SharedPreferences prefs, String venueCode) {
+    prefs.setBool(_pendingKey(venueCode), false);
+  }
 
   // ── Реестр заведений ────────────────────────────────────────────────────
 
@@ -130,13 +152,15 @@ class CloudSyncService {
     }
   }
 
-  /// "Умная" синхронизация для периодического автосинка одного заведения:
-  /// если в облаке за это время появились изменения с другого устройства
-  /// (updatedAt новее, чем последний известный этому устройству) — сначала
-  /// подтягиваем их локально, и только потом отправляем свежий локальный
-  /// снимок обратно.
-  static Future<void> syncSmart(
+  /// "Умная" синхронизация одного заведения.
+  ///
+  /// Если облако новее и локальных неотправленных правок нет — берём облако.
+  /// Если правки есть — соединяем списки ([mergeSyncValue]), потом отправляем
+  /// результат. Возвращает true, когда локальные строки реально изменились
+  /// и экраны нужно перечитать.
+  static Future<bool> syncSmart(
       String uid, SharedPreferences prefs, String venueCode) async {
+    var changed = false;
     try {
       final snap = await _venueDoc(uid, venueCode).get();
       final data = snap.data();
@@ -145,18 +169,31 @@ class CloudSyncService {
         final knownMs = prefs.getInt(_lastKnownKey(venueCode)) ?? 0;
         if (shouldPullBeforePush(cloudMs, knownMs)) {
           final suffix = venueKeySuffix(venueCode);
+          final pending = isLocalPending(prefs, venueCode);
           for (final key in _syncKeys) {
             final value = data[key];
-            if (value is String) {
-              await prefs.setString('$key$suffix', value);
+            final cloudString = value is String ? value : null;
+            final local = prefs.getString('$key$suffix');
+            final merged = mergeSyncValue(
+              key: key,
+              local: local,
+              cloud: cloudString,
+              localPending: pending,
+            );
+            if (merged != null && merged != local) {
+              await prefs.setString('$key$suffix', merged);
+              changed = true;
             }
           }
           await _rememberCloudUpdatedAt(prefs, venueCode, data);
         }
       }
-      await pushToCloud(uid, prefs, venueCode);
+      final pushed = await pushToCloud(uid, prefs, venueCode);
+      if (pushed) clearLocalPending(prefs, venueCode);
+      return changed;
     } catch (_) {
       // Нет сети — просто пропускаем цикл синхронизации.
+      return false;
     }
   }
 

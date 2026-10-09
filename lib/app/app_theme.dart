@@ -26,6 +26,18 @@ class AppColors {
   static const green        = Color(0xFF639922);
   static const greenLight   = Color(0xFF97C459);
   static const muted        = Color(0xFF8B8FA8);
+
+  /// Те же смыслы, что и заливка в Excel: много / мало / плохо.
+  static const markHigh     = Color(0xFF3D8B40);
+  static const markLow      = Color(0xFFE0A100);
+  static const markBad      = Color(0xFFD64545);
+}
+
+class AppMetrics {
+  static const screen = 20.0;
+  static const gap = 12.0;
+  static const radius = 18.0;
+  static const motion = Duration(milliseconds: 200);
 }
 
 ThemeData buildAppLightTheme() {

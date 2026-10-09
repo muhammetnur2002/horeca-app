@@ -23,6 +23,7 @@ import 'package:horeca_app/features/settings/presentation/tabs/app_settings_curr
 import 'package:horeca_app/features/settings/presentation/tabs/app_settings_dialogs.dart';
 import 'package:horeca_app/features/settings/presentation/tabs/app_settings_theme_card.dart';
 import 'package:horeca_app/features/settings/presentation/tabs/app_settings_widgets.dart';
+import 'package:horeca_app/features/supply/presentation/gigachat_key_card.dart';
 import 'package:horeca_app/features/venue/presentation/venue_settings_screen.dart';
 
 class AppSettingsTab extends ConsumerWidget {
@@ -47,6 +48,35 @@ class AppSettingsTab extends ConsumerWidget {
           onSetThemeMode: (mode) =>
               ref.read(themeModeProvider.notifier).setThemeMode(mode),
         ),
+        const SizedBox(height: 16),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            color: Colors.white.withOpacity(isDark ? 0.06 : 0.55),
+            border: Border.all(color: AppColors.orange.withOpacity(0.28)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Как устроен доступ',
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: textColor)),
+              const SizedBox(height: 6),
+              Text(
+                'PIN сотрудника скрывает настройки и аналитику на этом телефоне. '
+                'Облако всё равно принадлежит почте владельца: отдельного входа '
+                'для сотрудника в Firebase нет. Телефон без PIN открывает все разделы.',
+                style: TextStyle(fontSize: 12, height: 1.35, color: AppColors.muted),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        GigaChatKeyCard(isDark: isDark),
         const SizedBox(height: 16),
         AccountSection(isDark: isDark),
         const SizedBox(height: 16),

@@ -6,6 +6,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
+import 'package:horeca_app/app/di.dart';
 import 'package:horeca_app/features/account/data/account_repository.dart';
 import 'package:horeca_app/features/account/data/cloud_sync_service.dart';
 import 'package:horeca_app/features/auth/data/auth_repository.dart';
@@ -167,6 +168,17 @@ void showDeleteVenueDialog(BuildContext context, WidgetRef ref, Venue venue, boo
                       error = null;
                     });
 
+                    final prefs = ref.read(sharedPreferencesProvider);
+                    final locked =
+                        AuthRepository.lockoutSecondsFor(prefs, venue.code);
+                    if (locked > 0) {
+                      setState(() {
+                        isChecking = false;
+                        error = 'Слишком много попыток. Подождите $locked сек.';
+                      });
+                      return;
+                    }
+
                     final pinOk =
                         await AuthRepository.checkAdminPinForVenue(venue.code, input);
                     final passwordOk = pinOk
@@ -176,12 +188,18 @@ void showDeleteVenueDialog(BuildContext context, WidgetRef ref, Venue venue, boo
                             .verifyPassword(input);
 
                     if (!(pinOk || passwordOk)) {
+                      AuthRepository.notePinFailure(prefs, venue.code);
+                      final wait =
+                          AuthRepository.lockoutSecondsFor(prefs, venue.code);
                       setState(() {
                         isChecking = false;
-                        error = 'Неверный PIN или пароль';
+                        error = wait > 0
+                            ? 'Слишком много попыток. Подождите $wait сек.'
+                            : 'Неверный PIN или пароль';
                       });
                       return;
                     }
+                    AuthRepository.notePinSuccess(prefs, venue.code);
 
                     final venueRepo = ref.read(venueRepositoryProvider.notifier);
                     final deleted = await venueRepo.deleteVenue(venue.code);

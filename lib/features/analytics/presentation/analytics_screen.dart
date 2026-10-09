@@ -4,6 +4,7 @@ import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/features/analytics/data/analytics_repository.dart';
 import 'package:horeca_app/features/analytics/presentation/analytics_widgets.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
+import 'package:horeca_app/features/supply/presentation/stock_report_section.dart';
 
 /// Экран "Аналитика и инсайты". Мелкие карточки/график вынесены в
 /// analytics_widgets.dart, чтобы не раздувать build().
@@ -61,9 +62,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
                 ? const [Color(0xFF0F1629), Color(0xFF1A1040), Color(0xFF0D1F35)]
                 : const [Color(0xFFEEF2FF), Color(0xFFF5F7FF), Color(0xFFEEF2FF)])))),
         SafeArea(
-          child: records.isEmpty
-              ? EmptyState(isDark: isDark)
-              : SingleChildScrollView(
+          child: SingleChildScrollView(
                   padding: const EdgeInsets.fromLTRB(20, 80, 20, 30),
                   child: AnimatedBuilder(
                     animation: _animCtrl,
@@ -78,6 +77,11 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
                       );
                     },
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      if (records.isEmpty) ...[
+                        Text('Смен за период нет. График появится после закрытия смены. Остатки ниже считаются отдельно.',
+                            style: TextStyle(fontSize: 13, height: 1.35, color: AppColors.muted)),
+                        const SizedBox(height: 16),
+                      ],
                       // Сравнение смен
                       if (changePercent != null)
                         ChangeCard(percent: changePercent, isDark: isDark, currency: currency),
@@ -96,25 +100,29 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
                         const SizedBox(width: 8),
                         PeriodChip(label: '30 дней', selected: _periodDays == 30, isDark: isDark,
                             onTap: () => setState(() => _periodDays = 30)),
+                        const SizedBox(width: 8),
+                        PeriodChip(label: 'Год', selected: _periodDays == 365, isDark: isDark,
+                            onTap: () => setState(() => _periodDays = 365)),
                       ]),
                       const SizedBox(height: 16),
 
-                      // График выручки
-                      Text('Выручка по дням', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: textColor)),
-                      const SizedBox(height: 12),
-                      RevenueChart(records: records, isDark: isDark, currency: currency),
-                      const SizedBox(height: 24),
-
-                      // Топ списаний
-                      Text('Топ списываемых товаров', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: textColor)),
-                      const SizedBox(height: 12),
-                      if (topWriteOffs.isEmpty)
-                        Text('Нет данных о списаниях', style: const TextStyle(fontSize: 13, color: AppColors.muted))
-                      else
-                        ...topWriteOffs.entries.map((e) => WriteOffRow(
-                          name: e.key, count: e.value, isDark: isDark,
-                          maxCount: topWriteOffs.values.first,
-                        )),
+                      if (records.isNotEmpty) ...[
+                        Text('Выручка по дням', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: textColor)),
+                        const SizedBox(height: 12),
+                        RevenueChart(records: records, isDark: isDark, currency: currency),
+                        const SizedBox(height: 24),
+                        Text('Топ списываемых товаров', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: textColor)),
+                        const SizedBox(height: 12),
+                        if (topWriteOffs.isEmpty)
+                          Text('Нет данных о списаниях', style: const TextStyle(fontSize: 13, color: AppColors.muted))
+                        else
+                          ...topWriteOffs.entries.map((e) => WriteOffRow(
+                            name: e.key, count: e.value, isDark: isDark,
+                            maxCount: topWriteOffs.values.first,
+                          )),
+                        const SizedBox(height: 24),
+                      ],
+                      StockReportSection(periodDays: _periodDays, isDark: isDark),
                     ]),
                   ),
                 ),

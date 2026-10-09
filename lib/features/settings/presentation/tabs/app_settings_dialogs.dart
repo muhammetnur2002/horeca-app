@@ -3,11 +3,11 @@
 /// Вынесены из app_settings_tab.dart.
 library;
 
-import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:horeca_app/core/document_bytes.dart';
 import 'package:file_picker/file_picker.dart' as fp;
 import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/app/di.dart';
@@ -27,11 +27,12 @@ Future<void> pickEstablishmentLogo(
   // очистить в любой момент — копируем в постоянную папку приложения,
   // иначе лого может однажды "пропасть" само по себе.
   try {
-    final docsDir = await getApplicationDocumentsDirectory();
-    final ext = picked.path.split('.').last;
-    final savedPath =
-        '${docsDir.path}/establishment_logo_${DateTime.now().millisecondsSinceEpoch}.$ext';
-    await File(picked.path).copy(savedPath);
+    final bytes = await picked.readAsBytes();
+    final ext = picked.name.contains('.') ? picked.name.split('.').last : 'jpg';
+    final savedPath = await saveDocumentBytes(
+      'establishment_logo_${DateTime.now().millisecondsSinceEpoch}.$ext',
+      bytes,
+    );
     repo.setLogoPath(savedPath);
   } catch (_) {
     // Если копирование не удалось — используем оригинальный путь,
@@ -181,12 +182,14 @@ Future<void> restoreAppBackup(
   final result = await fp.FilePicker.platform.pickFiles(
     type: fp.FileType.custom,
     allowedExtensions: ['json'],
+    withData: true,
   );
-  if (result == null || result.files.single.path == null) return;
+  final bytes = result?.files.single.bytes;
+  if (result == null || bytes == null) return;
 
   final prefs = ref.read(sharedPreferencesProvider);
   final restoreResult =
-      await BackupService.restoreFromFile(result.files.single.path!, prefs);
+      await BackupService.restoreFromContent(utf8.decode(bytes), prefs);
 
   if (context.mounted) {
     final String message;

@@ -10,6 +10,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/features/analytics/data/analytics_repository.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
+import 'package:horeca_app/features/supply/data/supply_repository.dart';
+import 'package:horeca_app/features/supply/presentation/stock_levels_bridge.dart';
 import 'package:horeca_app/features/shift_close/data/shift_draft_provider.dart';
 import 'package:horeca_app/features/shift_close/presentation/shift_close_format.dart';
 import 'package:horeca_app/features/shift_close/presentation/shift_close_models.dart';
@@ -28,6 +30,7 @@ class ShiftCloseScreen extends ConsumerStatefulWidget {
 
 class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
   final ScrollController _scrollController = ScrollController();
+  bool _submitted = false;
   int _step = 0;
   final int _totalSteps = 4;
   final Set<String> _selectedStaff = {};
@@ -62,7 +65,22 @@ class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
   @override
   void initState() {
     super.initState();
+    final restored = ref.read(shiftDraftProvider).hasUserInput;
     _loadDraft();
+    if (restored) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: const Text(
+            'Черновик смены на месте — можно продолжить',
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: AppColors.green,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ));
+      });
+    }
   }
 
   void _loadDraft() {
@@ -108,8 +126,11 @@ class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
     // вкладок), чтобы введённые суммы не терялись, если пользователь
     // не дошёл до конца — используем microtask, т.к. во время deactivate
     // менять состояние провайдеров напрямую нельзя.
-    final draft = _buildDraft();
-    Future.microtask(() => ref.read(shiftDraftProvider.notifier).save(draft));
+    // После успешного закрытия смены черновик уже стёрт — не записываем его снова.
+    if (!_submitted) {
+      final draft = _buildDraft();
+      Future.microtask(() => ref.read(shiftDraftProvider.notifier).save(draft));
+    }
     super.deactivate();
   }
 
@@ -183,6 +204,15 @@ class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
     for (final m in _manualWriteOffs) {
       writeOffsMap[m.name] = (writeOffsMap[m.name] ?? 0) + m.quantity;
     }
+    final products = ref.read(settingsRepositoryProvider).products;
+    final closedAt = DateTime.now();
+    ref.read(supplyRepositoryProvider.notifier).recordWriteOffs(
+          at: closedAt,
+          batchId: 'shift-${closedAt.millisecondsSinceEpoch}',
+          quantities: writeOffsMap.map((name, qty) => MapEntry(name, qty.toDouble())),
+          productKeyFor: (name) => stockKeyFor(products, name),
+        );
+    applyComputedStock(ref);
     ref.read(analyticsRepositoryProvider).addShift(ShiftRecord(
           date: DateTime.now(),
           revenue: _finalTotal,
@@ -210,6 +240,7 @@ class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
       tomorrowCash: _tomorrowCash,
       date: DateTime.now(),
     );
+    _submitted = true;
     ref.read(shiftDraftProvider.notifier).reset();
     if (mounted) Navigator.of(context).pop();
   }

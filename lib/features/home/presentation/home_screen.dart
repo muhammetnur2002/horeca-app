@@ -7,6 +7,7 @@ import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
 import 'package:horeca_app/features/auth/data/auth_repository.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
 import 'package:horeca_app/features/inventory/data/stock_levels_repository.dart';
+import 'package:horeca_app/features/supply/presentation/today_card.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -55,17 +56,29 @@ class HomeScreen extends ConsumerWidget {
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: ListView(
+                padding: const EdgeInsets.only(top: 16, bottom: 24),
                 children: [
-                  const SizedBox(height: 16),
-                  _GreetingHeader(isDark: isDark),
+                  _GreetingHeader(
+                    isDark: isDark,
+                    roleLabel: !pinsEnabled
+                        ? 'Без PIN'
+                        : authState.role == UserRole.staff
+                            ? 'Сотрудник'
+                            : 'Администратор',
+                    roleHint: authState.role == UserRole.staff
+                        ? 'Настройки и аналитика скрыты на этом телефоне'
+                        : pinsEnabled
+                            ? 'Открыты все разделы'
+                            : 'Телефон не спрашивает код',
+                  ),
                   const SizedBox(height: 16),
                   if (lowStockItems.isNotEmpty) ...[
                     _LowStockBanner(items: lowStockItems, isDark: isDark),
                     const SizedBox(height: 12),
                   ],
-                  const SizedBox(height: 4),
+                  TodaySupplyCard(isDark: isDark),
+                  const SizedBox(height: 12),
                   _GlassButton(
                     icon: Icons.assignment_outlined,
                     label: l10n.makeRequest,
@@ -76,13 +89,12 @@ class HomeScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 12),
                   _GlassButton(
-                    icon: Icons.nights_stay_outlined,
-                    label: 'Закрытие смены',
-                    sublabel: 'Отчёт и PDF',
+                    icon: Icons.fact_check_outlined,
+                    label: 'Приёмка',
+                    sublabel: 'Накладная и сверка с заявкой',
                     isPrimary: false,
                     isDark: isDark,
-                    accentColor: AppColors.green,
-                    onTap: () => context.push('/shift-close'),
+                    onTap: () => context.push('/receipt'),
                   ),
                   const SizedBox(height: 12),
                   _GlassButton(
@@ -94,12 +106,21 @@ class HomeScreen extends ConsumerWidget {
                     onTap: () => context.push('/inventory'),
                   ),
                   const SizedBox(height: 12),
+                  _GlassButton(
+                    icon: Icons.nights_stay_outlined,
+                    label: 'Закрытие смены',
+                    sublabel: 'Отчёт и PDF',
+                    isPrimary: false,
+                    isDark: isDark,
+                    accentColor: AppColors.green,
+                    onTap: () => context.push('/shift-close'),
+                  ),
                   if (isAdmin) ...[
                     const SizedBox(height: 12),
                     _GlassButton(
                       icon: Icons.insights_rounded,
                       label: 'Аналитика и инсайты',
-                      sublabel: 'Графики, тренды, списания',
+                      sublabel: 'Графики, остатки, Excel',
                       isPrimary: false,
                       isDark: isDark,
                       accentColor: const Color(0xFF9966FF),
@@ -115,6 +136,16 @@ class HomeScreen extends ConsumerWidget {
                     isDark: isDark,
                     accentColor: const Color(0xFF378ADD),
                     onTap: () => context.push('/iiko'),
+                  ),
+                  const SizedBox(height: 12),
+                  _GlassButton(
+                    icon: Icons.groups_rounded,
+                    label: 'Люди',
+                    sublabel: 'Профиль, стаж и доступ',
+                    isPrimary: false,
+                    isDark: isDark,
+                    accentColor: const Color(0xFFD4537E),
+                    onTap: () => context.push('/people'),
                   ),
                 ],
               ),
@@ -331,7 +362,13 @@ class _LowStockBanner extends StatelessWidget {
 // ── Приветствие ──────────────────────────────────────────────────────────────
 class _GreetingHeader extends StatelessWidget {
   final bool isDark;
-  const _GreetingHeader({required this.isDark});
+  final String roleLabel;
+  final String roleHint;
+  const _GreetingHeader({
+    required this.isDark,
+    required this.roleLabel,
+    required this.roleHint,
+  });
 
   String _greeting() {
     final h = DateTime.now().hour;
@@ -373,6 +410,33 @@ class _GreetingHeader extends StatelessWidget {
               letterSpacing: -0.5)),
       const SizedBox(height: 4),
       Text(_formattedDate(), style: TextStyle(fontSize: 14, color: subColor)),
+      const SizedBox(height: 12),
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          color: Colors.white.withOpacity(isDark ? 0.06 : 0.55),
+          border: Border.all(color: AppColors.orange.withOpacity(0.35)),
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(mainAxisSize: MainAxisSize.min, children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: const BoxDecoration(
+                color: AppColors.orange,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(roleLabel,
+                style: TextStyle(
+                    fontSize: 12, fontWeight: FontWeight.w700, color: textColor)),
+          ]),
+          const SizedBox(height: 4),
+          Text(roleHint, style: TextStyle(fontSize: 11, color: subColor)),
+        ]),
+      ),
     ]);
   }
 }

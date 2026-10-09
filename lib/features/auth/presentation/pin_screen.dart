@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
@@ -6,11 +7,8 @@ import 'package:horeca_app/features/auth/data/auth_repository.dart';
 import 'package:horeca_app/features/auth/presentation/pin_recovery_dialog.dart';
 import 'package:horeca_app/features/venue/data/venue_repository.dart';
 import 'package:horeca_app/features/account/data/account_repository.dart';
+import 'package:horeca_app/features/account/data/cloud_auto_sync.dart';
 import 'package:horeca_app/features/account/data/cloud_sync_service.dart';
-import 'package:horeca_app/features/settings/data/settings_repository.dart';
-import 'package:horeca_app/features/history/data/history_repository.dart';
-import 'package:horeca_app/features/analytics/data/analytics_repository.dart';
-import 'package:horeca_app/features/notifications/data/notification_repository.dart';
 
 class PinScreen extends ConsumerStatefulWidget {
   const PinScreen({super.key});
@@ -18,9 +16,28 @@ class PinScreen extends ConsumerStatefulWidget {
   ConsumerState<PinScreen> createState() => _PinScreenState();
 }
 
-class _PinScreenState extends ConsumerState<PinScreen> {
+class _PinScreenState extends ConsumerState<PinScreen>
+    with SingleTickerProviderStateMixin {
   String _pin = '';
   String? _error;
+  late final AnimationController _shakeCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _shakeCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 460),
+    );
+  }
+
+  @override
+  void dispose() {
+    _shakeCtrl.dispose();
+    super.dispose();
+  }
+
+  void _shake() => _shakeCtrl.forward(from: 0);
 
   void _addDigit(String digit) {
     if (_pin.length >= 6) return;
@@ -46,20 +63,30 @@ class _PinScreenState extends ConsumerState<PinScreen> {
     if (!venueState.isMultiVenue) {
       if (currentPin.length < 4) return;
       final repo = ref.read(authRepositoryProvider.notifier);
-      final role = await repo.checkPinReady(currentPin);
+      if (repo.lockoutSecondsRemaining > 0) {
+        _showLockout(repo.lockoutSecondsRemaining);
+        return;
+      }
+      // Верный код из 4 или 5 цифр открывает сразу. Ошибка считается
+      // один раз, только когда набраны все 6 цифр и совпадения нет.
+      final role = await repo.peekPinReady(currentPin);
       if (!mounted || _pin != currentPin) return;
       if (role != null) {
+        repo.checkPin(currentPin);
         repo.login(role);
-      } else if (repo.lockoutSecondsRemaining > 0) {
-        setState(() {
-          _error = 'Слишком много попыток. Подождите ${repo.lockoutSecondsRemaining} сек.';
-          _pin = '';
-        });
-      } else if (currentPin.length >= 6) {
-        setState(() {
-          _error = 'Неверный PIN-код';
-          _pin = '';
-        });
+        return;
+      }
+      if (currentPin.length >= 6) {
+        repo.checkPin(currentPin);
+        if (repo.lockoutSecondsRemaining > 0) {
+          _showLockout(repo.lockoutSecondsRemaining);
+        } else {
+          setState(() {
+            _error = 'Неверный PIN. Осталось попыток: ${repo.attemptsRemaining}';
+            _pin = '';
+          });
+          _shake();
+        }
       }
       return;
     }
@@ -92,24 +119,28 @@ class _PinScreenState extends ConsumerState<PinScreen> {
             prefs.getString('settings_data${venueKeySuffix(code)}') != null;
         if (!hasLocalData) {
           await CloudSyncService.pullToLocal(account.uid!, prefs, code);
-          ref.invalidate(settingsRepositoryProvider);
-          ref.invalidate(historyRepositoryProvider);
-          ref.invalidate(analyticsRepositoryProvider);
-          ref.invalidate(notificationRepositoryProvider);
+          ref.read(cloudAutoSyncProvider).reloadMirrors();
         }
       }
       repo.login(role);
     } else if (repo.lockoutSecondsRemaining > 0) {
-      setState(() {
-        _error = 'Слишком много попыток. Подождите ${repo.lockoutSecondsRemaining} сек.';
-        _pin = '';
-      });
+      _showLockout(repo.lockoutSecondsRemaining);
     } else {
       setState(() {
-        _error = 'Неверный пароль для «${venue.name}»';
+        _error =
+            'Неверный пароль для «${venue.name}». Осталось попыток: ${repo.attemptsRemaining}';
         _pin = '';
       });
+      _shake();
     }
+  }
+
+  void _showLockout(int seconds) {
+    setState(() {
+      _error = 'Слишком много попыток. Подождите $seconds сек.';
+      _pin = '';
+    });
+    _shake();
   }
 
   @override
@@ -133,27 +164,44 @@ class _PinScreenState extends ConsumerState<PinScreen> {
                 child: const Icon(Icons.lock_outline_rounded, color: AppColors.orange, size: 32)),
             const SizedBox(height: 20),
             Text('Введите PIN-код', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: textColor)),
-            if (isMultiVenue) ...[
-              const SizedBox(height: 6),
-              Text('Код заведения (2 цифры) + пароль (4 цифры)',
-                  style: TextStyle(fontSize: 12, color: AppColors.muted)),
-            ],
+            const SizedBox(height: 6),
+            Text(
+              isMultiVenue
+                  ? 'Сначала 2 цифры кода заведения, потом 4 цифры пароля'
+                  : 'От 4 до 6 цифр. Верный код откроется сразу',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, color: AppColors.muted),
+            ),
             const SizedBox(height: 30),
-            Row(mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(6, (i) {
-                final filled = i < _pin.length;
-                return Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 6),
-                  width: 14, height: 14,
-                  decoration: BoxDecoration(shape: BoxShape.circle,
-                      color: filled ? AppColors.orange : Colors.transparent,
-                      border: Border.all(color: filled ? AppColors.orange : AppColors.muted.withOpacity(0.4))),
-                );
-              }),
+            AnimatedBuilder(
+              animation: _shakeCtrl,
+              builder: (context, child) {
+                final t = _shakeCtrl.value;
+                final dx = sin(t * pi * 6) * (1 - t) * 12;
+                return Transform.translate(offset: Offset(dx, 0), child: child);
+              },
+              child: Row(mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(6, (i) {
+                  final filled = i < _pin.length;
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 160),
+                    margin: const EdgeInsets.symmetric(horizontal: 6),
+                    width: filled ? 16 : 14,
+                    height: filled ? 16 : 14,
+                    decoration: BoxDecoration(shape: BoxShape.circle,
+                        color: filled ? AppColors.orange : Colors.transparent,
+                        border: Border.all(color: filled ? AppColors.orange : AppColors.muted.withOpacity(0.4)),
+                        boxShadow: filled
+                            ? [BoxShadow(color: AppColors.orange.withOpacity(0.45), blurRadius: 10)]
+                            : null),
+                  );
+                }),
+              ),
             ),
             if (_error != null) Padding(
-              padding: const EdgeInsets.only(top: 16),
-              child: Text(_error!, style: const TextStyle(color: Colors.redAccent, fontSize: 13)),
+              padding: const EdgeInsets.fromLTRB(28, 16, 28, 0),
+              child: Text(_error!, textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.redAccent, fontSize: 13, fontWeight: FontWeight.w600)),
             ),
             const Spacer(),
             _NumPad(onDigit: _addDigit, onBackspace: _removeDigit, isDark: isDark),

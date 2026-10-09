@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/features/request/domain/usecases/request_state.dart';
+import 'package:horeca_app/features/supply/presentation/remember_request.dart';
 import 'package:horeca_app/features/history/data/history_repository.dart';
 import 'package:horeca_app/features/history/domain/history_entry.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
@@ -143,6 +144,10 @@ class GenerateStep extends ConsumerWidget {
         state, establishmentName, allProducts, allCategories, allDepartments);
     final departmentLabel = _resolveDepartmentLabel(
         state, allProducts, allCategories, allDepartments);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!context.mounted) return;
+      rememberSupplyRequest(ref, state, departmentLabel);
+    });
 
     return Container(
       decoration: BoxDecoration(
@@ -358,6 +363,7 @@ class GenerateStep extends ConsumerWidget {
                 Expanded(
                   child: GestureDetector(
                     onTap: () {
+                      clearOpenSupplyRequest(ref);
                       ref.read(requestStateProvider.notifier).reset();
                       Navigator.of(context).popUntil((route) => route.isFirst);
                     },

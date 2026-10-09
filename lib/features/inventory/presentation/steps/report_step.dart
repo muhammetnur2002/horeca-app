@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
+import 'package:horeca_app/features/inventory/domain/department_label.dart';
 import 'package:horeca_app/features/inventory/domain/usecases/inventory_state.dart';
 import 'package:horeca_app/features/history/data/history_repository.dart';
 import 'package:horeca_app/features/history/domain/history_entry.dart';
@@ -16,26 +17,23 @@ import 'package:share_plus/share_plus.dart';
 import 'package:horeca_app/features/custom_template/data/template_repository.dart';
 import 'package:horeca_app/features/custom_template/data/template_models.dart';
 import 'package:horeca_app/features/inventory/data/stock_levels_repository.dart';
+import 'package:horeca_app/features/supply/data/supply_repository.dart';
+import 'package:horeca_app/features/supply/domain/stock_ledger.dart';
+import 'package:horeca_app/features/supply/presentation/stock_levels_bridge.dart';
 
 class ReportStep extends ConsumerWidget {
   const ReportStep({super.key});
 
-  String _getDeptName(String? departmentId, AppLocalizations l10n) {
-    if (departmentId == 'all') return l10n.allDepartments;
-    switch (departmentId) {
-      case '1':
-        return 'Кухня';
-      case '2':
-        return 'Бар';
-      case '3':
-        return 'Зал';
-      case '4':
-        return 'Склад';
-      case '5':
-        return 'Клининг';
-      default:
-        return departmentId ?? 'Неизвестный отдел';
-    }
+  String _getDeptName(
+    String? departmentId,
+    AppLocalizations l10n,
+    List<DepartmentModel> departments,
+  ) {
+    return inventoryDepartmentLabel(
+      departmentId: departmentId,
+      departments: departments,
+      allDepartmentsLabel: l10n.allDepartments,
+    );
   }
 
   String _generateReport(
@@ -52,7 +50,7 @@ class ReportStep extends ConsumerWidget {
         '${l10n.date}: ${DateTime.now().toLocal().toString().split('.')[0]}');
     buffer.writeln('${l10n.establishment}: "$establishmentName"');
     buffer.writeln(
-        '${l10n.department}: ${_getDeptName(state.departmentId, l10n)}');
+        '${l10n.department}: ${_getDeptName(state.departmentId, l10n, allDepartments)}');
     buffer.writeln();
 
     final Map<String, List<InventoryItem>> grouped = {};
@@ -103,7 +101,7 @@ class ReportStep extends ConsumerWidget {
     final allCategories = settings.categories;
     final allDepartments = settings.departments;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final deptName = _getDeptName(state.departmentId, l10n);
+    final deptName = _getDeptName(state.departmentId, l10n, allDepartments);
     final text = _generateReport(state, l10n, establishmentName, allProducts,
         allCategories, allDepartments);
 
@@ -253,6 +251,24 @@ class ReportStep extends ConsumerWidget {
                 ref
                     .read(stockLevelsRepositoryProvider.notifier)
                     .updateLevels(levels);
+                final countedAt = DateTime.now();
+                final countBatch = countedAt.millisecondsSinceEpoch.toString();
+                ref.read(supplyRepositoryProvider.notifier).recordCounts(
+                      at: countedAt,
+                      counts: [
+                        for (final item in state.items)
+                          StockMove(
+                            id: 'count-$countBatch-${item.productId}',
+                            at: countedAt,
+                            productKey: item.productId,
+                            name: item.productName,
+                            unit: item.unit.isEmpty ? 'шт' : item.unit,
+                            kind: StockMoveKind.count,
+                            qty: item.remaining,
+                          ),
+                      ],
+                    );
+                applyComputedStock(ref);
 
                 try {
                   final pdfItems = state.items

@@ -1,26 +1,31 @@
 import 'dart:convert';
-import 'dart:io';
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
+import 'dart:typed_data';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:horeca_app/core/pdf_generator/pdf_saver.dart';
 import 'package:horeca_app/features/venue/data/venue_repository.dart';
 
 enum RestoreResult { success, invalidFile, error }
 
 class BackupService {
   // Ключи, которые ведутся отдельно на каждое заведение (см.
-  // venueKeySuffix) — при бэкапе к каждому добавляется суффикс кода
-  // заведения. 'notification_data' сюда не входит — это единый глобальный
-  // ключ на всё устройство, не привязанный к конкретному заведению.
+  // venueKeySuffix). У заведения "01" суффикс пустой, поэтому старые
+  // бэкапы с ключом notification_data по-прежнему попадают в него.
   static const _perVenueKeys = [
     'settings_data',
     'history_data',
     'shift_records',
+    'notification_data',
+    'current_stock_levels',
+    'custom_inventory_template',
+    'shift_draft',
+    'supply_requests',
+    'goods_receipts',
+    'stock_moves',
+    'ocr_quota',
   ];
 
   // Глобальные ключи (одни на всё устройство, не по заведениям).
   static const _globalKeys = [
-    'notification_data',
     'venues_list',
     'active_venue_code',
   ];
@@ -52,32 +57,27 @@ class BackupService {
 
     final Map<String, dynamic> backup = {
       'app': 'Akyl',
-      'version': '1.0.0',
+      'version': '1.1.0',
       'createdAt': DateTime.now().toIso8601String(),
       'data': data,
     };
 
-    final jsonString = jsonEncode(backup);
-    final dir = await getTemporaryDirectory();
-    final dateStr = DateTime.now().toIso8601String().split('T')[0];
-    final file = File('${dir.path}/akyl_backup_$dateStr.json');
-    await file.writeAsString(jsonString);
-    return file.path;
+    return jsonEncode(backup);
   }
 
   static Future<void> shareBackup(SharedPreferences prefs) async {
-    final path = await createBackup(prefs);
-    await Share.shareXFiles(
-      [XFile(path, mimeType: 'application/json')],
-      subject: 'Резервная копия Akyl',
+    final jsonString = await createBackup(prefs);
+    final dateStr = DateTime.now().toIso8601String().split('T')[0];
+    await saveFile(
+      Uint8List.fromList(utf8.encode(jsonString)),
+      'akyl_backup_$dateStr.json',
+      mimeType: 'application/json',
     );
   }
 
-  static Future<RestoreResult> restoreFromFile(
-      String filePath, SharedPreferences prefs) async {
+  static Future<RestoreResult> restoreFromContent(
+      String content, SharedPreferences prefs) async {
     try {
-      final file = File(filePath);
-      final content = await file.readAsString();
       final backup = jsonDecode(content) as Map<String, dynamic>;
 
       if (backup['app'] != 'Akyl') {
