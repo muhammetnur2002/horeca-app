@@ -67,6 +67,21 @@ void main() {
     expect(repo.lockoutSecondsRemaining, 0);
   });
 
+  test('длина полного ввода берётся из сохранённых PIN', () async {
+    final prefs = await SharedPreferences.getInstance();
+    final repo = AuthRepository(prefs, '01');
+    expect(repo.fullPinLength, 4);
+    expect(repo.shortestPinLength, 4);
+
+    await repo.setAdminPin('123456');
+    await repo.setStaffPin('5678');
+    expect(repo.fullPinLength, 6);
+    expect(repo.shortestPinLength, 4);
+    expect(repo.shouldCountOnErase('999'), isFalse);
+    expect(repo.shouldCountOnErase('9999'), isTrue);
+    expect(repo.shouldCountOnErase('5678'), isFalse);
+  });
+
   test('промежуточная проверка PIN не тратит попытку', () async {
     final prefs = await SharedPreferences.getInstance();
     final repo = AuthRepository(prefs, '01');

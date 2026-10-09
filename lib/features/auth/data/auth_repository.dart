@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -171,8 +172,29 @@ class AuthRepository extends StateNotifier<AuthState> {
     return left < 0 ? 0 : left;
   }
 
+  /// Длины сохранённых PIN. Настройки задают ровно 4 цифры, но у старых
+  /// установок PIN мог быть длиннее (до 6).
+  Iterable<int> get _pinLengths => [adminPin, staffPin]
+      .whereType<String>()
+      .where((pin) => pin.isNotEmpty)
+      .map((pin) => pin.length);
+
+  /// Длина, на которой код считается введённым до конца: промах на ней
+  /// сразу записывается как ошибка. Пока PIN не заданы — 4.
+  int get fullPinLength => _pinLengths.fold(4, max);
+
+  /// Самый короткий сохранённый PIN (не меньше 4).
+  int get shortestPinLength => max(4, _pinLengths.fold(fullPinLength, min));
+
+  /// Стирание цифры после промаха — такая же попытка, как полный ввод, если
+  /// набранный код уже не короче самого короткого PIN. Иначе код можно
+  /// перебирать без замка: набрать, стереть последнюю цифру, набрать другую.
+  bool shouldCountOnErase(String pin) =>
+      pin.length >= shortestPinLength && peekPin(pin) == null;
+
   /// Совпадение без счётчика ошибок. Экран входа вызывает это на каждой
-  /// новой цифре, а ошибку записывает один раз — когда код введён до конца.
+  /// новой цифре, а ошибку записывает один раз — когда код введён до конца
+  /// (fullPinLength) или стёрт после промаха (shouldCountOnErase).
   UserRole? peekPin(String pin) {
     if (lockoutSecondsRemaining > 0) return null;
     if (pin.isEmpty) return null;
