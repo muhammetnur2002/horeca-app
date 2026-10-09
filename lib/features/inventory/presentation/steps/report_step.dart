@@ -5,8 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/features/inventory/domain/department_label.dart';
 import 'package:horeca_app/features/inventory/domain/usecases/inventory_state.dart';
-import 'package:horeca_app/features/history/data/history_repository.dart';
-import 'package:horeca_app/features/history/domain/history_entry.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
 import 'package:horeca_app/shared/models/product_model.dart';
 import 'package:horeca_app/shared/models/category_model.dart';
@@ -16,10 +14,7 @@ import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:horeca_app/features/custom_template/data/template_repository.dart';
 import 'package:horeca_app/features/custom_template/data/template_models.dart';
-import 'package:horeca_app/features/inventory/data/stock_levels_repository.dart';
-import 'package:horeca_app/features/supply/data/supply_repository.dart';
-import 'package:horeca_app/features/supply/domain/stock_ledger.dart';
-import 'package:horeca_app/features/supply/presentation/stock_levels_bridge.dart';
+import 'package:horeca_app/features/inventory/presentation/inventory_save.dart';
 
 class ReportStep extends ConsumerWidget {
   const ReportStep({super.key});
@@ -188,6 +183,8 @@ class ReportStep extends ConsumerWidget {
                     color: AppColors.muted,
                     isDark: isDark,
                     onTap: () {
+                      saveInventoryOnce(ref.read,
+                          state: state, title: '${l10n.inventory} $deptName', text: text);
                       final messenger = ScaffoldMessenger.of(context);
                       Clipboard.setData(ClipboardData(text: text)).then((_) {
                         messenger.showSnackBar(SnackBar(
@@ -208,7 +205,11 @@ class ReportStep extends ConsumerWidget {
                     label: l10n.share,
                     color: const Color(0xFF2AABEE),
                     isDark: isDark,
-                    onTap: () => Share.share(text),
+                    onTap: () {
+                      saveInventoryOnce(ref.read,
+                          state: state, title: '${l10n.inventory} $deptName', text: text);
+                      Share.share(text);
+                    },
                   ),
                 ),
               ],
@@ -234,41 +235,8 @@ class ReportStep extends ConsumerWidget {
                   ));
                   return;
                 }
-                final repo = ref.read(historyRepositoryProvider);
-                repo.add(HistoryEntry(
-                  id: DateTime.now().millisecondsSinceEpoch.toString(),
-                  type: HistoryType.inventory,
-                  title: '${l10n.inventory} $deptName',
-                  text: text,
-                  createdAt: DateTime.now(),
-                ));
-
-// Обновляем текущие остатки для отслеживания низких запасов
-                final levels = <String, double>{};
-                for (final item in state.items) {
-                  levels[item.productId] = item.remaining;
-                }
-                ref
-                    .read(stockLevelsRepositoryProvider.notifier)
-                    .updateLevels(levels);
-                final countedAt = DateTime.now();
-                final countBatch = countedAt.millisecondsSinceEpoch.toString();
-                ref.read(supplyRepositoryProvider.notifier).recordCounts(
-                      at: countedAt,
-                      counts: [
-                        for (final item in state.items)
-                          StockMove(
-                            id: 'count-$countBatch-${item.productId}',
-                            at: countedAt,
-                            productKey: item.productId,
-                            name: item.productName,
-                            unit: item.unit.isEmpty ? 'шт' : item.unit,
-                            kind: StockMoveKind.count,
-                            qty: item.remaining,
-                          ),
-                      ],
-                    );
-                applyComputedStock(ref);
+                saveInventoryOnce(ref.read,
+                    state: state, title: '${l10n.inventory} $deptName', text: text);
 
                 try {
                   final pdfItems = state.items

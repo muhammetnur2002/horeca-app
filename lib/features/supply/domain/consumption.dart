@@ -2,10 +2,15 @@
 /// Блюдо без техкарты в остаток не пишется: цифру нельзя выдумать.
 library;
 
+import 'package:horeca_app/features/supply/domain/stock_ledger.dart';
+
 class DishSale {
   final String name;
   final double qty;
-  const DishSale({required this.name, required this.qty});
+
+  /// День продажи (без времени). null — iiko не сказал, в какой день.
+  final DateTime? day;
+  const DishSale({required this.name, required this.qty, this.day});
 }
 
 class CardIngredient {
@@ -86,17 +91,90 @@ ConsumptionExpand expandSales({
 
 List<DishSale> parseOlapSales(dynamic body) {
   final rows = _rows(body);
-  final byName = <String, double>{};
+  final byKey = <(String, DateTime?), double>{};
   for (final row in rows) {
     final name = (row['DishName'] ?? row['dishName'] ?? '').toString().trim();
     final qtyRaw = row['DishAmountInt'] ?? row['DishAmount'] ?? row['amount'];
     final qty = qtyRaw is num ? qtyRaw.toDouble() : double.tryParse('$qtyRaw');
     if (name.isEmpty || qty == null || qty <= 0) continue;
-    byName[name] = (byName[name] ?? 0) + qty;
+    final day = _saleDay(row['OpenDate.Typed'] ?? row['OpenDate'] ?? row['Date']);
+    byKey[(name, day)] = (byKey[(name, day)] ?? 0) + qty;
   }
   return [
-    for (final entry in byName.entries) DishSale(name: entry.key, qty: entry.value),
+    for (final entry in byKey.entries)
+      DishSale(name: entry.key.$1, qty: entry.value, day: entry.key.$2),
   ];
+}
+
+DateTime? _saleDay(Object? raw) {
+  if (raw == null) return null;
+  final text = raw.toString().trim();
+  if (text.length < 10) return null;
+  final parsed = DateTime.tryParse(text.substring(0, 10));
+  if (parsed == null) return null;
+  return DateTime(parsed.year, parsed.month, parsed.day);
+}
+
+class DailyConsumption {
+  final List<StockMove> moves;
+  final List<String> dishesWithoutCard;
+
+  /// Продажи без дня. В остаток не идут: неизвестно, до пересчёта они
+  /// были или после.
+  final int undatedSales;
+  const DailyConsumption({
+    required this.moves,
+    required this.dishesWithoutCard,
+    required this.undatedSales,
+  });
+}
+
+/// Расход по дням: одно движение на ингредиент за каждый день продаж.
+///
+/// Движение ставится на начало дня. Пересчёт в тот же день (обычно на
+/// закрытии) заменяет остаток и этот день уже не вычитает второй раз.
+/// Расход до пересчёта внутри срока тоже не вычитается: пересчёт новее.
+DailyConsumption dailyConsumptionMoves({
+  required List<DishSale> sales,
+  required Map<String, List<CardIngredient>> cardsByDish,
+  required String Function(String ingredientName) keyFor,
+}) {
+  final byDay = <DateTime, List<DishSale>>{};
+  var undated = 0;
+  for (final sale in sales) {
+    final day = sale.day;
+    if (day == null) {
+      undated++;
+      continue;
+    }
+    byDay.putIfAbsent(day, () => []).add(sale);
+  }
+  final moves = <StockMove>[];
+  final missing = <String>{};
+  final days = byDay.keys.toList()..sort();
+  for (final day in days) {
+    final expanded = expandSales(sales: byDay[day]!, cardsByDish: cardsByDish);
+    missing.addAll(expanded.dishesWithoutCard);
+    final stamp = '${day.year}-${day.month.toString().padLeft(2, '0')}-'
+        '${day.day.toString().padLeft(2, '0')}';
+    for (final item in expanded.ingredients) {
+      final key = keyFor(item.name);
+      moves.add(StockMove(
+        id: 'iiko:$stamp:$key',
+        at: day,
+        productKey: key,
+        name: item.name,
+        unit: item.unit,
+        kind: StockMoveKind.consumption,
+        qty: item.qty,
+      ));
+    }
+  }
+  return DailyConsumption(
+    moves: moves,
+    dishesWithoutCard: missing.toList()..sort(),
+    undatedSales: undated,
+  );
 }
 
 /// Техкарты: имя блюда → ингредиенты на 1 порцию.

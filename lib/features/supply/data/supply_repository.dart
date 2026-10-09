@@ -148,18 +148,20 @@ class SupplyRepository extends StateNotifier<SupplySnapshot> {
     required String batchId,
     required Map<String, double> quantities,
     String Function(String name)? productKeyFor,
+    String Function(String name)? unitFor,
   }) {
     if (quantities.isEmpty) return;
     final moves = [...state.moves];
     quantities.forEach((name, qty) {
       if (qty <= 0 || name.trim().isEmpty) return;
       final key = productKeyFor?.call(name) ?? nameProductKey(name);
+      final unit = unitFor?.call(name).trim() ?? '';
       moves.add(StockMove(
         id: '$batchId:$key',
         at: at,
         productKey: key,
         name: name,
-        unit: 'шт',
+        unit: unit.isEmpty ? 'шт' : unit,
         kind: StockMoveKind.writeOff,
         qty: qty,
       ));
@@ -167,15 +169,18 @@ class SupplyRepository extends StateNotifier<SupplySnapshot> {
     _setMoves(moves);
   }
 
-  /// Повторный запрос за тот же срок заменяет расход, а не прибавляет его.
+  /// Расход лежит по дням. Повторный запрос заменяет только дни своего
+  /// срока: короткий запрос не стирает расход длинного за другие дни.
   void replaceConsumption({
     required DateTime from,
     required DateTime to,
     required List<StockMove> consumption,
   }) {
+    final firstDay = DateTime(from.year, from.month, from.day);
+    final afterLastDay = DateTime(to.year, to.month, to.day + 1);
     final kept = state.moves.where((m) {
       if (m.kind != StockMoveKind.consumption) return true;
-      return m.at.isBefore(from) || m.at.isAfter(to);
+      return m.at.isBefore(firstDay) || !m.at.isBefore(afterLastDay);
     });
     _setMoves([...kept, ...consumption]);
   }

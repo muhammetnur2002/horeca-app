@@ -68,6 +68,9 @@ class StockReportRow {
   final bool countedInPeriod;
   final StockMark mark;
 
+  /// Часть движений записана в несовместимой единице и в остаток не вошла.
+  final bool mixedUnits;
+
   const StockReportRow({
     required this.productKey,
     required this.name,
@@ -79,6 +82,7 @@ class StockReportRow {
     required this.closing,
     required this.countedInPeriod,
     required this.mark,
+    this.mixedUnits = false,
   });
 }
 
@@ -112,26 +116,77 @@ String stockMarkLabel(StockMark mark) {
   }
 }
 
-double balanceAt(List<StockMove> moves, DateTime at) {
-  final relevant = moves.where((m) => !m.at.isAfter(at)).toList()
-    ..sort((a, b) {
-      final byTime = a.at.compareTo(b.at);
-      if (byTime != 0) return byTime;
-      return a.id.compareTo(b.id);
-    });
+/// Базовая единица и множитель к ней: 500 г = 0,5 кг, 250 мл = 0,25 л.
+/// Неизвестная единица остаётся сама собой, без пересчёта.
+(String, double) baseUnit(String unit) {
+  final u = unit.trim().toLowerCase().replaceAll('.', '');
+  switch (u) {
+    case 'г':
+    case 'гр':
+    case 'грамм':
+      return ('кг', 0.001);
+    case 'кг':
+      return ('кг', 1);
+    case 'мл':
+      return ('л', 0.001);
+    case 'л':
+    case 'литр':
+      return ('л', 1);
+    case '':
+    case 'шт':
+    case 'штук':
+      return ('шт', 1);
+  }
+  return (u, 1);
+}
+
+List<StockMove> _ordered(Iterable<StockMove> moves) => moves.toList()
+  ..sort((a, b) {
+    final byTime = a.at.compareTo(b.at);
+    if (byTime != 0) return byTime;
+    return a.id.compareTo(b.id);
+  });
+
+/// Единица, в которой считается остаток товара: последнего пересчёта,
+/// иначе последнего движения.
+String ledgerUnit(Iterable<StockMove> moves) {
+  final ordered = _ordered(moves);
+  if (ordered.isEmpty) return 'шт';
+  for (final move in ordered.reversed) {
+    if (move.kind == StockMoveKind.count) return move.unit;
+  }
+  return ordered.last.unit;
+}
+
+/// true — среди движений есть единица, которую нельзя пересчитать
+/// в единицу остатка (шт против кг). Такие движения в остаток не идут.
+bool hasMixedUnits(Iterable<StockMove> moves, {String? unit}) {
+  final target = baseUnit(unit ?? ledgerUnit(moves)).$1;
+  return moves.any((m) => baseUnit(m.unit).$1 != target);
+}
+
+/// Остаток в единице [unit] (по умолчанию [ledgerUnit]). Граммы и
+/// миллилитры пересчитываются в кг и л. Движение в несовместимой единице
+/// пропускается: сложить 3 шт и 2 кг нельзя.
+double balanceAt(List<StockMove> moves, DateTime at, {String? unit}) {
+  final relevant = _ordered(moves.where((m) => !m.at.isAfter(at)));
+  final (target, targetFactor) = baseUnit(unit ?? ledgerUnit(moves));
   var balance = 0.0;
   for (final move in relevant) {
+    final (base, factor) = baseUnit(move.unit);
+    if (base != target) continue;
+    final qty = move.qty * factor;
     switch (move.kind) {
       case StockMoveKind.count:
-        balance = move.qty;
+        balance = qty;
       case StockMoveKind.receipt:
-        balance += move.qty;
+        balance += qty;
       case StockMoveKind.writeOff:
       case StockMoveKind.consumption:
-        balance -= move.qty;
+        balance -= qty;
     }
   }
-  return balance;
+  return balance / targetFactor;
 }
 
 List<StockReportRow> buildStockReport({
@@ -155,21 +210,27 @@ List<StockReportRow> buildStockReport({
     final latest = (inside.isNotEmpty ? inside : before)
       ..sort((a, b) => a.at.compareTo(b.at));
     final name = latest.last.name;
-    final unit = latest.last.unit;
+    final unit = ledgerUnit(own);
+    final (target, targetFactor) = baseUnit(unit);
     double sum(StockMoveKind kind) => inside
         .where((m) => m.kind == kind)
-        .fold(0.0, (total, m) => total + m.qty);
+        .fold(0.0, (total, m) {
+          final (base, factor) = baseUnit(m.unit);
+          return base == target ? total + m.qty * factor / targetFactor : total;
+        });
+    final closing = balanceAt(own, to, unit: unit);
     rows.add(StockReportRow(
       productKey: key,
       name: name,
       unit: unit,
-      opening: balanceAt(before, from),
+      opening: balanceAt(before, from, unit: unit),
       incoming: sum(StockMoveKind.receipt),
       consumption: sum(StockMoveKind.consumption),
       writeOff: sum(StockMoveKind.writeOff),
-      closing: balanceAt(own, to),
+      closing: closing,
       countedInPeriod: inside.any((m) => m.kind == StockMoveKind.count),
-      mark: markStock(balance: balanceAt(own, to), minimum: minimums[key]),
+      mark: markStock(balance: closing, minimum: minimums[key]),
+      mixedUnits: hasMixedUnits(own, unit: unit),
     ));
   }
   rows.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));

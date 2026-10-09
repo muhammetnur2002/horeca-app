@@ -159,6 +159,12 @@ class CloudSyncService {
   /// результат. Возвращает true, когда локальные строки реально изменились
   /// и экраны нужно перечитать.
   static Future<bool> syncSmart(
+          String uid, SharedPreferences prefs, String venueCode) async =>
+      (await syncSmartOutcome(uid, prefs, venueCode)).changed;
+
+  /// То же, что [syncSmart], но ещё говорит, дошли ли данные до облака:
+  /// кнопке «Синхронизировать» нужно честно ответить «отправлено» или нет.
+  static Future<SyncOutcome> syncSmartOutcome(
       String uid, SharedPreferences prefs, String venueCode) async {
     var changed = false;
     try {
@@ -190,10 +196,10 @@ class CloudSyncService {
       }
       final pushed = await pushToCloud(uid, prefs, venueCode);
       if (pushed) clearLocalPending(prefs, venueCode);
-      return changed;
+      return SyncOutcome(ok: pushed, changed: changed);
     } catch (_) {
       // Нет сети — просто пропускаем цикл синхронизации.
-      return false;
+      return SyncOutcome(ok: false, changed: changed);
     }
   }
 
@@ -243,4 +249,13 @@ class CloudSyncService {
       return null;
     }
   }
+}
+
+class SyncOutcome {
+  /// Данные дошли до облака.
+  final bool ok;
+
+  /// Локальные данные изменились после слияния — экраны надо перечитать.
+  final bool changed;
+  const SyncOutcome({required this.ok, required this.changed});
 }

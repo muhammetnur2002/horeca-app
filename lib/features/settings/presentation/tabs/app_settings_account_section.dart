@@ -10,6 +10,7 @@ import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/app/di.dart';
 import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
 import 'package:horeca_app/features/account/data/account_repository.dart';
+import 'package:horeca_app/features/account/data/cloud_auto_sync.dart';
 import 'package:horeca_app/features/account/data/cloud_sync_service.dart';
 import 'package:horeca_app/features/account/presentation/account_gate_screen.dart';
 import 'package:horeca_app/features/settings/presentation/tabs/app_settings_widgets.dart';
@@ -35,7 +36,13 @@ class _AccountSectionState extends ConsumerState<AccountSection> {
     final venueCode = ref.read(venueRepositoryProvider).activeVenueCode;
     final registryOk = await CloudSyncService.pushVenueRegistry(
         uid, ref.read(venueRepositoryProvider).venues);
-    final dataOk = await CloudSyncService.pushToCloud(uid, prefs, venueCode);
+    // Раньше здесь был pushToCloud: он отправлял свою копию поверх облака
+    // без слияния, и правки с другого телефона пропадали. syncSmart сначала
+    // подтягивает облако и соединяет списки, потом отправляет результат.
+    final outcome =
+        await CloudSyncService.syncSmartOutcome(uid, prefs, venueCode);
+    if (outcome.changed) ref.read(cloudAutoSyncProvider).reloadMirrors();
+    final dataOk = outcome.ok;
     // Раньше здесь всегда показывалось "Данные отправлены", даже если оба
     // вызова выше молча падали (например, нет сети) — сотрудник считал
     // данные синхронизированными, хотя они оставались только на устройстве.
