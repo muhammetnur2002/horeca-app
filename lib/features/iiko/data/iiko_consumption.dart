@@ -98,7 +98,9 @@ class IikoConsumptionClient {
       'organizationId': organizationId,
       'organizationIds': [organizationId],
       'reportType': 'SALES',
-      'groupByRowFields': ['DishName'],
+      // День продажи нужен, чтобы расход лёг на свой день, а не одной
+      // датой на весь срок (иначе пересчёт внутри срока вычитался дважды).
+      'groupByRowFields': ['DishName', 'OpenDate.Typed'],
       'groupByColFields': <String>[],
       'aggregateFields': ['DishAmountInt'],
       'buildSummary': false,
@@ -108,7 +110,7 @@ class IikoConsumptionClient {
           'filterType': 'DateRange',
           'periodType': 'CUSTOM',
           'from': _stamp(from),
-          'to': _stamp(to),
+          'to': _stampEnd(to),
           'includeLow': true,
           'includeHigh': true,
         },
@@ -149,12 +151,14 @@ class IikoConsumptionClient {
 }
 
 List<DishSale> _mergeSales(List<DishSale> sales) {
-  final byName = <String, double>{};
+  final byKey = <(String, DateTime?), double>{};
   for (final sale in sales) {
-    byName[sale.name] = (byName[sale.name] ?? 0) + sale.qty;
+    final key = (sale.name, sale.day);
+    byKey[key] = (byKey[key] ?? 0) + sale.qty;
   }
   return [
-    for (final entry in byName.entries) DishSale(name: entry.key, qty: entry.value),
+    for (final entry in byKey.entries)
+      DishSale(name: entry.key.$1, qty: entry.value, day: entry.key.$2),
   ];
 }
 
@@ -178,3 +182,6 @@ String _day(DateTime value) {
 }
 
 String _stamp(DateTime value) => '${_day(value)}T00:00:00.000';
+
+/// Конец дня: иначе последний день каждого куска выпадал из продаж.
+String _stampEnd(DateTime value) => '${_day(value)}T23:59:59.999';

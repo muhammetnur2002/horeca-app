@@ -76,36 +76,33 @@ class _StockReportSectionState extends ConsumerState<StockReportSection> {
             result.cardsError ?? 'Техкарты не пришли. Расход по ингредиентам не записан.');
         return;
       }
-      final expanded = expandSales(sales: result.sales, cardsByDish: result.cards);
-      if (expanded.ingredients.isEmpty) {
-        final sample = expanded.dishesWithoutCard.take(6).join(', ');
+      final products = ref.read(settingsRepositoryProvider).products;
+      final daily = dailyConsumptionMoves(
+        sales: result.sales,
+        cardsByDish: result.cards,
+        keyFor: (name) => stockKeyFor(products, name),
+      );
+      if (result.sales.isNotEmpty && daily.undatedSales == result.sales.length) {
+        setState(() => _notice =
+            'iiko не отдал продажи по дням. Расход не записан, нули не подставлены.');
+        return;
+      }
+      if (daily.moves.isEmpty) {
+        final sample = daily.dishesWithoutCard.take(6).join(', ');
         setState(() => _notice = sample.isEmpty
             ? 'Продаж с техкартами за срок нет. Расход не записан.'
             : 'Техкарты не совпали с блюдами ($sample). Расход не записан.');
         return;
       }
-      final products = ref.read(settingsRepositoryProvider).products;
-      final moves = [
-        for (final item in expanded.ingredients)
-          StockMove(
-            id: 'iiko-${stockKeyFor(products, item.name)}-${from.millisecondsSinceEpoch}',
-            at: to,
-            productKey: stockKeyFor(products, item.name),
-            name: item.name,
-            unit: item.unit,
-            kind: StockMoveKind.consumption,
-            qty: item.qty,
-          ),
-      ];
       ref.read(supplyRepositoryProvider.notifier).replaceConsumption(
             from: from,
             to: to,
-            consumption: moves,
+            consumption: daily.moves,
           );
       applyComputedStock(ref);
-      final skipped = expanded.dishesWithoutCard;
+      final skipped = daily.dishesWithoutCard;
       setState(() => _notice = skipped.isEmpty
-          ? 'Расход по техкартам записан.'
+          ? 'Расход по техкартам записан по дням.'
           : 'Расход записан. Без техкарты не списаны: ${skipped.take(6).join(', ')}.');
     } catch (_) {
       if (mounted) {
@@ -130,6 +127,7 @@ class _StockReportSectionState extends ConsumerState<StockReportSection> {
       minimums: minimumsByKey(products),
     );
     final counted = rows.any((row) => row.countedInPeriod);
+    final mixed = [for (final row in rows) if (row.mixedUnits) row.name];
 
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text('Остатки за период',
@@ -145,6 +143,15 @@ class _StockReportSectionState extends ConsumerState<StockReportSection> {
         const Text(
           'В периоде была инвентаризация: остаток заменён на посчитанный факт.',
           style: TextStyle(fontSize: 13, height: 1.35, color: AppColors.muted),
+        ),
+      ],
+      if (mixed.isNotEmpty) ...[
+        const SizedBox(height: 6),
+        Text(
+          'Разные единицы у товаров: ${mixed.take(4).join(', ')}. Строки в '
+          'несовместимой единице (шт против кг или л) в остаток не вошли — '
+          'проверьте единицу товара в каталоге.',
+          style: const TextStyle(fontSize: 13, height: 1.35, color: AppColors.muted),
         ),
       ],
       const SizedBox(height: AppMetrics.gap),

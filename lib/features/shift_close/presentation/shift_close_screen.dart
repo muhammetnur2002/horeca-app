@@ -211,6 +211,7 @@ class _ShiftCloseScreenState extends ConsumerState<ShiftCloseScreen> {
           batchId: 'shift-${closedAt.millisecondsSinceEpoch}',
           quantities: writeOffsMap.map((name, qty) => MapEntry(name, qty.toDouble())),
           productKeyFor: (name) => stockKeyFor(products, name),
+          unitFor: (name) => stockUnitFor(products, name),
         );
     applyComputedStock(ref);
     ref.read(analyticsRepositoryProvider).addShift(ShiftRecord(
