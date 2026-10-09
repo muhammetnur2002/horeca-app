@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:horeca_app/app/di.dart';
 import 'package:horeca_app/features/account/data/cloud_auto_sync.dart';
 import 'package:horeca_app/features/notifications/data/notification_service.dart';
+import 'package:horeca_app/features/venue/data/venue_repository.dart';
 
 enum ReminderFrequency { daily, weekly }
 
@@ -108,11 +109,12 @@ class NotificationRepository extends StateNotifier<NotificationData> {
   final SharedPreferences _prefs;
   final NotificationService _service = NotificationService();
   final void Function()? _onChanged;
-  static const _key = 'notification_data';
+  final String _key;
   int _nextId = 1000;
 
-  NotificationRepository(this._prefs, {void Function()? onChanged})
+  NotificationRepository(this._prefs, String venueCode, {void Function()? onChanged})
       : _onChanged = onChanged,
+        _key = 'notification_data${venueKeySuffix(venueCode)}',
         super(const NotificationData()) {
     _load();
     _service.init();
@@ -210,6 +212,7 @@ class NotificationRepository extends StateNotifier<NotificationData> {
 final notificationRepositoryProvider =
     StateNotifierProvider<NotificationRepository, NotificationData>((ref) {
   final prefs = ref.watch(sharedPreferencesProvider);
-  return NotificationRepository(prefs,
+  final venueCode = ref.watch(venueRepositoryProvider).activeVenueCode;
+  return NotificationRepository(prefs, venueCode,
       onChanged: () => ref.read(cloudAutoSyncProvider).scheduleSync());
 });

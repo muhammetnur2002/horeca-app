@@ -19,7 +19,14 @@ void main() async {
     // работать без аккаунта, если Firebase недоступен.
     bool firebaseReady = false;
     try {
-      await Firebase.initializeApp();
+      // Таймаут — страховка от сетей, где firebase_core_web не получает ни
+      // успеха, ни ошибки: он подгружает Firebase JS SDK через динамический
+      // import() из gstatic.com прямо в браузере, и если этот import
+      // зависает (медленная/фильтрующая сеть, а не явный отказ), то Future
+      // от Firebase.initializeApp() может никогда не завершиться — тогда
+      // runApp() ниже не вызовется вообще, и вместо офлайн-режима
+      // пользователь увидит бесконечный пустой экран.
+      await Firebase.initializeApp().timeout(const Duration(seconds: 8));
       firebaseReady = true;
     } catch (e) {
       debugPrint('Firebase init failed, продолжаем офлайн: $e');

@@ -106,6 +106,12 @@ class AppThemeCard extends StatelessWidget {
             )),
           ],
         ),
+        const SizedBox(height: 10),
+        Text(
+          '«Авто» запоминается и повторяет тему телефона',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 12, color: AppColors.muted),
+        ),
       ],
     );
   }
@@ -145,7 +151,10 @@ class _ThemeOption extends StatelessWidget {
             width: selected ? 1.5 : 1,
           ),
         ),
-        child: Column(
+        child: AnimatedScale(
+          duration: const Duration(milliseconds: 220),
+          scale: selected ? 1.04 : 1,
+          child: Column(
           children: [
             Icon(icon, color: selected ? accent : AppColors.muted, size: 28),
             const SizedBox(height: 8),
@@ -156,6 +165,7 @@ class _ThemeOption extends StatelessWidget {
                   color: selected ? accent : AppColors.muted,
                 )),
           ],
+        ),
         ),
       ),
     );

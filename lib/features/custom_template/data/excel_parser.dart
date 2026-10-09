@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:excel/excel.dart';
 
 class ParsedTemplate {
@@ -10,9 +9,8 @@ class ParsedTemplate {
 }
 
 class ExcelParser {
-  static Future<ParsedTemplate?> parseFile(String filePath) async {
+  static ParsedTemplate? parseBytes(List<int> bytes) {
     try {
-      final bytes = await File(filePath).readAsBytes();
       final excel = Excel.decodeBytes(bytes);
 
       if (excel.tables.isEmpty) return null;

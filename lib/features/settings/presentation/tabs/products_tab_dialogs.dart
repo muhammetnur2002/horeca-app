@@ -10,7 +10,6 @@ import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/core/localization/l10n/app_localizations.dart';
 import 'package:horeca_app/features/settings/data/settings_repository.dart';
 import 'package:horeca_app/features/settings/data/settings_repository_products.dart';
-import 'package:horeca_app/features/settings/data/settings_repository_staff.dart';
 import 'package:horeca_app/shared/models/category_model.dart';
 import 'package:horeca_app/shared/models/department_model.dart';
 import 'package:horeca_app/shared/models/product_model.dart';

@@ -67,6 +67,18 @@ void main() {
     expect(repo.lockoutSecondsRemaining, 0);
   });
 
+  test('промежуточная проверка PIN не тратит попытку', () async {
+    final prefs = await SharedPreferences.getInstance();
+    final repo = AuthRepository(prefs, '01');
+    await repo.setAdminPin('123456');
+
+    expect(repo.peekPin('1234'), isNull);
+    expect(repo.peekPin('12345'), isNull);
+    expect(repo.attemptsRemaining, 5);
+    expect(repo.peekPin('123456'), UserRole.admin);
+    expect(repo.attemptsRemaining, 5);
+  });
+
   test('неверный PIN не путается с ролью staff', () async {
     final prefs = await SharedPreferences.getInstance();
     final repo = AuthRepository(prefs, '01');

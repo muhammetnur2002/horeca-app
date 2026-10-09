@@ -14,6 +14,9 @@ import 'package:horeca_app/features/analytics/presentation/analytics_screen.dart
 import 'package:horeca_app/features/notifications/presentation/notifications_screen.dart';
 import 'package:horeca_app/features/custom_template/presentation/template_screen.dart';
 import 'package:horeca_app/features/auth/data/auth_repository.dart';
+import 'package:horeca_app/features/people/presentation/people_profile_screen.dart';
+import 'package:horeca_app/features/people/presentation/venue_access_screen.dart';
+import 'package:horeca_app/features/supply/presentation/receipt_screen.dart';
 
 /// Настройки и аналитика видны только администратору — соответствующие
 /// кнопки и так скрыты для сотрудников (см. HomeScreen, MainShell), но это
@@ -50,6 +53,10 @@ final router = GoRouter(
       builder: (_, __) => const ShiftCloseScreen(),
     ),
     GoRoute(
+      path: '/receipt',
+      builder: (_, __) => const ReceiptScreen(),
+    ),
+    GoRoute(
       path: '/iiko',
       builder: (_, __) => const IikoScreen(),
     ),
@@ -65,6 +72,17 @@ final router = GoRouter(
     GoRoute(
       path: '/template',
       builder: (_, __) => const TemplateScreen(),
+    ),
+    // Раздел «Люди» не смотрит на PIN администратора и сотрудника.
+    GoRoute(
+      path: '/people',
+      builder: (_, __) => const PeopleProfileScreen(),
+      routes: [
+        GoRoute(
+          path: 'access',
+          builder: (_, __) => const VenueAccessScreen(),
+        ),
+      ],
     ),
   ],
 );

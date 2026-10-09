@@ -76,7 +76,10 @@ class _HorecaAppState extends ConsumerState<HorecaApp> with WidgetsBindingObserv
       // на месте), а не со всеми пятью сразу.
       final venueCode = ref.read(venueRepositoryProvider).activeVenueCode;
       CloudSyncService.syncSmart(
-          account.uid!, ref.read(sharedPreferencesProvider), venueCode);
+              account.uid!, ref.read(sharedPreferencesProvider), venueCode)
+          .then((changed) {
+        if (changed) ref.read(cloudAutoSyncProvider).reloadMirrors();
+      });
     }
   }
 

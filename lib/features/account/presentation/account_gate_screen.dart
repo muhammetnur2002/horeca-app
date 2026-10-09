@@ -3,12 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horeca_app/app/app.dart';
 import 'package:horeca_app/app/di.dart';
 import 'package:horeca_app/features/account/data/account_repository.dart';
+import 'package:horeca_app/features/account/data/cloud_auto_sync.dart';
 import 'package:horeca_app/features/account/data/cloud_sync_service.dart';
 import 'package:horeca_app/features/account/presentation/account_gate_widgets.dart';
-import 'package:horeca_app/features/settings/data/settings_repository.dart';
-import 'package:horeca_app/features/history/data/history_repository.dart';
-import 'package:horeca_app/features/analytics/data/analytics_repository.dart';
-import 'package:horeca_app/features/notifications/data/notification_repository.dart';
 import 'package:horeca_app/features/venue/data/venue_repository.dart';
 
 /// Экран входа/регистрации по email. Показывается один раз при первом
@@ -80,18 +77,10 @@ class _AccountGateScreenState extends ConsumerState<AccountGateScreen> {
     await CloudSyncService.pushVenueRegistry(uid, ref.read(venueRepositoryProvider).venues);
 
     final activeCode = ref.read(venueRepositoryProvider).activeVenueCode;
-    final hasCloudData = await CloudSyncService.hasCloudData(uid, activeCode);
-    if (hasCloudData) {
-      await CloudSyncService.pullToLocal(uid, prefs, activeCode);
-    } else {
-      await CloudSyncService.pushToCloud(uid, prefs, activeCode);
-    }
-    // Репозитории уже могли закэшировать старые данные в памяти —
-    // сбрасываем их, чтобы они перечитали SharedPreferences заново.
-    ref.invalidate(settingsRepositoryProvider);
-    ref.invalidate(historyRepositoryProvider);
-    ref.invalidate(analyticsRepositoryProvider);
-    ref.invalidate(notificationRepositoryProvider);
+    // syncSmart сам решит: скачать облако, соединить с локальными правками
+    // или отправить то, чего в облаке ещё нет.
+    await CloudSyncService.syncSmart(uid, prefs, activeCode);
+    ref.read(cloudAutoSyncProvider).reloadMirrors();
     if (mounted) setState(() => _isSyncing = false);
   }
 

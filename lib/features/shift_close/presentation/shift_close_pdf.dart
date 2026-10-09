@@ -2,9 +2,7 @@ import 'package:flutter/material.dart' show BuildContext;
 import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:share_plus/share_plus.dart';
-import 'package:path_provider/path_provider.dart';
-import 'dart:io';
+import 'package:horeca_app/core/pdf_generator/pdf_saver.dart';
 import 'package:horeca_app/features/shift_close/presentation/shift_close_models.dart';
 
 class ShiftClosePdf {
@@ -215,15 +213,8 @@ class ShiftClosePdf {
     ));
 
     final Uint8List bytes = await pdf.save();
-    final dir = await getTemporaryDirectory();
     final fileName = 'smena_${date.year}${date.month.toString().padLeft(2,'0')}${date.day.toString().padLeft(2,'0')}.pdf';
-    final file = File('${dir.path}/$fileName');
-    await file.writeAsBytes(bytes);
-
-    await Share.shareXFiles(
-      [XFile(file.path, mimeType: 'application/pdf')],
-      subject: 'Отчёт о закрытии смены — $dateStr',
-    );
+    await saveFile(bytes, fileName);
   }
 
   static pw.Widget _pdfBox({

@@ -6,8 +6,8 @@ import 'dart:typed_data';
 import 'dart:html' as html;
 
 class PlatformSaver {
-  static Future<void> save(Uint8List bytes, String fileName) async {
-    final blob = html.Blob([bytes], 'application/pdf');
+  static Future<void> save(Uint8List bytes, String fileName, String mimeType) async {
+    final blob = html.Blob([bytes], mimeType);
     final url = html.Url.createObjectUrlFromBlob(blob);
     html.AnchorElement(href: url)
       ..target = 'blank'

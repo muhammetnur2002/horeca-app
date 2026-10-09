@@ -25,11 +25,11 @@ class AuthState {
 class AuthRepository extends StateNotifier<AuthState> {
   final SharedPreferences _prefs;
   static const _secureStorage = FlutterSecureStorage();
+  final String _venueCode;
   final String _adminPinKey;
   final String _staffPinKey;
   final String _pinsEnabledKey;
   final String _failedAttemptsKey;
-  final String _lockedUntilKey;
 
   // PIN-коды — это ключи доступа к админ-функциям, поэтому храним их в
   // защищённом (шифрованном) хранилище, а не в обычных SharedPreferences.
@@ -40,23 +40,42 @@ class AuthRepository extends StateNotifier<AuthState> {
   bool _pinsLoaded = false;
   final Completer<void> _pinsLoadedCompleter = Completer<void>();
 
+  // Счётчик записей PIN — нужен, чтобы фоновая _loadPins() (запущенная в
+  // конструкторе) не затёрла более свежее значение, если setAdminPin()/
+  // setStaffPin() успели выполниться, пока начальное чтение из secure
+  // storage ещё не завершилось (например, на медленном первом чтении из
+  // keystore на Android). Без этого PIN, только что установленный в
+  // Настройках сразу после переключения заведения, мог молча откатиться
+  // на старое значение в памяти — при этом на диске лежал бы уже верный.
+  int _pinWriteVersion = 0;
+
   AuthRepository(this._prefs, String venueCode)
-      : _adminPinKey = 'admin_pin${venueKeySuffix(venueCode)}',
+      : _venueCode = venueCode,
+        _adminPinKey = 'admin_pin${venueKeySuffix(venueCode)}',
         _staffPinKey = 'staff_pin${venueKeySuffix(venueCode)}',
         _pinsEnabledKey = 'pins_enabled${venueKeySuffix(venueCode)}',
         _failedAttemptsKey = 'pin_failed_attempts${venueKeySuffix(venueCode)}',
-        _lockedUntilKey = 'pin_locked_until${venueKeySuffix(venueCode)}',
         super(const AuthState()) {
     _loadPins();
   }
 
   Future<void> _loadPins() async {
+    final versionAtStart = _pinWriteVersion;
+    String? adminPin;
+    String? staffPin;
     try {
-      _cachedAdminPin = await _secureStorage.read(key: _adminPinKey);
-      _cachedStaffPin = await _secureStorage.read(key: _staffPinKey);
+      adminPin = await _secureStorage.read(key: _adminPinKey);
+      staffPin = await _secureStorage.read(key: _staffPinKey);
     } catch (_) {
-      _cachedAdminPin = null;
-      _cachedStaffPin = null;
+      adminPin = null;
+      staffPin = null;
+    }
+    // Если за время этого чтения кто-то успел вызвать setAdminPin/
+    // setStaffPin/clearPins — их значение свежее, чем то, что мы только
+    // что прочитали, поэтому не перезаписываем кэш.
+    if (_pinWriteVersion == versionAtStart) {
+      _cachedAdminPin = adminPin;
+      _cachedStaffPin = staffPin;
     }
     _pinsLoaded = true;
     if (!_pinsLoadedCompleter.isCompleted) _pinsLoadedCompleter.complete();
@@ -81,17 +100,20 @@ class AuthRepository extends StateNotifier<AuthState> {
 
   Future<void> setAdminPin(String pin) async {
     _cachedAdminPin = pin;
+    _pinWriteVersion++;
     await _secureStorage.write(key: _adminPinKey, value: pin);
   }
 
   Future<void> setStaffPin(String pin) async {
     _cachedStaffPin = pin;
+    _pinWriteVersion++;
     await _secureStorage.write(key: _staffPinKey, value: pin);
   }
 
   Future<void> clearPins() async {
     _cachedAdminPin = null;
     _cachedStaffPin = null;
+    _pinWriteVersion++;
     await _secureStorage.delete(key: _adminPinKey);
     await _secureStorage.delete(key: _staffPinKey);
     _prefs.setBool(_pinsEnabledKey, false);
@@ -101,49 +123,76 @@ class AuthRepository extends StateNotifier<AuthState> {
   // временная блокировка ввода. Храним в SharedPreferences (не в памяти),
   // чтобы блокировка не сбрасывалась при переключении между заведениями
   // или перезапуске приложения.
-  static const _maxAttempts = 5;
-  static const _lockoutDuration = Duration(seconds: 30);
+  static const maxPinAttempts = 5;
+  static const pinLockout = Duration(seconds: 30);
 
-  int get _failedAttempts => _prefs.getInt(_failedAttemptsKey) ?? 0;
-  set _failedAttempts(int v) => _prefs.setInt(_failedAttemptsKey, v);
+  static String attemptsKeyFor(String venueCode) =>
+      'pin_failed_attempts${venueKeySuffix(venueCode)}';
 
-  DateTime? get _lockedUntil {
-    final ms = _prefs.getInt(_lockedUntilKey);
-    return ms == null ? null : DateTime.fromMillisecondsSinceEpoch(ms);
+  static String lockedUntilKeyFor(String venueCode) =>
+      'pin_locked_until${venueKeySuffix(venueCode)}';
+
+  static int lockoutSecondsFor(SharedPreferences prefs, String venueCode) {
+    final ms = prefs.getInt(lockedUntilKeyFor(venueCode));
+    if (ms == null) return 0;
+    final diff = DateTime.fromMillisecondsSinceEpoch(ms)
+        .difference(DateTime.now())
+        .inSeconds;
+    return diff > 0 ? diff : 0;
   }
 
-  set _lockedUntil(DateTime? v) {
-    if (v == null) {
-      _prefs.remove(_lockedUntilKey);
+  static void notePinSuccess(SharedPreferences prefs, String venueCode) {
+    prefs.setInt(attemptsKeyFor(venueCode), 0);
+    prefs.remove(lockedUntilKeyFor(venueCode));
+  }
+
+  static void notePinFailure(SharedPreferences prefs, String venueCode) {
+    if (lockoutSecondsFor(prefs, venueCode) > 0) return;
+    final attempts = (prefs.getInt(attemptsKeyFor(venueCode)) ?? 0) + 1;
+    if (attempts >= maxPinAttempts) {
+      prefs.setInt(
+        lockedUntilKeyFor(venueCode),
+        DateTime.now().add(pinLockout).millisecondsSinceEpoch,
+      );
+      prefs.setInt(attemptsKeyFor(venueCode), 0);
     } else {
-      _prefs.setInt(_lockedUntilKey, v.millisecondsSinceEpoch);
+      prefs.setInt(attemptsKeyFor(venueCode), attempts);
     }
   }
 
   /// Сколько секунд осталось до разблокировки ввода PIN (0, если не заблокировано).
-  int get lockoutSecondsRemaining {
-    final until = _lockedUntil;
-    if (until == null) return 0;
-    final diff = until.difference(DateTime.now()).inSeconds;
-    return diff > 0 ? diff : 0;
+  int get lockoutSecondsRemaining => lockoutSecondsFor(_prefs, _venueCode);
+
+  /// Сколько ошибок ещё можно сделать до блокировки.
+  int get attemptsRemaining {
+    if (lockoutSecondsRemaining > 0) return 0;
+    final used = _prefs.getInt(_failedAttemptsKey) ?? 0;
+    final left = maxPinAttempts - used;
+    return left < 0 ? 0 : left;
+  }
+
+  /// Совпадение без счётчика ошибок. Экран входа вызывает это на каждой
+  /// новой цифре, а ошибку записывает один раз — когда код введён до конца.
+  UserRole? peekPin(String pin) {
+    if (lockoutSecondsRemaining > 0) return null;
+    if (pin.isEmpty) return null;
+    if (pin == adminPin) return UserRole.admin;
+    if (pin == staffPin) return UserRole.staff;
+    return null;
   }
 
   UserRole? checkPin(String pin) {
     if (lockoutSecondsRemaining > 0) return null;
     if (pin.isEmpty) return null;
     if (pin == adminPin) {
-      _failedAttempts = 0;
+      notePinSuccess(_prefs, _venueCode);
       return UserRole.admin;
     }
     if (pin == staffPin) {
-      _failedAttempts = 0;
+      notePinSuccess(_prefs, _venueCode);
       return UserRole.staff;
     }
-    _failedAttempts = _failedAttempts + 1;
-    if (_failedAttempts >= _maxAttempts) {
-      _lockedUntil = DateTime.now().add(_lockoutDuration);
-      _failedAttempts = 0;
-    }
+    notePinFailure(_prefs, _venueCode);
     return null;
   }
 
@@ -154,6 +203,11 @@ class AuthRepository extends StateNotifier<AuthState> {
   Future<UserRole?> checkPinReady(String pin) async {
     if (!_pinsLoaded) await _pinsLoadedCompleter.future;
     return checkPin(pin);
+  }
+
+  Future<UserRole?> peekPinReady(String pin) async {
+    if (!_pinsLoaded) await _pinsLoadedCompleter.future;
+    return peekPin(pin);
   }
 
   /// Проверка PIN администратора конкретного заведения без переключения

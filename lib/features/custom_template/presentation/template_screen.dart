@@ -28,14 +28,16 @@ class _TemplateScreenState extends ConsumerState<TemplateScreen> {
     final result = await fp.FilePicker.platform.pickFiles(
       type: fp.FileType.custom,
       allowedExtensions: ['xlsx', 'xls'],
+      withData: true,
     );
     if (!mounted) return;
-    if (result == null || result.files.single.path == null) {
+    final bytes = result?.files.single.bytes;
+    if (result == null || bytes == null) {
       setState(() => _loading = false);
       return;
     }
 
-    final parsed = await ExcelParser.parseFile(result.files.single.path!);
+    final parsed = ExcelParser.parseBytes(bytes);
     if (!mounted) return;
     if (parsed == null) {
       setState(() {
