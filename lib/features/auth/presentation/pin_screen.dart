@@ -50,7 +50,27 @@ class _PinScreenState extends ConsumerState<PinScreen>
 
   void _removeDigit() {
     if (_pin.isEmpty) return;
+    final repo = ref.read(authRepositoryProvider.notifier);
+    if (!ref.read(venueRepositoryProvider).isMultiVenue &&
+        repo.pinsLoaded &&
+        repo.shouldCountOnErase(_pin)) {
+      _rejectPin(repo, _pin);
+      return;
+    }
     setState(() => _pin = _pin.substring(0, _pin.length - 1));
+  }
+
+  void _rejectPin(AuthRepository repo, String pin) {
+    repo.checkPin(pin);
+    if (repo.lockoutSecondsRemaining > 0) {
+      _showLockout(repo.lockoutSecondsRemaining);
+      return;
+    }
+    setState(() {
+      _error = 'Неверный PIN. Осталось попыток: ${repo.attemptsRemaining}';
+      _pin = '';
+    });
+    _shake();
   }
 
   /// Если заведение одно (обычный случай) — вводится просто PIN, как раньше.
@@ -67,8 +87,9 @@ class _PinScreenState extends ConsumerState<PinScreen>
         _showLockout(repo.lockoutSecondsRemaining);
         return;
       }
-      // Верный код из 4 или 5 цифр открывает сразу. Ошибка считается
-      // один раз, только когда набраны все 6 цифр и совпадения нет.
+      // Верный код открывает сразу. Ошибка считается один раз на ввод: когда
+      // набрана длина самого длинного PIN или код стёрт после промаха
+      // (см. _removeDigit).
       final role = await repo.peekPinReady(currentPin);
       if (!mounted || _pin != currentPin) return;
       if (role != null) {
@@ -76,17 +97,8 @@ class _PinScreenState extends ConsumerState<PinScreen>
         repo.login(role);
         return;
       }
-      if (currentPin.length >= 6) {
-        repo.checkPin(currentPin);
-        if (repo.lockoutSecondsRemaining > 0) {
-          _showLockout(repo.lockoutSecondsRemaining);
-        } else {
-          setState(() {
-            _error = 'Неверный PIN. Осталось попыток: ${repo.attemptsRemaining}';
-            _pin = '';
-          });
-          _shake();
-        }
+      if (currentPin.length >= repo.fullPinLength) {
+        _rejectPin(repo, currentPin);
       }
       return;
     }
