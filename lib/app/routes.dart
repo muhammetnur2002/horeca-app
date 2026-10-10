@@ -114,11 +114,11 @@ class MainShell extends ConsumerWidget {
         decoration: BoxDecoration(
           color: isDark
               ? AppColors.darkSurface
-              : Colors.white,
+              : AppColors.lightSurface,
           border: Border(
             top: BorderSide(
               color: isDark
-                  ? Colors.white.withOpacity(0.06)
+                  ? AppColors.cream.withOpacity(0.06)
                   : Colors.black.withOpacity(0.06),
               width: 0.5,
             ),

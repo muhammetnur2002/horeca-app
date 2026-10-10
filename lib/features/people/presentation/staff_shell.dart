@@ -57,10 +57,10 @@ class _StaffShellState extends ConsumerState<StaffShell> {
       ]),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: isDark ? AppColors.darkSurface : Colors.white,
+          color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
           border: Border(
             top: BorderSide(
-              color: (isDark ? Colors.white : Colors.black).withOpacity(0.06),
+              color: (isDark ? AppColors.cream : AppColors.black).withOpacity(0.06),
               width: 0.5,
             ),
           ),

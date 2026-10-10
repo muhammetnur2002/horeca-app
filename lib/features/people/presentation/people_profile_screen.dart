@@ -427,7 +427,7 @@ class _AlbumPage extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: AppColors.orange,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.black,
         onPressed: () => chooseAlbumSource(context, ref),
         icon: const Icon(Icons.add_a_photo_outlined),
         label: const Text('Добавить'),
@@ -558,7 +558,7 @@ class _MissingMedia extends StatelessWidget {
   Widget build(BuildContext context) {
     return const ColoredBox(
       color: Color(0xFF2E3352),
-      child: Icon(Icons.broken_image_outlined, color: Colors.white70),
+      child: Icon(Icons.broken_image_outlined, color: AppColors.muted),
     );
   }
 }
