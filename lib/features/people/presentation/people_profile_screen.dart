@@ -274,7 +274,7 @@ class _ProfileBody extends ConsumerWidget {
         const SizedBox(height: 8),
         if (profile.album.isEmpty)
           Text(
-            'Альбом пуст. Фото и видео о работе: кухня, бар, зал, блюдо, команда.',
+            'В альбоме пока пусто. Можно добавить фото и видео с работы. Видео не больше 50 МБ.',
             style: TextStyle(color: colors.sub, height: 1.35),
           )
         else

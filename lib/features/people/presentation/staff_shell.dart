@@ -136,26 +136,31 @@ class _StaffChatsPage extends StatelessWidget {
     final colors = PeopleColors(isDark);
     final specialties = collectSpecialties(profile.workplaces, now: DateTime.now());
     final spheres = {for (final s in specialties) workSphereLabel(s.role)}.toList();
+    // Тексты пустых состояний — Grok 1, docs/совместная-работа.md (PR #15).
     final sphereText = spheres.isEmpty
-        ? 'Сфера появится, когда добавите место работы с должностью.'
+        ? 'Специальность ещё не выбрана. Без неё вакансии вашей сферы не появятся.'
         : 'Ваша сфера: ${spheres.join(', ')}.';
-    return _StaffPage(title: 'Мои чаты', children: [
+    return _StaffPage(title: 'Главная', children: [
       Text(sphereText, style: TextStyle(color: colors.sub, height: 1.35)),
       const SizedBox(height: 14),
+      PeopleSectionHeader(title: 'Вакансии вашей сферы', isDark: isDark),
+      const SizedBox(height: 8),
       _EmptyCard(
         isDark: isDark,
         icon: Icons.work_outline_rounded,
-        title: spheres.isEmpty ? 'Вакансии вашей сферы' : 'Вакансии: ${spheres.first}',
-        body: 'Канал вакансий откроется вместе с откликами. Сюда будут '
-            'приходить вакансии только вашей сферы.',
+        title: 'Вакансий вашей сферы пока нет',
+        body: 'Когда заведение опубликует вакансию по вашей специальности, '
+            'она появится здесь.',
       ),
-      const SizedBox(height: 10),
+      const SizedBox(height: 18),
+      PeopleSectionHeader(title: 'Мои чаты', isDark: isDark),
+      const SizedBox(height: 8),
       _EmptyCard(
         isDark: isDark,
         icon: Icons.chat_bubble_outline_rounded,
-        title: 'Чатов пока нет',
-        body: 'Отклик на вакансию откроет одну переписку с заведением. До '
-            'одобрения владельца можно отправить 3 сообщения, потом лимит снимается.',
+        title: 'Откликов пока нет',
+        body: 'Откройте вакансию и нажмите «Откликнуться». Пока владелец не '
+            'одобрил разговор, можно отправить 3 сообщения.',
       ),
     ]);
   }
@@ -186,9 +191,8 @@ class _StaffNotificationsPage extends StatelessWidget {
       _EmptyCard(
         isDark: isDark,
         icon: Icons.notifications_none_rounded,
-        title: 'Уведомлений пока нет',
-        body: 'Здесь появятся одобрения разговоров, новые вакансии вашей сферы '
-            'и подтверждения мест работы.',
+        title: 'Уведомлений нет',
+        body: 'Здесь появятся одобрения и новые вакансии вашей сферы.',
       ),
     ]);
   }

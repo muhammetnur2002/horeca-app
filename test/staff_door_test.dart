@@ -68,7 +68,8 @@ void main() {
     await tester.pump();
     expect(find.text('Мои чаты'), findsOneWidget);
     expect(find.text('Ваша сфера: кухня.'), findsOneWidget);
-    expect(find.text('Чатов пока нет'), findsOneWidget);
+    expect(find.text('Вакансий вашей сферы пока нет'), findsOneWidget);
+    expect(find.text('Откликов пока нет'), findsOneWidget);
 
     await tester.tap(find.text('Смены'));
     await tester.pump();
@@ -77,6 +78,6 @@ void main() {
 
     await tester.tap(find.text('Уведомления'));
     await tester.pump();
-    expect(find.text('Уведомлений пока нет'), findsOneWidget);
+    expect(find.text('Уведомлений нет'), findsOneWidget);
   });
 }

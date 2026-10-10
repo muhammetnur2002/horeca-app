@@ -75,7 +75,7 @@ class WorkplacesSection extends ConsumerWidget {
         ),
         const SizedBox(height: 10),
         if (profile.workplaces.isEmpty)
-          Text('Мест пока нет. Добавьте первое — с него начнётся стаж.',
+          Text('Мест работы пока нет. Добавьте место, чтобы пошёл стаж.',
               style: TextStyle(color: colors.sub))
         else
           for (final place in profile.workplaces) ...[
