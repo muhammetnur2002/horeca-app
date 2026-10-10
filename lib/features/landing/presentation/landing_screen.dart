@@ -46,8 +46,7 @@ class LandingScreen extends ConsumerWidget {
                         fontSize: 28, height: 1.22, fontWeight: FontWeight.w800, color: text)),
                 const SizedBox(height: 10),
                 // Текст Grok 1 (docs/совместная-работа.md, PR #15).
-                Text('Сотрудник ведёт профиль и отклики.
-Владелец ведёт заявки, склад и смены.',
+                Text('Сотрудник ведёт профиль и отклики.\nВладелец ведёт заявки, склад и смены.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                         fontSize: 14,
