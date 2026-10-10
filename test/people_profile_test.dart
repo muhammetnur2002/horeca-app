@@ -386,7 +386,7 @@ void main() {
     expect(home.contains("context.push('/people')"), isFalse);
     final routes = File('lib/app/routes.dart').readAsStringSync();
     final staffRouter = routes.substring(routes.indexOf('final staffRouter'));
-    expect(staffRouter.contains('PeopleProfileScreen()'), isTrue);
+    expect(staffRouter.contains('StaffShell()'), isTrue);
     final settings =
         File('lib/features/settings/presentation/tabs/app_settings_tab.dart').readAsStringSync();
     expect(settings.contains("context.push('/people/access')"), isTrue);

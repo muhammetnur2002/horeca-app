@@ -15,6 +15,7 @@ import 'package:horeca_app/features/notifications/presentation/notifications_scr
 import 'package:horeca_app/features/custom_template/presentation/template_screen.dart';
 import 'package:horeca_app/features/auth/data/auth_repository.dart';
 import 'package:horeca_app/features/people/presentation/people_profile_screen.dart';
+import 'package:horeca_app/features/people/presentation/staff_shell.dart';
 import 'package:horeca_app/features/people/presentation/venue_access_screen.dart';
 import 'package:horeca_app/features/supply/presentation/receipt_screen.dart';
 
@@ -92,7 +93,7 @@ final router = GoRouter(
 final staffRouter = GoRouter(
   initialLocation: '/',
   routes: [
-    GoRoute(path: '/', builder: (_, __) => const PeopleProfileScreen()),
+    GoRoute(path: '/', builder: (_, __) => const StaffShell()),
   ],
 );
 

@@ -12,6 +12,7 @@ import 'package:horeca_app/features/people/presentation/album_pages.dart';
 import 'package:horeca_app/features/people/presentation/people_editors.dart';
 import 'package:horeca_app/features/people/presentation/people_media.dart';
 import 'package:horeca_app/features/people/presentation/people_style.dart';
+import 'package:horeca_app/features/people/presentation/people_work_sections.dart';
 
 class PeopleProfileScreen extends ConsumerWidget {
   const PeopleProfileScreen({super.key});
@@ -29,7 +30,7 @@ class PeopleProfileScreen extends ConsumerWidget {
         backgroundColor: isDark ? AppColors.darkBg : AppColors.lightBg,
         foregroundColor: colors.text,
         iconTheme: IconThemeData(color: colors.text),
-        title: Text('Люди', style: TextStyle(color: colors.text, fontWeight: FontWeight.w700)),
+        title: Text('Профиль сотрудника', style: TextStyle(color: colors.text, fontWeight: FontWeight.w700)),
         actions: [
           if (staffDoor)
             IconButton(
@@ -134,120 +135,155 @@ class _ProfileBody extends ConsumerWidget {
     final now = DateTime.now();
     final rank = assessRank(profile.workplaces, now: now);
     final specialties = collectSpecialties(profile.workplaces, now: now);
-    final owned = ref.watch(peopleRepositoryProvider).ownedVenues;
+    final main = specialties.isEmpty
+        ? null
+        : (specialties.toList()..sort((a, b) => b.totalDays.compareTo(a.totalDays))).first;
+    final steps = PersonRank.values.length - 1;
+    final barColor = main == null ? AppColors.orange : experienceColor(main.level);
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+      padding: const EdgeInsets.fromLTRB(18, 8, 18, 32),
       children: [
-        Center(child: _Avatar(profile: profile, onTap: () => chooseProfilePhoto(context, ref))),
-        const SizedBox(height: 14),
+        // Шапка по макету: фото в оранжевом кольце, справа имя, ID и ранг.
         Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Flexible(
-              child: Text(
-                profile.name,
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: colors.text),
+            _Avatar(profile: profile, size: 124, onTap: () => chooseProfilePhoto(context, ref)),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(children: [
+                    Flexible(
+                      child: Text(
+                        profile.name,
+                        style: TextStyle(
+                            fontSize: 23, height: 1.15, fontWeight: FontWeight.w800, color: colors.text),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Изменить имя',
+                      visualDensity: VisualDensity.compact,
+                      onPressed: () => editPersonName(context, ref),
+                      icon: Icon(Icons.edit_outlined, size: 18, color: colors.sub),
+                    ),
+                  ]),
+                  InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: () async {
+                      await Clipboard.setData(ClipboardData(text: profile.id));
+                      if (context.mounted) showPeopleMessage(context, 'ID скопирован');
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Row(children: [
+                        const Icon(Icons.badge_outlined, size: 16, color: AppColors.orange),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            profile.id,
+                            key: const Key('person-id'),
+                            style: TextStyle(
+                              color: colors.sub,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ]),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      color: AppColors.orange.withOpacity(0.07),
+                      border: Border.all(color: AppColors.orange.withOpacity(0.45)),
+                    ),
+                    child: Row(children: [
+                      const Icon(Icons.military_tech_outlined, color: AppColors.orange, size: 30),
+                      const SizedBox(width: 10),
+                      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text('Ранг', style: TextStyle(color: colors.sub, fontSize: 12)),
+                        Text(
+                          rank.title,
+                          key: const Key('person-rank-title'),
+                          style: const TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.orange),
+                        ),
+                      ]),
+                    ]),
+                  ),
+                ],
               ),
-            ),
-            IconButton(
-              tooltip: 'Изменить имя',
-              onPressed: () => editPersonName(context, ref),
-              icon: Icon(Icons.edit_outlined, color: colors.sub),
             ),
           ],
         ),
-        const SizedBox(height: 8),
-        PeopleCard(
-          isDark: isDark,
-          child: InkWell(
-            onTap: () async {
-              await Clipboard.setData(ClipboardData(text: profile.id));
-              if (context.mounted) showPeopleMessage(context, 'ID скопирован');
-            },
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Постоянный ID', style: TextStyle(color: colors.sub, fontSize: 13)),
-                      const SizedBox(height: 4),
-                      Text(
-                        profile.id,
-                        key: const Key('person-id'),
-                        style: TextStyle(
-                          color: colors.text,
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.6,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(Icons.copy_rounded, color: colors.sub),
-              ],
+        const SizedBox(height: 16),
+        Row(children: [
+          Icon(Icons.restaurant_menu_rounded, color: colors.text, size: 28),
+          const SizedBox(width: 12),
+          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Специальность', style: TextStyle(color: colors.sub, fontSize: 12)),
+            Text(
+              main == null ? 'добавьте место работы' : roleLabel(main.role),
+              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: colors.text),
             ),
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          'Хранится на этом телефоне. Облако для профилей подключим отдельно, офлайн-работа Akyl от этого не зависит.',
-          style: TextStyle(color: colors.sub, fontSize: 12, height: 1.35),
-        ),
-        const SizedBox(height: 18),
-        PeopleCard(
-          isDark: isDark,
-          borderColor: AppColors.orange.withOpacity(0.45),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Рейтинг', style: TextStyle(color: colors.sub, fontSize: 13)),
-              const SizedBox(height: 4),
-              Text(
-                rank.title,
-                key: const Key('person-rank-title'),
-                style: const TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.orange,
-                  height: 1.05,
-                ),
+          ]),
+        ]),
+        const SizedBox(height: 14),
+        Row(children: [
+          Text('Опыт', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: colors.text)),
+          const Spacer(),
+          Text('${rank.rank.index} / $steps',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: colors.text)),
+        ]),
+        const SizedBox(height: 8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(99),
+          child: SizedBox(
+            height: 8,
+            child: Stack(fit: StackFit.expand, children: [
+              ColoredBox(color: colors.text.withOpacity(0.12)),
+              FractionallySizedBox(
+                alignment: Alignment.centerLeft,
+                widthFactor: (rank.rank.index / steps).clamp(0.04, 1.0),
+                child: ColoredBox(color: barColor),
               ),
-              const SizedBox(height: 8),
-              Text(rank.reason, style: TextStyle(fontSize: 16, height: 1.35, color: colors.text)),
-              const SizedBox(height: 8),
-              Text(rankScaleCaption(), style: TextStyle(fontSize: 12, height: 1.35, color: colors.sub)),
-            ],
+            ]),
           ),
-        ),
-        const SizedBox(height: 22),
-        PeopleSectionHeader(title: 'Специальности', isDark: isDark),
-        const SizedBox(height: 4),
-        Text(
-          'Каждая должность один раз. Полоска — сумма дней по всем местам этой должности.',
-          style: TextStyle(color: colors.sub, height: 1.35),
         ),
         const SizedBox(height: 8),
-        Text(
-          experienceLegend(),
-          key: const Key('experience-legend'),
-          style: TextStyle(color: colors.text, fontSize: 13, height: 1.35, fontWeight: FontWeight.w600),
+        Text(rank.reason, style: TextStyle(fontSize: 13, height: 1.35, color: colors.sub)),
+        const SizedBox(height: 4),
+        Text(rankScaleCaption(), style: TextStyle(fontSize: 12, height: 1.35, color: colors.sub)),
+        const SizedBox(height: 14),
+        Divider(color: colors.text.withOpacity(0.08)),
+        const SizedBox(height: 6),
+        PeopleSectionHeader(
+          title: 'Фотоальбом',
+          isDark: isDark,
+          action: profile.album.isEmpty ? 'Добавить' : 'Смотреть все',
+          onAction: () => profile.album.isEmpty
+              ? chooseAlbumSource(context, ref)
+              : Navigator.of(context).push(MaterialPageRoute(builder: (_) => const _AlbumPage())),
         ),
-        const SizedBox(height: 12),
-        if (specialties.isEmpty)
+        const SizedBox(height: 8),
+        if (profile.album.isEmpty)
           Text(
-            'Добавьте место работы — должность станет специальностью.',
+            'Альбом пуст. Фото и видео о работе: кухня, бар, зал, блюдо, команда.',
             style: TextStyle(color: colors.sub, height: 1.35),
           )
         else
-          for (final item in specialties) ...[
-            _SpecialtyBar(item: item, isDark: isDark),
-            const SizedBox(height: 12),
-          ],
+          _AlbumGrid(items: profile.album.take(6).toList()),
+        const SizedBox(height: 22),
+        SpecialtiesSection(profile: profile, isDark: isDark),
         const SizedBox(height: 10),
+        WorkplacesSection(profile: profile, isDark: isDark),
+        const SizedBox(height: 18),
         PeopleSectionHeader(
           title: 'Навыки',
           isDark: isDark,
@@ -316,55 +352,66 @@ class _ProfileBody extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
           ],
-        const SizedBox(height: 10),
-        PeopleSectionHeader(
-          title: 'Места работы',
-          isDark: isDark,
-          action: 'Добавить',
-          onAction: () => editWorkplace(context, ref),
-        ),
-        Text(
-          'Сколько угодно. Дата конца или отметка «работаю сейчас».',
-          style: TextStyle(color: colors.sub, height: 1.35),
-        ),
-        const SizedBox(height: 10),
-        if (profile.workplaces.isEmpty)
-          Text('Мест пока нет.', style: TextStyle(color: colors.sub))
-        else
-          for (final place in profile.workplaces) ...[
-            _WorkplaceTile(place: place, owned: owned, me: profile, isDark: isDark),
-            const SizedBox(height: 8),
-          ],
-        const SizedBox(height: 10),
-        PeopleSectionHeader(
-          title: 'Альбом',
-          isDark: isDark,
-          action: 'Добавить',
-          onAction: () => chooseAlbumSource(context, ref),
-        ),
-        Text(
-          'Только фото и видео про общепит. Видео больше 50 МБ приложение не возьмёт.',
-          style: TextStyle(color: colors.sub, height: 1.35),
-        ),
-        const SizedBox(height: 10),
-        if (profile.album.isEmpty)
-          Text('Альбом пуст.', style: TextStyle(color: colors.sub))
-        else
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-            ),
-            itemCount: profile.album.length,
-            itemBuilder: (context, index) {
-              final item = profile.album[index];
-              return _AlbumTile(item: item);
-            },
-          ),
       ],
+    );
+  }
+}
+
+class _AlbumGrid extends StatelessWidget {
+  final List<AlbumItem> items;
+  const _AlbumGrid({required this.items});
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
+      ),
+      itemCount: items.length,
+      itemBuilder: (context, index) => _AlbumTile(item: items[index]),
+    );
+  }
+}
+
+/// «Смотреть все»: весь альбом и добавление.
+class _AlbumPage extends ConsumerWidget {
+  const _AlbumPage();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = PeopleColors(isDark);
+    final album = ref.watch(peopleRepositoryProvider).me?.album ?? const <AlbumItem>[];
+    return Scaffold(
+      backgroundColor: isDark ? AppColors.darkBg : AppColors.lightBg,
+      appBar: AppBar(
+        backgroundColor: isDark ? AppColors.darkBg : AppColors.lightBg,
+        foregroundColor: colors.text,
+        title: Text('Фотоальбом · ${album.length}',
+            style: TextStyle(color: colors.text, fontWeight: FontWeight.w700)),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: AppColors.orange,
+        foregroundColor: Colors.white,
+        onPressed: () => chooseAlbumSource(context, ref),
+        icon: const Icon(Icons.add_a_photo_outlined),
+        label: const Text('Добавить'),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+        children: [
+          Text(
+            'Только фото и видео про общепит. Видео больше 50 МБ приложение не возьмёт.',
+            style: TextStyle(color: colors.sub, height: 1.35),
+          ),
+          const SizedBox(height: 12),
+          _AlbumGrid(items: album),
+        ],
+      ),
     );
   }
 }
@@ -372,8 +419,9 @@ class _ProfileBody extends ConsumerWidget {
 class _Avatar extends StatelessWidget {
   final PersonProfile profile;
   final VoidCallback onTap;
+  final double size;
 
-  const _Avatar({required this.profile, required this.onTap});
+  const _Avatar({required this.profile, required this.onTap, this.size = 176});
 
   @override
   Widget build(BuildContext context) {
@@ -383,11 +431,12 @@ class _Avatar extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 176,
-        height: 176,
+        width: size,
+        height: size,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           border: Border.all(color: AppColors.orange, width: 3),
+          boxShadow: [BoxShadow(color: AppColors.orange.withOpacity(0.3), blurRadius: 20)],
           color: AppColors.orange.withOpacity(0.16),
         ),
         clipBehavior: Clip.antiAlias,
@@ -404,168 +453,6 @@ class _Avatar extends StatelessWidget {
         letter,
         style: const TextStyle(fontSize: 64, fontWeight: FontWeight.w800, color: AppColors.orange),
       ),
-    );
-  }
-}
-
-class _SpecialtyBar extends StatelessWidget {
-  final SpecialtyExperience item;
-  final bool isDark;
-
-  const _SpecialtyBar({required this.item, required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = PeopleColors(isDark);
-    final color = experienceColor(item.level);
-    final fill = experienceFill(item.totalDays);
-    final days = item.totalDays <= 0 ? 'меньше дня' : countDays(item.totalDays);
-    return Semantics(
-      label: '${roleLabel(item.role)}, $days, ${experienceLevelLabel(item.level)}',
-      child: Column(
-        key: Key('specialty-${item.role.name}'),
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  roleLabel(item.role),
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: colors.text),
-                ),
-              ),
-              Text(
-                experienceLevelLabel(item.level),
-                style: TextStyle(fontWeight: FontWeight.w800, color: color),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '${countPlaces(item.placeCount)} · $days',
-            style: TextStyle(color: colors.sub, fontSize: 13),
-          ),
-          const SizedBox(height: 6),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(99),
-            child: SizedBox(
-              height: 12,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  ColoredBox(color: color.withOpacity(0.18)),
-                  FractionallySizedBox(
-                    alignment: Alignment.centerLeft,
-                    widthFactor: fill,
-                    child: ColoredBox(color: color),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _WorkplaceTile extends ConsumerWidget {
-  final WorkPlace place;
-  final List<OwnedVenue> owned;
-  final PersonProfile me;
-  final bool isDark;
-
-  const _WorkplaceTile({
-    required this.place,
-    required this.owned,
-    required this.me,
-    required this.isDark,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final colors = PeopleColors(isDark);
-    final period = place.workingNow
-        ? 'с ${formatRuDate(place.startedAt)} · работаю сейчас'
-        : '${formatRuDate(place.startedAt)} — ${formatRuDate(place.endedAt!)}';
-    final canConfirm = canConfirmWorkplace(me: me, place: place, ownedVenues: owned);
-    return PeopleCard(
-      isDark: isDark,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(place.venueName,
-                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: colors.text)),
-                    const SizedBox(height: 4),
-                    Text('${roleLabel(place.role)} · $period',
-                        style: TextStyle(color: colors.sub, height: 1.3)),
-                  ],
-                ),
-              ),
-              IconButton(
-                tooltip: 'Изменить',
-                onPressed: () => editWorkplace(context, ref, current: place),
-                icon: Icon(Icons.edit_outlined, color: colors.sub),
-              ),
-              IconButton(
-                tooltip: 'Убрать',
-                onPressed: () async {
-                  final ok = await askPeopleConfirm(
-                    context,
-                    title: 'Убрать место?',
-                    body: '«${place.venueName}» исчезнет из профиля. Специальности пересчитаются.',
-                    confirm: 'Убрать',
-                  );
-                  if (!ok || !context.mounted) return;
-                  ref.read(peopleRepositoryProvider.notifier).removeWorkplace(place.id);
-                },
-                icon: Icon(Icons.delete_outline_rounded, color: colors.sub),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          if (place.confirmed)
-            const _StatusPill(text: 'Подтверждено', color: AppColors.green)
-          else if (canConfirm)
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton(
-                onPressed: () {
-                  final error = ref.read(peopleRepositoryProvider.notifier).confirmWorkplace(place.id);
-                  if (error != null) showPeopleMessage(context, error);
-                },
-                child: const Text('Подтвердить как владелец'),
-              ),
-            )
-          else
-            const _StatusPill(text: 'Ждёт подтверждения владельца', color: AppColors.muted),
-        ],
-      ),
-    );
-  }
-}
-
-class _StatusPill extends StatelessWidget {
-  final String text;
-  final Color color;
-  const _StatusPill({required this.text, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.14),
-        borderRadius: BorderRadius.circular(99),
-      ),
-      child: Text(text, style: TextStyle(color: color, fontWeight: FontWeight.w700, fontSize: 13)),
     );
   }
 }
