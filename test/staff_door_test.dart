@@ -60,23 +60,25 @@ void main() {
     expect(find.text('Профиль сотрудника'), findsOneWidget);
     expect(find.text('Аня Ковалёва'), findsOneWidget);
     expect(find.text('Фотоальбом'), findsOneWidget);
+    Finder nav(String label) =>
+        find.descendant(of: find.byType(BottomNavigationBar), matching: find.text(label));
     for (final label in ['Главная', 'Смены', 'Профиль', 'Уведомления']) {
-      expect(find.text(label), findsOneWidget);
+      expect(nav(label), findsOneWidget);
     }
 
-    await tester.tap(find.text('Главная'));
+    await tester.tap(nav('Главная'));
     await tester.pump();
     expect(find.text('Мои чаты'), findsOneWidget);
     expect(find.text('Ваша сфера: кухня.'), findsOneWidget);
     expect(find.text('Вакансий вашей сферы пока нет'), findsOneWidget);
     expect(find.text('Откликов пока нет'), findsOneWidget);
 
-    await tester.tap(find.text('Смены'));
+    await tester.tap(nav('Смены'));
     await tester.pump();
     expect(find.text('Смены и стаж'), findsOneWidget);
     expect(find.text('Дом у реки'), findsWidgets);
 
-    await tester.tap(find.text('Уведомления'));
+    await tester.tap(nav('Уведомления'));
     await tester.pump();
     expect(find.text('Уведомлений нет'), findsOneWidget);
   });
