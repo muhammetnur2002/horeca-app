@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -38,8 +39,9 @@ Future<void> pickProfilePhoto(BuildContext context, WidgetRef ref, ImageSource s
   try {
     picked = await ImagePicker().pickImage(
       source: source,
-      imageQuality: 85,
-      maxWidth: 1600,
+      // В вебе фото лежит в памяти браузера (около 5 МБ на сайт) — берём меньше.
+      imageQuality: kIsWeb ? 70 : 85,
+      maxWidth: kIsWeb ? 640 : 1600,
     );
   } catch (_) {
     if (context.mounted) {
@@ -71,11 +73,20 @@ Future<void> clearProfilePhoto(BuildContext context, WidgetRef ref) async {
 }
 
 Future<void> pickAlbumMedia(BuildContext context, WidgetRef ref, AlbumKind kind) async {
+  // Видео в браузере сохранить негде: после перезагрузки страницы оно пропадёт.
+  if (kIsWeb && kind == AlbumKind.video) {
+    showPeopleMessage(context, 'Видео в веб-версии не сохраняется. Добавьте его с телефона.');
+    return;
+  }
   final XFile? picked;
   try {
     final picker = ImagePicker();
     picked = kind == AlbumKind.photo
-        ? await picker.pickImage(source: ImageSource.gallery, imageQuality: 85, maxWidth: 2000)
+        ? await picker.pickImage(
+                source: ImageSource.gallery,
+                imageQuality: kIsWeb ? 70 : 85,
+                maxWidth: kIsWeb ? 900 : 2000,
+              )
         : await picker.pickVideo(source: ImageSource.gallery);
   } catch (_) {
     if (context.mounted) {

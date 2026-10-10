@@ -9,23 +9,29 @@ import 'package:flutter/services.dart';
 
 // ─── Цветовые константы (меняй только здесь) ───────────────────────────────
 class AppColors {
-  // Тёмная тема
-  static const darkBg       = Color(0xFF0F1629);
-  static const darkSurface  = Color(0xFF1A1E2E);
-  static const darkCard     = Color(0xFF242840);
-  static const darkCard2    = Color(0xFF2E3352);
+  // Фирменная палитра — строго три цвета. Остальные оттенки ниже — это
+  // они же, смешанные друг с другом (поверхности, карточки, подписи).
+  static const black        = Color(0xFF0B0B0C);
+  static const cream        = Color(0xFFF2F0EC);
+  static const orange       = Color(0xFFFF6A00);
 
-  // Светлая тема
-  static const lightBg      = Color(0xFFEEF2FF);
-  static const lightSurface = Color(0xFFF5F7FF);
-  static const lightCard    = Color(0xFFFFFFFF);
+  // Тёмная тема: чёрный с 6 / 10 / 14 % кремового.
+  static const darkBg       = black;
+  static const darkSurface  = Color(0xFF191919);
+  static const darkCard     = Color(0xFF222222);
+  static const darkCard2    = Color(0xFF2B2B2B);
 
-  // Акцентные (общие)
-  static const orange       = Color(0xFFF5862E);
-  static const orangeLight  = Color(0xFFFFB067);
+  // Светлая тема: кремовый, поверхности — кремовый с 4 % чёрного.
+  static const lightBg      = cream;
+  static const lightSurface = Color(0xFFE9E7E3);
+  static const lightCard    = cream;
+
+  static const orangeLight  = orange;
   static const green        = Color(0xFF639922);
   static const greenLight   = Color(0xFF97C459);
-  static const muted        = Color(0xFF8B8FA8);
+
+  /// Подписи: кремовый на 55 % поверх чёрного.
+  static const muted        = Color(0xFF8A8987);
 
   /// Те же смыслы, что и заливка в Excel: много / мало / плохо.
   static const markHigh     = Color(0xFF3D8B40);
@@ -45,7 +51,7 @@ ThemeData buildAppLightTheme() {
     brightness: Brightness.light,
     useMaterial3: true,
     dialogTheme: DialogThemeData(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.cream,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       elevation: 0,
     ),
@@ -55,23 +61,23 @@ ThemeData buildAppLightTheme() {
       primary:    AppColors.orange,
       secondary:  AppColors.green,
       surface:    AppColors.lightSurface,
-      onPrimary:  Colors.white,
-      onSurface:  Color(0xFF1A1A2E),
+      onPrimary:  AppColors.black,
+      onSurface:  AppColors.black,
     ),
     textTheme: const TextTheme(
       headlineLarge: TextStyle(
         fontSize: 26, fontWeight: FontWeight.w600,
-        color: Color(0xFF1A1A2E), letterSpacing: -0.5,
+        color: AppColors.black, letterSpacing: -0.5,
       ),
       headlineMedium: TextStyle(
         fontSize: 20, fontWeight: FontWeight.w600,
-        color: Color(0xFF1A1A2E),
+        color: AppColors.black,
       ),
-      bodyLarge: TextStyle(fontSize: 16, color: Color(0xFF1A1A2E)),
-      bodyMedium: TextStyle(fontSize: 14, color: Color(0xFF4A4A6A)),
+      bodyLarge: TextStyle(fontSize: 16, color: AppColors.black),
+      bodyMedium: TextStyle(fontSize: 14, color: Color(0xFF3B3A39)),
       labelLarge: TextStyle(
         fontSize: 16, fontWeight: FontWeight.w500,
-        color: Colors.white,
+        color: AppColors.cream,
       ),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
@@ -81,7 +87,7 @@ ThemeData buildAppLightTheme() {
           borderRadius: BorderRadius.circular(16),
         ),
         backgroundColor: AppColors.orange,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.black,
         elevation: 0,
       ),
     ),
@@ -89,9 +95,9 @@ ThemeData buildAppLightTheme() {
       backgroundColor: Colors.transparent,
       elevation: 0,
       scrolledUnderElevation: 0,
-      iconTheme: IconThemeData(color: Color(0xFF1A1A2E)),
+      iconTheme: IconThemeData(color: AppColors.black),
       titleTextStyle: TextStyle(
-        color: Color(0xFF1A1A2E),
+        color: AppColors.black,
         fontSize: 18,
         fontWeight: FontWeight.w600,
       ),
@@ -99,7 +105,7 @@ ThemeData buildAppLightTheme() {
     switchTheme: SwitchThemeData(
       thumbColor: WidgetStateProperty.resolveWith(
         (s) => s.contains(WidgetState.selected)
-            ? AppColors.orange : Colors.white,
+            ? AppColors.orange : AppColors.cream,
       ),
       trackColor: WidgetStateProperty.resolveWith(
         (s) => s.contains(WidgetState.selected)
@@ -114,7 +120,7 @@ ThemeData buildAppLightTheme() {
     ),
     floatingActionButtonTheme: const FloatingActionButtonThemeData(
       backgroundColor: AppColors.darkCard,
-      foregroundColor: Colors.white,
+      foregroundColor: AppColors.black,
       elevation: 4,
     ),
     inputDecorationTheme: InputDecorationTheme(
@@ -122,11 +128,11 @@ ThemeData buildAppLightTheme() {
       fillColor: AppColors.lightCard,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+        borderSide: const BorderSide(color: Color(0x1F0B0B0C)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+        borderSide: const BorderSide(color: Color(0x1F0B0B0C)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -151,23 +157,23 @@ ThemeData buildAppDarkTheme() {
       primary:    AppColors.orange,
       secondary:  AppColors.green,
       surface:    AppColors.darkSurface,
-      onPrimary:  Colors.white,
-      onSurface:  Colors.white,
+      onPrimary:  AppColors.black,
+      onSurface:  AppColors.cream,
     ),
     textTheme: const TextTheme(
       headlineLarge: TextStyle(
         fontSize: 26, fontWeight: FontWeight.w600,
-        color: Colors.white, letterSpacing: -0.5,
+        color: AppColors.cream, letterSpacing: -0.5,
       ),
       headlineMedium: TextStyle(
         fontSize: 20, fontWeight: FontWeight.w600,
-        color: Colors.white,
+        color: AppColors.cream,
       ),
-      bodyLarge: TextStyle(fontSize: 16, color: Colors.white),
+      bodyLarge: TextStyle(fontSize: 16, color: AppColors.cream),
       bodyMedium: TextStyle(fontSize: 14, color: AppColors.muted),
       labelLarge: TextStyle(
         fontSize: 16, fontWeight: FontWeight.w500,
-        color: Colors.white,
+        color: AppColors.cream,
       ),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
@@ -177,7 +183,7 @@ ThemeData buildAppDarkTheme() {
           borderRadius: BorderRadius.circular(16),
         ),
         backgroundColor: AppColors.orange,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.black,
         elevation: 0,
       ),
     ),
@@ -185,9 +191,9 @@ ThemeData buildAppDarkTheme() {
       backgroundColor: Colors.transparent,
       elevation: 0,
       scrolledUnderElevation: 0,
-      iconTheme: const IconThemeData(color: Colors.white),
+      iconTheme: const IconThemeData(color: AppColors.cream),
       titleTextStyle: const TextStyle(
-        color: Colors.white,
+        color: AppColors.cream,
         fontSize: 18,
         fontWeight: FontWeight.w600,
       ),
@@ -204,7 +210,7 @@ ThemeData buildAppDarkTheme() {
       trackColor: WidgetStateProperty.resolveWith(
         (s) => s.contains(WidgetState.selected)
             ? AppColors.orange.withOpacity(0.4)
-            : Colors.white.withOpacity(0.1),
+            : AppColors.cream.withOpacity(0.1),
       ),
     ),
     tabBarTheme: const TabBarThemeData(
@@ -214,7 +220,7 @@ ThemeData buildAppDarkTheme() {
     ),
     floatingActionButtonTheme: const FloatingActionButtonThemeData(
       backgroundColor: AppColors.orange,
-      foregroundColor: Colors.white,
+      foregroundColor: AppColors.black,
       elevation: 4,
     ),
     inputDecorationTheme: InputDecorationTheme(
@@ -222,11 +228,11 @@ ThemeData buildAppDarkTheme() {
       fillColor: AppColors.darkCard2,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+        borderSide: BorderSide(color: AppColors.cream.withOpacity(0.1)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+        borderSide: BorderSide(color: AppColors.cream.withOpacity(0.1)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),

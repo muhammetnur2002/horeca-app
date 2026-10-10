@@ -15,6 +15,7 @@ import 'package:horeca_app/features/notifications/presentation/notifications_scr
 import 'package:horeca_app/features/custom_template/presentation/template_screen.dart';
 import 'package:horeca_app/features/auth/data/auth_repository.dart';
 import 'package:horeca_app/features/people/presentation/people_profile_screen.dart';
+import 'package:horeca_app/features/people/presentation/staff_shell.dart';
 import 'package:horeca_app/features/people/presentation/venue_access_screen.dart';
 import 'package:horeca_app/features/supply/presentation/receipt_screen.dart';
 
@@ -73,7 +74,8 @@ final router = GoRouter(
       path: '/template',
       builder: (_, __) => const TemplateScreen(),
     ),
-    // Раздел «Люди» не смотрит на PIN администратора и сотрудника.
+    // Профиль «Люди» — дверь сотрудника. Отсюда заведение открывает только
+    // выдачу доступа (Настройки → «Доступ людей»).
     GoRoute(
       path: '/people',
       builder: (_, __) => const PeopleProfileScreen(),
@@ -84,6 +86,14 @@ final router = GoRouter(
         ),
       ],
     ),
+  ],
+);
+
+/// Дверь сотрудника. Склад, заявки и доступ заведения сюда не входят.
+final staffRouter = GoRouter(
+  initialLocation: '/',
+  routes: [
+    GoRoute(path: '/', builder: (_, __) => const StaffShell()),
   ],
 );
 
@@ -104,11 +114,11 @@ class MainShell extends ConsumerWidget {
         decoration: BoxDecoration(
           color: isDark
               ? AppColors.darkSurface
-              : Colors.white,
+              : AppColors.lightSurface,
           border: Border(
             top: BorderSide(
               color: isDark
-                  ? Colors.white.withOpacity(0.06)
+                  ? AppColors.cream.withOpacity(0.06)
                   : Colors.black.withOpacity(0.06),
               width: 0.5,
             ),

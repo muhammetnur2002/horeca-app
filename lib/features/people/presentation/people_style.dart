@@ -46,12 +46,17 @@ class PeopleColors {
   final bool isDark;
   const PeopleColors(this.isDark);
 
-  Color get text => isDark ? Colors.white : const Color(0xFF1A1A2E);
-  Color get sub => isDark ? AppColors.muted : const Color(0xFF6B7280);
-  Color get card => isDark ? Colors.white.withOpacity(0.06) : Colors.white.withOpacity(0.78);
-  Color get cardBorder => isDark ? Colors.white.withOpacity(0.10) : Colors.white;
-  Color get field => isDark ? Colors.white.withOpacity(0.05) : const Color(0xFFF7F8FC);
-  Color get sheet => isDark ? AppColors.darkCard : Colors.white;
+  // Строго три цвета: чёрный, кремовый, оранжевый. Оттенки — они же с прозрачностью.
+  Color get text => isDark ? AppColors.cream : AppColors.black;
+  Color get sub => isDark ? AppColors.muted : const Color(0xFF5E5D5B);
+  Color get card => isDark ? AppColors.cream.withOpacity(0.05) : AppColors.black.withOpacity(0.03);
+  Color get cardBorder => isDark ? AppColors.cream.withOpacity(0.10) : AppColors.black.withOpacity(0.08);
+  Color get field => isDark ? AppColors.cream.withOpacity(0.05) : AppColors.black.withOpacity(0.04);
+  Color get sheet => isDark ? AppColors.darkCard : AppColors.cream;
+
+  /// Мелкий оранжевый текст на кремовом читается плохо — в светлой теме
+  /// мелкие ссылки чёрные.
+  Color get link => isDark ? AppColors.orange : AppColors.black;
 }
 
 class PeopleBackground extends StatelessWidget {
@@ -60,17 +65,7 @@ class PeopleBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isDark
-              ? const [Color(0xFF0F1629), Color(0xFF1A1040), Color(0xFF0D1F35)]
-              : const [Color(0xFFEEF2FF), Color(0xFFF7F8FF), Color(0xFFFFF4EC)],
-        ),
-      ),
-    );
+    return ColoredBox(color: isDark ? AppColors.black : AppColors.cream);
   }
 }
 
@@ -127,13 +122,18 @@ class PeopleSectionHeader extends StatelessWidget {
         Expanded(
           child: Text(
             title,
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: colors.text),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: colors.text),
           ),
         ),
         if (action != null)
           TextButton(
             onPressed: onAction,
-            child: Text(action!, style: const TextStyle(fontWeight: FontWeight.w700)),
+            style: TextButton.styleFrom(foregroundColor: colors.link),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Text(action!, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+              const SizedBox(width: 2),
+              const Icon(Icons.chevron_right_rounded, size: 20),
+            ]),
           ),
       ],
     );
