@@ -11,6 +11,7 @@ import 'package:horeca_app/features/people/data/people_repository.dart';
 import 'package:horeca_app/features/people/domain/people_calc.dart';
 import 'package:horeca_app/features/people/domain/people_models.dart';
 import 'package:horeca_app/features/people/presentation/people_profile_screen.dart';
+import 'package:horeca_app/features/people/presentation/people_work_sections.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -386,7 +387,7 @@ void main() {
     expect(home.contains("context.push('/people')"), isFalse);
     final routes = File('lib/app/routes.dart').readAsStringSync();
     final staffRouter = routes.substring(routes.indexOf('final staffRouter'));
-    expect(staffRouter.contains('PeopleProfileScreen()'), isTrue);
+    expect(staffRouter.contains('StaffShell()'), isTrue);
     final settings =
         File('lib/features/settings/presentation/tabs/app_settings_tab.dart').readAsStringSync();
     expect(settings.contains("context.push('/people/access')"), isTrue);
@@ -441,7 +442,29 @@ void main() {
     expect(find.text(id), findsOneWidget);
     expect(find.byKey(const Key('person-rank-title')), findsOneWidget);
     expect(find.text('Работяга'), findsOneWidget);
+
+    // Шкала званий — по нажатию на карточку ранга, как в макете профиля.
+    await tester.tap(find.byKey(const Key('person-rank-card')));
+    await tester.pumpAndSettle();
+    expect(find.text(rankScaleCaption()), findsOneWidget);
     expect(find.textContaining('182 дня'), findsWidgets);
+    Navigator.of(tester.element(find.byKey(const Key('rank-scale-caption')))).pop();
+    await tester.pumpAndSettle();
+
+    // Специальности со стажем — во вкладке «Смены» двери сотрудника.
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+        child: MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: SpecialtiesSection(profile: people.state.me!, isDark: false),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
     expect(find.byKey(const Key('specialty-waiter')), findsOneWidget);
     expect(find.byKey(const Key('specialty-bartender')), findsOneWidget);
     expect(find.byKey(const Key('specialty-cook')), findsOneWidget);
@@ -449,7 +472,6 @@ void main() {
     expect(find.text('средне'), findsWidgets);
     expect(find.text('много'), findsOneWidget);
     expect(find.text(experienceLegend()), findsOneWidget);
-    expect(find.text(rankScaleCaption()), findsOneWidget);
     expect(find.text('работаю сейчас'), findsNothing);
   });
 }

@@ -1,5 +1,6 @@
 /// Лендинг: человек выбирает дверь — «Я сотрудник» или «Я владелец
-/// заведения». Вёрстка по макету Figma «Akyl — две двери».
+/// заведения». Вёрстка по макету «Akyl — две двери», строго три цвета:
+/// оранжевый, чёрный, кремовый.
 library;
 
 import 'package:flutter/material.dart';
@@ -10,101 +11,71 @@ import 'package:horeca_app/features/landing/data/door_repository.dart';
 class LandingScreen extends ConsumerWidget {
   const LandingScreen({super.key});
 
-  static const _cream = Color(0xFFFFF7EE);
-  static const _logoDark = Color(0xFFF1E9DD);
-  static const _primary = Color(0xFFD8601A);
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final text = isDark ? Colors.white : const Color(0xFF1A1A2E);
-    final panel = isDark ? const Color(0xFF141B2B) : Colors.white;
-    final line = isDark ? Colors.white.withOpacity(0.08) : const Color(0x1A1A1A2E);
+    final text = isDark ? AppColors.cream : AppColors.black;
+    final sub = isDark ? AppColors.muted : const Color(0xFF5E5D5B);
+    final line = isDark ? AppColors.cream.withOpacity(0.12) : AppColors.black.withOpacity(0.10);
     final door = ref.read(doorProvider.notifier);
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.darkBg : _cream,
+      backgroundColor: isDark ? AppColors.black : AppColors.cream,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 440),
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(24, 36, 24, 24),
+              padding: const EdgeInsets.fromLTRB(24, 40, 24, 24),
               children: [
                 Text('Akyl',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 44,
+                      fontSize: 54,
                       fontWeight: FontWeight.w800,
-                      letterSpacing: -0.8,
-                      color: isDark ? _logoDark : AppColors.orange,
+                      letterSpacing: -1,
+                      color: isDark ? AppColors.cream : AppColors.orange,
                     )),
-                const SizedBox(height: 18),
+                const SizedBox(height: 22),
                 Text('Работа и заведение\nв одном месте',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                        fontSize: 28, height: 1.22, fontWeight: FontWeight.w800, color: text)),
+                        fontSize: 30, height: 1.2, fontWeight: FontWeight.w800, color: text)),
                 const SizedBox(height: 10),
                 // Текст Grok 1 (docs/совместная-работа.md, PR #15).
                 Text('Сотрудник ведёт профиль и отклики.\nВладелец ведёт заявки, склад и смены.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                        fontSize: 14,
-                        height: 1.4,
-                        color: isDark ? const Color(0xFFB8BFCC) : const Color(0xFF5A6070))),
-                const SizedBox(height: 20),
+                    style: TextStyle(fontSize: 14, height: 1.4, color: sub)),
+                const SizedBox(height: 18),
                 Container(
-                  height: 200,
-                  decoration: BoxDecoration(
-                    color: panel,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: line),
-                  ),
+                  height: 210,
+                  decoration: isDark
+                      ? BoxDecoration(color: AppColors.darkSurface, borderRadius: BorderRadius.circular(18))
+                      : null,
                   child: Semantics(
-                    label: 'Кафе: стойка, дверь с табличкой «Открыто», столик со стульями',
+                    label: 'Кафе: стойка, лампа, дверь с табличкой «Открыто», столик со стульями',
                     child: CustomPaint(painter: _CafePainter(isDark: isDark)),
                   ),
                 ),
                 const SizedBox(height: 22),
-                SizedBox(
-                  height: 56,
-                  child: FilledButton.icon(
-                    onPressed: () => door.choose(AppDoor.staff),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: _primary,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      textStyle: const TextStyle(fontSize: 19, fontWeight: FontWeight.w700),
-                    ),
-                    icon: const Icon(Icons.person_outline_rounded),
-                    label: const Text('Я сотрудник'),
-                  ),
+                _DoorButton(
+                  label: 'Я сотрудник',
+                  icon: Icons.person_outline_rounded,
+                  primary: true,
+                  isDark: isDark,
+                  onTap: () => door.choose(AppDoor.staff),
                 ),
                 const SizedBox(height: 12),
-                SizedBox(
-                  height: 56,
-                  child: OutlinedButton.icon(
-                    onPressed: () => door.choose(AppDoor.venue),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: text,
-                      side: BorderSide(
-                          color: isDark ? Colors.white.withOpacity(0.24) : const Color(0x401A1A2E),
-                          width: 1.5),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
-                    ),
-                    icon: const Icon(Icons.storefront_outlined),
-                    label: const Text('Я владелец заведения'),
-                  ),
+                _DoorButton(
+                  label: 'Я владелец заведения',
+                  icon: Icons.storefront_outlined,
+                  primary: false,
+                  isDark: isDark,
+                  onTap: () => door.choose(AppDoor.venue),
                 ),
                 const SizedBox(height: 26),
-                Container(
-                  decoration: BoxDecoration(
-                    color: panel,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: line),
-                  ),
-                  child: IntrinsicHeight(
+                if (isDark)
+                  IntrinsicHeight(
                     child: Row(children: [
                       _Perk(icon: Icons.verified_user_outlined, label: 'Удобно\nи надёжно', isDark: isDark),
                       VerticalDivider(width: 1, color: line),
@@ -112,10 +83,85 @@ class LandingScreen extends ConsumerWidget {
                       VerticalDivider(width: 1, color: line),
                       _Perk(icon: Icons.favorite_border_rounded, label: 'Для команды\nи бизнеса', isDark: isDark),
                     ]),
+                  )
+                else
+                  IntrinsicHeight(
+                    child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                      for (final perk in const [
+                        (Icons.verified_user_outlined, 'Удобно\nи надёжно'),
+                        (Icons.schedule_rounded, 'Экономит\nвремя'),
+                        (Icons.favorite_border_rounded, 'Для команды\nи бизнеса'),
+                      ]) ...[
+                        if (perk.$1 != Icons.verified_user_outlined) const SizedBox(width: 10),
+                        _Perk(icon: perk.$1, label: perk.$2, isDark: isDark, boxed: true),
+                      ],
+                    ]),
                   ),
-                ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Кнопка двери: капсула. Главная — оранжевая с чёрным текстом (белый на
+/// #FF6A00 читается плохо), вторая — контурная.
+class _DoorButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool primary;
+  final bool isDark;
+  final VoidCallback onTap;
+  const _DoorButton({
+    required this.label,
+    required this.icon,
+    required this.primary,
+    required this.isDark,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final fg = primary ? AppColors.black : (isDark ? AppColors.cream : AppColors.black);
+    return Semantics(
+      button: true,
+      label: label,
+      excludeSemantics: true,
+      child: Material(
+        color: primary ? AppColors.orange : Colors.transparent,
+        shape: StadiumBorder(
+          side: primary
+              ? BorderSide.none
+              : BorderSide(
+                  color: isDark ? AppColors.cream.withOpacity(0.35) : AppColors.black.withOpacity(0.30),
+                  width: 1.5),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: SizedBox(
+            height: 60,
+            child: Row(children: [
+              const SizedBox(width: 8),
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: primary ? AppColors.black : (isDark ? AppColors.cream : AppColors.black).withOpacity(0.08),
+                ),
+                child: Icon(icon, size: 22, color: primary ? AppColors.orange : fg),
+              ),
+              Expanded(
+                child: Text(label,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: fg)),
+              ),
+              Icon(Icons.arrow_forward_rounded, color: fg),
+              const SizedBox(width: 20),
+            ]),
           ),
         ),
       ),
@@ -127,25 +173,35 @@ class _Perk extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool isDark;
-  const _Perk({required this.icon, required this.label, required this.isDark});
+  final bool boxed;
+  const _Perk({required this.icon, required this.label, required this.isDark, this.boxed = false});
 
   @override
   Widget build(BuildContext context) {
+    final content = Padding(
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 6),
+      child: Column(children: [
+        Icon(icon, color: isDark ? AppColors.cream : AppColors.orange, size: 28),
+        const SizedBox(height: 8),
+        Text(label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13,
+              height: 1.3,
+              color: isDark ? AppColors.cream.withOpacity(0.8) : AppColors.black,
+            )),
+      ]),
+    );
     return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 6),
-        child: Column(children: [
-          Icon(icon, color: AppColors.orange, size: 24),
-          const SizedBox(height: 8),
-          Text(label,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 12,
-                height: 1.3,
-                color: isDark ? const Color(0xFFB8BFCC) : const Color(0xFF5A6070),
-              )),
-        ]),
-      ),
+      child: boxed
+          ? DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.black.withOpacity(0.10)),
+              ),
+              child: content,
+            )
+          : content,
     );
   }
 }
@@ -168,9 +224,9 @@ class _CafePainter extends CustomPainter {
       ..strokeWidth = 2
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
-    final base = stroke(isDark ? const Color(0xFF5C6F96) : const Color(0xFF8A7B6A));
+    final base = stroke(isDark ? AppColors.cream.withOpacity(0.45) : AppColors.black.withOpacity(0.75));
     final accent = stroke(AppColors.orange);
-    final leaf = stroke(const Color(0xFF5E8A6B));
+    final leaf = stroke(AppColors.orange.withOpacity(0.7));
 
     void path(List<Offset> points, Paint paint) {
       final p = Path()..moveTo(points.first.dx, points.first.dy);
