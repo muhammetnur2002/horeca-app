@@ -44,7 +44,16 @@ class LandingScreen extends ConsumerWidget {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                         fontSize: 28, height: 1.22, fontWeight: FontWeight.w800, color: text)),
-                const SizedBox(height: 22),
+                const SizedBox(height: 10),
+                // Текст Grok 1 (docs/совместная-работа.md, PR #15).
+                Text('Сотрудник ведёт профиль и отклики.
+Владелец ведёт заявки, склад и смены.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        fontSize: 14,
+                        height: 1.4,
+                        color: isDark ? const Color(0xFFB8BFCC) : const Color(0xFF5A6070))),
+                const SizedBox(height: 20),
                 Container(
                   height: 200,
                   decoration: BoxDecoration(
